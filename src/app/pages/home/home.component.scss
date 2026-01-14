@@ -241,6 +241,37 @@
   padding: 24px;
 }
 
+.admin-login-section {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #e0e0e0;
+  text-align: center;
+}
+
+.admin-login-btn {
+  width: 100%;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+
+  mat-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+  }
+}
+
+.divider {
+  margin: 0 0 20px 0;
+  border: none;
+  border-top: 1px solid #e0e0e0;
+}
+
 // Responsive Design
 @media (max-width: 1024px) {
   .two-column-layout {

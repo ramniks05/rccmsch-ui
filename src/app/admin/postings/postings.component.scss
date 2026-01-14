@@ -1,0 +1,16 @@
+@import '../administrative-units/administrative-units.component.scss';
+
+.action-btn-view {
+  transition: all 0.3s ease;
+  
+  &:hover:not(:disabled) {
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    background-color: rgba(25, 118, 210, 0.1);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}

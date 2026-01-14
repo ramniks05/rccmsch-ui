@@ -1,0 +1,106 @@
+<div class="officer-home-container">
+  <!-- Welcome Header -->
+  <div class="welcome-header">
+    <div class="welcome-content">
+      <h1 class="welcome-title">
+        <mat-icon class="welcome-icon">badge</mat-icon>
+        Welcome, {{ userName }}!
+      </h1>
+      
+      <!-- Officer Details - Inline (below welcome message) -->
+      <div class="officer-details-inline" *ngIf="officerName || roleName || administrativeUnit">
+        <span *ngIf="officerName" class="detail-item">
+          <span class="detail-value">{{ officerName }}</span>
+        </span>
+        <span *ngIf="roleName" class="detail-item">
+          <span class="detail-value">{{ roleName }}</span>
+          <span class="detail-code" *ngIf="roleCode">{{ roleCode }}</span>
+        </span>
+        <span *ngIf="administrativeUnit" class="detail-item">
+          <span class="detail-value">{{ administrativeUnit }}</span>
+          <span class="detail-level" *ngIf="unitLevel">{{ unitLevel }}</span>
+        </span>
+        <span *ngIf="districtName" class="detail-item">
+          <span class="detail-value">{{ districtName }}</span>
+        </span>
+        <span *ngIf="stateName" class="detail-item">
+          <span class="detail-value">{{ stateName }}</span>
+        </span>
+      </div>
+      
+      <p class="welcome-subtitle">Officer Dashboard - Revenue Court Case Management System</p>
+      <p class="welcome-subtitle-small">Government of Manipur</p>
+    </div>
+    <button mat-raised-button color="primary" (click)="logout()" class="logout-btn">
+      <mat-icon>logout</mat-icon>
+      Logout
+    </button>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Quick Actions Card -->
+    <mat-card class="quick-actions-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>dashboard</mat-icon>
+          Quick Actions
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="action-buttons">
+          <button mat-raised-button color="primary" class="action-btn" routerLink="/officer/cases">
+            <mat-icon>folder_open</mat-icon>
+            View Cases
+          </button>
+          <button mat-raised-button color="accent" class="action-btn" routerLink="/officer/new-case">
+            <mat-icon>add_circle</mat-icon>
+            New Case
+          </button>
+          <button mat-raised-button color="primary" class="action-btn" routerLink="/officer/reports">
+            <mat-icon>assessment</mat-icon>
+            Reports
+          </button>
+          <button mat-raised-button color="primary" class="action-btn" routerLink="/officer/profile">
+            <mat-icon>person</mat-icon>
+            My Profile
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Information Cards -->
+    <div class="info-cards">
+      <mat-card class="info-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon class="card-icon">info</mat-icon>
+            About Officer Dashboard
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <p>
+            The Officer Dashboard allows you to manage cases, create new case entries, 
+            view reports, and update your profile. Use the quick actions above to navigate to different sections.
+          </p>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="info-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon class="card-icon">help</mat-icon>
+            Need Help?
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <p>
+            For assistance with using the officer dashboard, please refer to the user manual 
+            or contact your system administrator.
+          </p>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</div>
+

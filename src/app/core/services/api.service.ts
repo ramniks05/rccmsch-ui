@@ -70,14 +70,6 @@ export class ApiService {
   }
 
   /**
-   * Placeholder HTTP call method for testing
-   * @param endpoint API endpoint
-   */
-  testCall(endpoint: string): Observable<any> {
-    return this.get(endpoint);
-  }
-
-  /**
    * Register a new citizen
    * @param registrationData User registration data
    */
@@ -89,30 +81,30 @@ export class ApiService {
   }
 
   /**
-   * Send OTP to mobile number
+   * Send OTP to mobile number for Citizen Login
    * @param mobileNumber Mobile number (10 digits)
-   * @param userType User type (CITIZEN or OPERATOR)
+   * @param citizenType Citizen type (CITIZEN or OPERATOR)
    */
-  sendOTP(mobileNumber: string, userType: string): Observable<any> {
+  sendOTP(mobileNumber: string, citizenType: string = 'CITIZEN'): Observable<any> {
     const headers = new HttpHeaders({
       'Content-Type': 'application/json'
     });
     const body = {
       mobileNumber: mobileNumber,
-      userType: userType
+      citizenType: citizenType
     };
-    return this.post('auth/mobile/send-otp', body, headers);
+    return this.post('auth/citizen/send-otp', body, headers);
   }
 
   /**
-   * Verify OTP and Login
+   * Verify OTP and Login (OTP-based Login)
    * @param mobileNumber Mobile number (10 digits)
    * @param otp 6-digit OTP code
    * @param captcha CAPTCHA value
    * @param captchaId CAPTCHA ID (UUID)
-   * @param userType User type (CITIZEN or OPERATOR)
+   * @param citizenType Citizen type (CITIZEN or OPERATOR)
    */
-  verifyOTP(mobileNumber: string, otp: string, captcha: string, captchaId: string, userType: string): Observable<any> {
+  verifyOTP(mobileNumber: string, otp: string, captcha: string, captchaId: string, citizenType: string = 'CITIZEN'): Observable<any> {
     const headers = new HttpHeaders({
       'Content-Type': 'application/json'
     });
@@ -121,9 +113,9 @@ export class ApiService {
       otp: otp,
       captcha: captcha,
       captchaId: captchaId,
-      userType: userType
+      citizenType: citizenType
     };
-    return this.post('auth/mobile/verify-otp', body, headers);
+    return this.post('auth/citizen/otp-login', body, headers);
   }
 
   /**
@@ -132,9 +124,9 @@ export class ApiService {
    * @param password Password
    * @param captcha CAPTCHA value
    * @param captchaId CAPTCHA ID (UUID)
-   * @param userType User type (CITIZEN or OPERATOR)
+   * @param citizenType Citizen type (CITIZEN or OPERATOR)
    */
-  passwordLogin(username: string, password: string, captcha: string, captchaId: string, userType: string): Observable<any> {
+  passwordLogin(username: string, password: string, captcha: string, captchaId: string, citizenType: string = 'CITIZEN'): Observable<any> {
     const headers = new HttpHeaders({
       'Content-Type': 'application/json'
     });
@@ -143,9 +135,9 @@ export class ApiService {
       password: password,
       captcha: captcha,
       captchaId: captchaId,
-      userType: userType
+      citizenType: citizenType
     };
-    return this.post('auth/password/login', body, headers);
+    return this.post('auth/citizen/login', body, headers);
   }
 
   /**
@@ -161,7 +153,7 @@ export class ApiService {
       mobileNumber: mobileNumber,
       otp: otp
     };
-    return this.post('auth/verify-registration-otp', body, headers);
+    return this.post('auth/citizen/registration/verify-otp', body, headers);
   }
 
   /**
@@ -202,17 +194,19 @@ export class ApiService {
   }
 
   /**
-   * Send OTP for registration (mobile verification during registration)
+   * Send OTP for registration verification (resend OTP during registration)
    * @param mobileNumber Mobile number to send OTP to
+   * @param citizenType Citizen type (CITIZEN or OPERATOR), defaults to CITIZEN
    */
-  sendRegistrationOTP(mobileNumber: string): Observable<any> {
+  sendRegistrationOTP(mobileNumber: string, citizenType: string = 'CITIZEN'): Observable<any> {
     const headers = new HttpHeaders({
       'Content-Type': 'application/json'
     });
     const body = {
-      mobileNumber: mobileNumber
+      mobileNumber: mobileNumber,
+      citizenType: citizenType
     };
-    return this.post('auth/registration/send-otp', body, headers);
+    return this.post('auth/citizen/registration/send-otp', body, headers);
   }
 }
 

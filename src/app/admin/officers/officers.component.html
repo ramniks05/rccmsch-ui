@@ -1,0 +1,189 @@
+<div class="admin-page-container">
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <mat-icon>groups</mat-icon>
+        Officers Management
+      </h1>
+      <p class="page-subtitle">Manage government employees and officers</p>
+    </div>
+    <div class="header-actions">
+      <button mat-raised-button color="primary" (click)="openCreateDialog()" class="create-btn">
+        <mat-icon>add</mat-icon>
+        Create New Officer
+      </button>
+      <button mat-raised-button color="primary" routerLink="/admin/home" class="back-btn">
+        <mat-icon>arrow_back</mat-icon>
+        Back to Dashboard
+      </button>
+    </div>
+  </div>
+
+  <div class="page-content">
+    <!-- Error Message -->
+    <div *ngIf="errorMessage" class="alert alert-error">
+      <mat-icon>error</mat-icon>
+      <span>{{ errorMessage }}</span>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div *ngIf="isLoading" class="loading-container">
+      <mat-spinner diameter="50"></mat-spinner>
+      <p>Loading officers...</p>
+    </div>
+
+    <!-- Table Container -->
+    <div *ngIf="!isLoading" class="table-container">
+      <!-- Search Filter -->
+      <div class="table-header">
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>Search</mat-label>
+          <input matInput (keyup)="applyFilter($event)" placeholder="Search officers...">
+          <mat-icon matPrefix>search</mat-icon>
+        </mat-form-field>
+      </div>
+
+      <!-- Data Table -->
+      <div class="table-wrapper">
+        <table mat-table [dataSource]="dataSource" matSort class="data-table">
+          <!-- ID Column -->
+          <ng-container matColumnDef="id">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+              <mat-icon class="header-icon">badge</mat-icon>
+              ID
+            </th>
+            <td mat-cell *matCellDef="let officer">
+              <div class="cell-content">
+                <mat-icon class="cell-icon">fingerprint</mat-icon>
+                <span>{{ officer.id }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Full Name Column -->
+          <ng-container matColumnDef="fullName">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+              <mat-icon class="header-icon">person</mat-icon>
+              Full Name
+            </th>
+            <td mat-cell *matCellDef="let officer">
+              <div class="cell-content">
+                <mat-icon class="cell-icon">account_circle</mat-icon>
+                <span class="name-text">{{ officer.fullName }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Mobile Column -->
+          <ng-container matColumnDef="mobileNo">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+              <mat-icon class="header-icon">phone</mat-icon>
+              Mobile
+            </th>
+            <td mat-cell *matCellDef="let officer">
+              <div class="cell-content">
+                <mat-icon class="cell-icon">phone_android</mat-icon>
+                <span>{{ officer.mobileNo }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Email Column -->
+          <ng-container matColumnDef="email">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+              <mat-icon class="header-icon">email</mat-icon>
+              Email
+            </th>
+            <td mat-cell *matCellDef="let officer">
+              <div class="cell-content" *ngIf="officer.email; else noEmail">
+                <mat-icon class="cell-icon">mail</mat-icon>
+                <span>{{ officer.email }}</span>
+              </div>
+              <ng-template #noEmail>
+                <span class="no-data-text">-</span>
+              </ng-template>
+            </td>
+          </ng-container>
+
+          <!-- Active Status Column -->
+          <ng-container matColumnDef="isActive">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+              <mat-icon class="header-icon">toggle_on</mat-icon>
+              Status
+            </th>
+            <td mat-cell *matCellDef="let officer">
+              <span [class.active]="officer.isActive" [class.inactive]="!officer.isActive" class="status-badge">
+                <mat-icon class="status-icon">{{ officer.isActive ? 'check_circle' : 'cancel' }}</mat-icon>
+                {{ officer.isActive ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Mobile Verified Column -->
+          <ng-container matColumnDef="isMobileVerified">
+            <th mat-header-cell *matHeaderCellDef>
+              <mat-icon class="header-icon">verified</mat-icon>
+              Mobile Verified
+            </th>
+            <td mat-cell *matCellDef="let officer">
+              <span [class.verified]="officer.isMobileVerified" [class.not-verified]="!officer.isMobileVerified" class="verification-badge">
+                <mat-icon class="verification-icon">{{ officer.isMobileVerified ? 'verified' : 'cancel' }}</mat-icon>
+                {{ officer.isMobileVerified ? 'Yes' : 'No' }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Password Reset Required Column -->
+          <ng-container matColumnDef="isPasswordResetRequired">
+            <th mat-header-cell *matHeaderCellDef>
+              <mat-icon class="header-icon">lock_reset</mat-icon>
+              Password Reset
+            </th>
+            <td mat-cell *matCellDef="let officer">
+              <span [class.required]="officer.isPasswordResetRequired" class="reset-badge" *ngIf="officer.isPasswordResetRequired; else noReset">
+                <mat-icon class="reset-icon">warning</mat-icon>
+                Required
+              </span>
+              <ng-template #noReset>
+                <span class="no-data-text">-</span>
+              </ng-template>
+            </td>
+          </ng-container>
+
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>
+              <mat-icon class="header-icon">settings</mat-icon>
+              Actions
+            </th>
+            <td mat-cell *matCellDef="let officer">
+              <button mat-icon-button color="primary" (click)="viewOfficer(officer)" matTooltip="View Details" class="action-btn-view">
+                <mat-icon>visibility</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+          <!-- No data row -->
+          <tr class="mat-row" *matNoDataRow>
+            <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+              <div class="no-data">
+                <mat-icon>inbox</mat-icon>
+                <p>No officers found</p>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- Paginator -->
+      <mat-paginator
+        [pageSizeOptions]="[5, 10, 20, 50]"
+        [pageSize]="10"
+        showFirstLastButtons>
+      </mat-paginator>
+    </div>
+  </div>
+</div>

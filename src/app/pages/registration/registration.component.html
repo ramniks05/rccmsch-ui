@@ -62,13 +62,15 @@
           <mat-error *ngIf="registrationForm.get('email')?.hasError('email') && registrationForm.get('email')?.touched">
             Please enter a valid email address
           </mat-error>
+          <mat-error *ngIf="registrationForm.get('email')?.hasError('serverError')">
+            {{ registrationForm.get('email')?.errors?.['serverError'] }}
+          </mat-error>
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="form-field">
           <mat-label>Mobile Number *</mat-label>
-          <input matInput formControlName="mobileNumber" placeholder="Enter 10-digit mobile number" maxlength="10" [readonly]="isMobileVerified">
+          <input matInput formControlName="mobileNumber" placeholder="Enter 10-digit mobile number" maxlength="10">
           <mat-icon matPrefix>phone</mat-icon>
-          <mat-icon matSuffix *ngIf="isMobileVerified" class="verified-icon" color="primary">verified</mat-icon>
           <mat-error *ngIf="registrationForm.get('mobileNumber')?.hasError('required') && registrationForm.get('mobileNumber')?.touched">
             Mobile number is required
           </mat-error>
@@ -79,92 +81,6 @@
             {{ registrationForm.get('mobileNumber')?.errors?.['serverError'] }}
           </mat-error>
         </mat-form-field>
-      </div>
-
-      <!-- Mobile Verification Section (Before Registration) -->
-      <div *ngIf="registrationForm.get('mobileNumber')?.valid && !isMobileVerified" class="mobile-verification-section">
-        <div class="mobile-verification-card">
-          <div class="verification-header">
-            <mat-icon>verified_user</mat-icon>
-            <h4>Verify Mobile Number</h4>
-          </div>
-          
-          <p class="verification-text">Please verify your mobile number before submitting the registration form.</p>
-
-          <!-- Mobile OTP Success Message -->
-          <div *ngIf="mobileOtpSuccessMessage" class="alert alert-success" role="alert">
-            <mat-icon>check_circle</mat-icon>
-            <span>{{ mobileOtpSuccessMessage }}</span>
-          </div>
-
-          <!-- Mobile OTP Error Message -->
-          <div *ngIf="mobileOtpErrorMessage" class="alert alert-error" role="alert">
-            <mat-icon>error</mat-icon>
-            <span>{{ mobileOtpErrorMessage }}</span>
-          </div>
-
-          <!-- Send OTP Button -->
-          <div *ngIf="!mobileOtpSent" class="mobile-verification-actions">
-            <button 
-              mat-raised-button 
-              color="accent" 
-              type="button" 
-              (click)="onSendMobileOtp()"
-              class="send-mobile-otp-btn"
-              [disabled]="registrationForm.get('mobileNumber')?.invalid || isSendingMobileOtp">
-              <mat-spinner *ngIf="isSendingMobileOtp" diameter="20" class="button-spinner"></mat-spinner>
-              <span *ngIf="!isSendingMobileOtp">Send OTP to Verify</span>
-              <span *ngIf="isSendingMobileOtp">Sending...</span>
-            </button>
-          </div>
-
-          <!-- OTP Verification (After OTP Sent) -->
-          <div *ngIf="mobileOtpSent && !isMobileVerified" class="mobile-otp-verification">
-            <form [formGroup]="mobileVerificationForm" (ngSubmit)="onVerifyMobileOtp()" class="mobile-otp-form">
-              <mat-form-field appearance="outline" class="form-field full-width">
-                <mat-label>Enter OTP *</mat-label>
-                <input matInput formControlName="mobileOtp" placeholder="Enter 6-digit OTP" maxlength="6" type="text" pattern="[0-9]*">
-                <mat-icon matPrefix>pin</mat-icon>
-                <mat-error *ngIf="mobileVerificationForm.get('mobileOtp')?.hasError('required') && mobileVerificationForm.get('mobileOtp')?.touched">
-                  OTP is required
-                </mat-error>
-                <mat-error *ngIf="mobileVerificationForm.get('mobileOtp')?.hasError('pattern') && mobileVerificationForm.get('mobileOtp')?.touched">
-                  OTP must be 6 digits
-                </mat-error>
-              </mat-form-field>
-
-              <div class="mobile-otp-actions">
-                <button 
-                  mat-raised-button 
-                  color="primary" 
-                  type="submit" 
-                  class="verify-mobile-otp-btn"
-                  [disabled]="mobileVerificationForm.invalid || isVerifyingMobileOtp">
-                  <mat-spinner *ngIf="isVerifyingMobileOtp" diameter="20" class="button-spinner"></mat-spinner>
-                  <span *ngIf="!isVerifyingMobileOtp">Verify OTP</span>
-                  <span *ngIf="isVerifyingMobileOtp">Verifying...</span>
-                </button>
-                <button 
-                  mat-stroked-button 
-                  type="button" 
-                  (click)="resendMobileOtp()" 
-                  class="resend-mobile-otp-btn"
-                  [disabled]="isVerifyingMobileOtp || isSendingMobileOtp">
-                  Resend OTP
-                </button>
-              </div>
-            </form>
-          </div>
-
-          <!-- Verified Status -->
-          <div *ngIf="isMobileVerified" class="mobile-verified-status">
-            <mat-icon class="verified-icon-large">check_circle</mat-icon>
-            <p class="verified-text">Mobile number verified successfully!</p>
-            <button mat-button type="button" (click)="resetMobileVerification()" class="change-mobile-btn">
-              Change Mobile Number
-            </button>
-          </div>
-        </div>
       </div>
 
       <div class="form-row">
@@ -246,6 +162,9 @@
         <mat-error *ngIf="registrationForm.get('aadharNumber')?.hasError('pattern') && registrationForm.get('aadharNumber')?.touched">
           Aadhar number must be 12 digits
         </mat-error>
+        <mat-error *ngIf="registrationForm.get('aadharNumber')?.hasError('serverError')">
+          {{ registrationForm.get('aadharNumber')?.errors?.['serverError'] }}
+        </mat-error>
       </mat-form-field>
 
       <div class="form-row">
@@ -308,6 +227,14 @@
           An OTP has been sent to your mobile number <strong>{{ registrationMobileNumber }}</strong>. 
           Please enter the 6-digit OTP to activate your account.
         </p>
+
+        <!-- Development: Show OTP Code -->
+        <div *ngIf="otpCode" class="dev-otp-display">
+          <mat-icon>info</mat-icon>
+          <div class="dev-otp-content">
+            <strong>Development Mode:</strong> OTP Code: <span class="otp-code">{{ otpCode }}</span>
+          </div>
+        </div>
 
         <!-- OTP Success Message -->
         <div *ngIf="otpSuccessMessage" class="alert alert-success" role="alert">

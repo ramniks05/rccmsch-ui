@@ -98,6 +98,15 @@
             </mat-card-header>
             <mat-card-content class="login-card-content">
               <app-login></app-login>
+              
+              <!-- Admin Login Link -->
+              <div class="admin-login-section">
+                <hr class="divider" />
+                <button mat-stroked-button color="accent" routerLink="/admin/login" class="admin-login-btn">
+                  <mat-icon>admin_panel_settings</mat-icon>
+                  Admin Login
+                </button>
+              </div>
             </mat-card-content>
           </mat-card>
         </div>

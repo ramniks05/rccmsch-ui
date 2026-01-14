@@ -1,0 +1,84 @@
+<div class="admin-home-container">
+  <!-- Welcome Header -->
+  <div class="welcome-header">
+    <div class="welcome-content">
+      <h1 class="welcome-title">
+        <mat-icon class="welcome-icon">admin_panel_settings</mat-icon>
+        Welcome, {{ userName }}!
+      </h1>
+      <p class="welcome-subtitle">Admin Dashboard - Revenue Court Case Management System</p>
+      <p class="welcome-subtitle-small">Government of Manipur</p>
+    </div>
+    <button mat-raised-button color="primary" (click)="logout()" class="logout-btn">
+      <mat-icon>logout</mat-icon>
+      Logout
+    </button>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Quick Actions Card -->
+    <mat-card class="quick-actions-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>dashboard</mat-icon>
+          Quick Actions
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="action-buttons">
+          <button mat-raised-button color="primary" class="action-btn" routerLink="/admin/officers">
+            <mat-icon>people</mat-icon>
+            Manage Officers
+          </button>
+          <button mat-raised-button color="accent" class="action-btn" routerLink="/admin/postings">
+            <mat-icon>assignment_ind</mat-icon>
+            Manage Postings
+          </button>
+          <button mat-raised-button color="primary" class="action-btn" routerLink="/admin/administrative-units">
+            <mat-icon>location_city</mat-icon>
+            Administrative Units
+          </button>
+          <button mat-raised-button color="primary" class="action-btn" routerLink="/admin/case-types">
+            <mat-icon>folder_special</mat-icon>
+            Case Types
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Information Cards -->
+    <div class="info-cards">
+      <mat-card class="info-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon class="card-icon">info</mat-icon>
+            About Admin Panel
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <p>
+            The Admin Panel allows you to manage officers, assign postings, configure administrative units, 
+            and manage case types. Use the quick actions above to navigate to different sections.
+          </p>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="info-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon class="card-icon">help</mat-icon>
+            Need Help?
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <p>
+            For assistance with using the admin panel, please refer to the API documentation 
+            or contact the system administrator.
+          </p>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</div>
+

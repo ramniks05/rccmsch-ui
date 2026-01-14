@@ -1,0 +1,65 @@
+<div class="admin-login-container">
+  <div class="admin-login-card">
+    <div class="login-header">
+      <mat-icon class="admin-icon">admin_panel_settings</mat-icon>
+      <h1>Admin Login</h1>
+      <p class="subtitle">Revenue Court Case Management System</p>
+      <p class="subtitle-small">Government of Manipur</p>
+    </div>
+
+    <!-- Error Message -->
+    <div *ngIf="errorMessage" class="alert alert-error" role="alert">
+      <mat-icon>error</mat-icon>
+      <span>{{ errorMessage }}</span>
+    </div>
+
+    <!-- Success Message -->
+    <div *ngIf="successMessage" class="alert alert-success" role="alert">
+      <mat-icon>check_circle</mat-icon>
+      <span>{{ successMessage }}</span>
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+      <mat-form-field appearance="outline" class="form-field">
+        <mat-label>Username *</mat-label>
+        <input matInput formControlName="username" placeholder="Enter username" autocomplete="username">
+        <mat-icon matPrefix>person</mat-icon>
+        <mat-error *ngIf="loginForm.get('username')?.hasError('required') && loginForm.get('username')?.touched">
+          Username is required
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="form-field">
+        <mat-label>Password *</mat-label>
+        <input matInput type="password" formControlName="password" placeholder="Enter password" autocomplete="current-password">
+        <mat-icon matPrefix>lock</mat-icon>
+        <mat-error *ngIf="loginForm.get('password')?.hasError('required') && loginForm.get('password')?.touched">
+          Password is required
+        </mat-error>
+      </mat-form-field>
+
+      <div class="form-actions">
+        <button mat-raised-button type="button" (click)="goToHome()" class="back-btn" [disabled]="isLoading">
+          <mat-icon>arrow_back</mat-icon>
+          Back to Home
+        </button>
+        <button mat-raised-button color="primary" type="submit" class="login-btn" [disabled]="loginForm.invalid || isLoading">
+          <mat-spinner *ngIf="isLoading" diameter="20" class="button-spinner"></mat-spinner>
+          <mat-icon *ngIf="!isLoading">login</mat-icon>
+          <span *ngIf="!isLoading">Login</span>
+          <span *ngIf="isLoading">Logging in...</span>
+        </button>
+      </div>
+
+      <div class="default-credentials">
+        <mat-icon>info</mat-icon>
+        <div>
+          <strong>Default Credentials:</strong>
+          <p>Username: <code>admin</code></p>
+          <p>Password: <code>admin@123</code></p>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+

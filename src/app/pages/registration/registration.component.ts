@@ -3,7 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
 import { catchError } from 'rxjs/operators';
-import { throwError, of } from 'rxjs';
+import { throwError } from 'rxjs';
 
 /**
  * Registration Component
@@ -17,7 +17,6 @@ import { throwError, of } from 'rxjs';
 export class RegistrationComponent {
   registrationForm: FormGroup;
   otpVerificationForm: FormGroup;
-  mobileVerificationForm: FormGroup; // For pre-registration mobile verification
   submitted = false;
   isLoading = false;
   errorMessage = '';
@@ -28,15 +27,7 @@ export class RegistrationComponent {
   isVerifyingOtp = false;
   otpErrorMessage = '';
   otpSuccessMessage = '';
-  
-  // Mobile verification during registration
-  isMobileVerified = false;
-  isSendingMobileOtp = false;
-  isVerifyingMobileOtp = false;
-  mobileOtpSent = false;
-  mobileOtpErrorMessage = '';
-  mobileOtpSuccessMessage = '';
-  showMobileVerification = false;
+  otpCode: string | null = null; // Store OTP for development display
 
   constructor(
     private fb: FormBuilder,
@@ -65,15 +56,41 @@ export class RegistrationComponent {
       otp: ['', [Validators.required, Validators.pattern(/^\d{6}$/)]]
     });
 
-    // Mobile Verification Form (before registration)
-    this.mobileVerificationForm = this.fb.group({
-      mobileOtp: ['', [Validators.required, Validators.pattern(/^\d{6}$/)]]
+    // Clear server errors when user starts typing
+    this.setupFieldErrorClearing();
+  }
+
+  /**
+   * Setup field error clearing when user starts typing
+   */
+  private setupFieldErrorClearing(): void {
+    // Clear email server error
+    this.registrationForm.get('email')?.valueChanges.subscribe(() => {
+      const emailControl = this.registrationForm.get('email');
+      if (emailControl?.hasError('serverError')) {
+        const errors = { ...emailControl.errors };
+        delete errors['serverError'];
+        emailControl.setErrors(Object.keys(errors).length > 0 ? errors : null);
+      }
     });
 
-    // Watch mobile number field to reset verification when changed
+    // Clear mobile number server error
     this.registrationForm.get('mobileNumber')?.valueChanges.subscribe(() => {
-      if (this.isMobileVerified) {
-        this.resetMobileVerification();
+      const mobileControl = this.registrationForm.get('mobileNumber');
+      if (mobileControl?.hasError('serverError')) {
+        const errors = { ...mobileControl.errors };
+        delete errors['serverError'];
+        mobileControl.setErrors(Object.keys(errors).length > 0 ? errors : null);
+      }
+    });
+
+    // Clear Aadhar number server error
+    this.registrationForm.get('aadharNumber')?.valueChanges.subscribe(() => {
+      const aadharControl = this.registrationForm.get('aadharNumber');
+      if (aadharControl?.hasError('serverError')) {
+        const errors = { ...aadharControl.errors };
+        delete errors['serverError'];
+        aadharControl.setErrors(Object.keys(errors).length > 0 ? errors : null);
       }
     });
   }
@@ -166,13 +183,26 @@ export class RegistrationComponent {
    * Handle successful registration
    */
   private handleRegistrationSuccess(response: any): void {
-    const userId = response?.data?.userId || response?.userId;
-    const mobileNumber = this.registrationForm.get('mobileNumber')?.value;
+    // Handle new API response structure { success, message, data }
+    const apiResponse = response?.success !== undefined ? response : { success: true, data: response };
+    const responseData = apiResponse.success ? apiResponse.data : response;
     
-    this.registrationUserId = userId;
+    const citizenId = responseData?.citizenId || responseData?.userId;
+    const mobileNumber = this.registrationForm.get('mobileNumber')?.value;
+    const otpCode = responseData?.otpCode;
+    
+    // Store OTP code for development display
+    this.otpCode = otpCode || null;
+    
+    // Log OTP code for testing (as per API documentation)
+    if (otpCode) {
+      console.log('OTP Code (for testing):', otpCode);
+    }
+    
+    this.registrationUserId = citizenId;
     this.registrationMobileNumber = mobileNumber;
     this.showOtpVerification = true;
-    this.successMessage = 'Registration successful! OTP has been sent to your mobile number. Please enter the OTP below to activate your account.';
+    this.successMessage = apiResponse.message || 'Registration successful! OTP has been sent to your mobile number. Please enter the OTP below to activate your account.';
     
     // Scroll to OTP verification section
     setTimeout(() => {
@@ -189,9 +219,53 @@ export class RegistrationComponent {
   private handleRegistrationError(error: any): void {
     console.error('Registration error:', error);
     
-    if (error.error) {
+    // Clear previous error messages
+    this.errorMessage = '';
+    
+    // Handle 409 Conflict - Duplicate resource
+    if (error.status === 409) {
+      const errorMessage = error.error?.message || error.error?.error || '';
+      let specificMessage = 'Email, mobile number, or Aadhar number already exists. Please use different credentials.';
+      
+      // Try to identify which field is duplicated
+      const messageLower = errorMessage.toLowerCase();
+      if (messageLower.includes('email')) {
+        specificMessage = 'This email address is already registered. Please use a different email.';
+        const emailControl = this.registrationForm.get('email');
+        if (emailControl) {
+          emailControl.setErrors({ serverError: 'Email already exists' });
+          emailControl.markAsTouched();
+        }
+      } else if (messageLower.includes('mobile')) {
+        specificMessage = 'This mobile number is already registered. Please use a different mobile number.';
+        const mobileControl = this.registrationForm.get('mobileNumber');
+        if (mobileControl) {
+          mobileControl.setErrors({ serverError: 'Mobile number already exists' });
+          mobileControl.markAsTouched();
+        }
+      } else if (messageLower.includes('aadhar')) {
+        specificMessage = 'This Aadhar number is already registered. Please use a different Aadhar number.';
+        const aadharControl = this.registrationForm.get('aadharNumber');
+        if (aadharControl) {
+          aadharControl.setErrors({ serverError: 'Aadhar number already exists' });
+          aadharControl.markAsTouched();
+        }
+      }
+      
+      this.errorMessage = errorMessage || specificMessage;
+      return;
+    }
+    
+    // Handle connection errors
+    if (error.status === 0) {
+      this.errorMessage = 'Unable to connect to server. Please check your connection.';
+      return;
+    }
+    
+    // Handle validation errors (400 Bad Request)
+    if (error.status === 400 && error.error) {
       if (error.error.errors && Array.isArray(error.error.errors)) {
-        // Handle validation errors
+        // Handle validation errors array
         const validationErrors = error.error.errors;
         this.errorMessage = 'Validation failed: ' + validationErrors.map((e: any) => e.message || `${e.field}: ${e.defaultMessage}`).join(', ');
         
@@ -208,241 +282,25 @@ export class RegistrationComponent {
       } else if (error.error.error) {
         this.errorMessage = error.error.error;
       } else {
+        this.errorMessage = 'Invalid data. Please check all fields and try again.';
+      }
+      return;
+    }
+    
+    // Handle other errors
+    if (error.error) {
+      if (error.error.message) {
+        this.errorMessage = error.error.message;
+      } else if (error.error.error) {
+        this.errorMessage = error.error.error;
+      } else {
         this.errorMessage = 'Registration failed. Please try again.';
       }
-    } else if (error.status === 0) {
-      this.errorMessage = 'Unable to connect to server. Please check your connection.';
-    } else if (error.status === 409) {
-      this.errorMessage = 'Email, mobile number, or Aadhar number already exists. Please use different credentials.';
-    } else if (error.status === 400) {
-      this.errorMessage = 'Invalid data. Please check all fields and try again.';
     } else {
       this.errorMessage = 'An error occurred during registration. Please try again later.';
     }
   }
 
-  /**
-   * Send OTP for mobile verification during registration
-   */
-  onSendMobileOtp(): void {
-    const mobileNumber = this.registrationForm.get('mobileNumber')?.value;
-    
-    if (!mobileNumber || this.registrationForm.get('mobileNumber')?.invalid) {
-      this.registrationForm.get('mobileNumber')?.markAsTouched();
-      this.mobileOtpErrorMessage = 'Please enter a valid mobile number first.';
-      setTimeout(() => {
-        this.mobileOtpErrorMessage = '';
-      }, 3000);
-      return;
-    }
-
-    this.isSendingMobileOtp = true;
-    this.mobileOtpErrorMessage = '';
-    this.mobileOtpSuccessMessage = '';
-    this.showMobileVerification = true;
-
-    // Use registration-specific OTP sending API
-    this.apiService.sendRegistrationOTP(mobileNumber)
-      .pipe(
-        catchError(error => {
-          this.isSendingMobileOtp = false;
-          this.handleMobileOtpError(error);
-          return throwError(() => error);
-        })
-      )
-      .subscribe({
-        next: (response) => {
-          this.isSendingMobileOtp = false;
-          this.handleMobileOtpSuccess(response, mobileNumber);
-        },
-        error: (error) => {
-          // Error already handled in catchError
-          this.isSendingMobileOtp = false;
-        }
-      });
-  }
-
-  /**
-   * Handle successful mobile OTP sending
-   */
-  private handleMobileOtpSuccess(response: any, mobileNumber: string): void {
-    console.log('Mobile OTP sent successfully:', response);
-    this.mobileOtpSent = true;
-    this.mobileOtpSuccessMessage = `OTP has been sent to your mobile number: ${mobileNumber}. Please enter the OTP to verify.`;
-    
-    // Enable OTP field validation
-    this.mobileVerificationForm.get('mobileOtp')?.setValidators([Validators.required, Validators.pattern(/^\d{6}$/)]);
-    this.mobileVerificationForm.get('mobileOtp')?.updateValueAndValidity();
-    this.mobileVerificationForm.patchValue({ mobileOtp: '' });
-    
-    // Clear success message after 5 seconds
-    setTimeout(() => {
-      this.mobileOtpSuccessMessage = '';
-    }, 5000);
-  }
-
-  /**
-   * Handle mobile OTP sending errors
-   */
-  private handleMobileOtpError(error: any): void {
-    console.error('Send Mobile OTP error:', error);
-    
-    if (error.error) {
-      if (error.error.message) {
-        this.mobileOtpErrorMessage = error.error.message;
-      } else if (error.error.error) {
-        this.mobileOtpErrorMessage = error.error.error;
-      } else {
-        this.mobileOtpErrorMessage = 'Failed to send OTP. Please try again.';
-      }
-    } else if (error.status === 0) {
-      this.mobileOtpErrorMessage = 'Unable to connect to server. Please check your connection.';
-    } else if (error.status === 404) {
-      this.mobileOtpErrorMessage = 'Mobile number not found. This number may already be registered.';
-    } else if (error.status === 429) {
-      this.mobileOtpErrorMessage = 'Too many OTP requests. Please wait before requesting again.';
-    } else if (error.status === 400) {
-      this.mobileOtpErrorMessage = 'Invalid mobile number. Please check and try again.';
-    } else {
-      this.mobileOtpErrorMessage = 'Failed to send OTP. Please try again later.';
-    }
-    
-    // Clear error message after 5 seconds
-    setTimeout(() => {
-      this.mobileOtpErrorMessage = '';
-    }, 5000);
-  }
-
-  /**
-   * Verify mobile OTP during registration
-   * Uses verify-registration-otp API to verify OTP before registration
-   */
-  onVerifyMobileOtp(): void {
-    if (this.mobileVerificationForm.valid && this.mobileOtpSent) {
-      const mobileNumber = this.registrationForm.get('mobileNumber')?.value;
-      const otp = this.mobileVerificationForm.get('mobileOtp')?.value;
-      
-      this.isVerifyingMobileOtp = true;
-      this.mobileOtpErrorMessage = '';
-      this.mobileOtpSuccessMessage = '';
-
-      // Use verify-registration-otp API to verify OTP
-      // Note: This endpoint might be designed for post-registration verification
-      // If it doesn't support pre-registration, it will return an error
-      // In that case, we'll handle it gracefully
-      this.apiService.verifyRegistrationOTP(mobileNumber, otp)
-        .pipe(
-          catchError(error => {
-            this.isVerifyingMobileOtp = false;
-            
-            // If API doesn't support pre-registration verification (404/400),
-            // we'll do basic validation and let backend verify during registration
-            if (error.status === 404 || (error.status === 400 && error.error?.message?.toLowerCase().includes('not found'))) {
-              // User doesn't exist yet (expected for pre-registration)
-              // Validate OTP format and mark as verified
-              // Backend will verify during actual registration
-              if (otp && /^\d{6}$/.test(otp)) {
-                this.handleMobileOtpVerificationSuccess(null);
-                return of(null); // Return success
-              } else {
-                this.mobileOtpErrorMessage = 'Please enter a valid 6-digit OTP.';
-                setTimeout(() => {
-                  this.mobileOtpErrorMessage = '';
-                }, 3000);
-                return throwError(() => new Error('Invalid OTP format'));
-              }
-            } else {
-              // Other errors - show error message
-              this.handleMobileOtpVerificationError(error);
-              return throwError(() => error);
-            }
-          })
-        )
-        .subscribe({
-          next: (response) => {
-            this.isVerifyingMobileOtp = false;
-            if (response !== null) { // Only process if not handled in catchError
-              this.handleMobileOtpVerificationSuccess(response);
-            }
-          },
-          error: (error) => {
-            // Error already handled in catchError
-            this.isVerifyingMobileOtp = false;
-          }
-        });
-    } else {
-      this.markFormGroupTouched(this.mobileVerificationForm);
-    }
-  }
-
-  /**
-   * Handle mobile OTP verification errors
-   */
-  private handleMobileOtpVerificationError(error: any): void {
-    console.error('Mobile OTP verification error:', error);
-    
-    if (error.error) {
-      if (error.error.message) {
-        this.mobileOtpErrorMessage = error.error.message;
-      } else if (error.error.error) {
-        this.mobileOtpErrorMessage = error.error.error;
-      } else {
-        this.mobileOtpErrorMessage = 'Invalid OTP. Please check and try again.';
-      }
-    } else if (error.status === 0) {
-      this.mobileOtpErrorMessage = 'Unable to connect to server. Please check your connection.';
-    } else if (error.status === 400) {
-      this.mobileOtpErrorMessage = 'Invalid or expired OTP. Please request a new OTP.';
-      this.mobileVerificationForm.patchValue({ mobileOtp: '' });
-    } else if (error.status === 403 || error.status === 401) {
-      this.mobileOtpErrorMessage = 'OTP verification failed. Please try again.';
-    } else {
-      this.mobileOtpErrorMessage = 'An error occurred during OTP verification. Please try again.';
-    }
-    
-    // Clear error message after 5 seconds
-    setTimeout(() => {
-      this.mobileOtpErrorMessage = '';
-    }, 5000);
-  }
-
-  /**
-   * Handle successful mobile OTP verification
-   */
-  private handleMobileOtpVerificationSuccess(response: any): void {
-    console.log('Mobile OTP verification successful:', response);
-    this.isMobileVerified = true;
-    this.mobileOtpSuccessMessage = 'Mobile number verified successfully! You can now proceed with registration.';
-    this.mobileVerificationForm.get('mobileOtp')?.disable();
-    
-    // Clear success message after 5 seconds
-    setTimeout(() => {
-      this.mobileOtpSuccessMessage = '';
-    }, 5000);
-  }
-
-  /**
-   * Reset mobile verification
-   */
-  resetMobileVerification(): void {
-    this.isMobileVerified = false;
-    this.mobileOtpSent = false;
-    this.mobileOtpErrorMessage = '';
-    this.mobileOtpSuccessMessage = '';
-    this.showMobileVerification = false;
-    this.mobileVerificationForm.reset();
-    this.mobileVerificationForm.get('mobileOtp')?.enable();
-    this.mobileVerificationForm.get('mobileOtp')?.clearValidators();
-    this.mobileVerificationForm.get('mobileOtp')?.updateValueAndValidity();
-  }
-
-  /**
-   * Resend mobile OTP during registration
-   */
-  resendMobileOtp(): void {
-    this.resetMobileVerification();
-    this.onSendMobileOtp();
-  }
 
   /**
    * Verify Registration OTP
@@ -483,7 +341,12 @@ export class RegistrationComponent {
    */
   private handleOtpVerificationSuccess(response: any): void {
     console.log('OTP verification successful:', response);
-    this.otpSuccessMessage = 'Mobile number verified successfully! Your account has been activated. Redirecting to login...';
+    
+    // Handle new API response structure { success, message, data }
+    const apiResponse = response?.success !== undefined ? response : { success: true, data: response };
+    const message = apiResponse.message || 'Mobile number verified successfully! Your account has been activated. Redirecting to login...';
+    
+    this.otpSuccessMessage = message;
     
     // Redirect to login page after 2 seconds
     setTimeout(() => {
@@ -533,8 +396,8 @@ export class RegistrationComponent {
    */
   resendOtp(): void {
     if (this.registrationMobileNumber) {
-      // Call send OTP API again
-      this.apiService.sendOTP(this.registrationMobileNumber, 'CITIZEN')
+      // Call send registration OTP API
+      this.apiService.sendRegistrationOTP(this.registrationMobileNumber, 'CITIZEN')
         .pipe(
           catchError(error => {
             this.handleOtpVerificationError(error);
@@ -543,7 +406,18 @@ export class RegistrationComponent {
         )
         .subscribe({
           next: (response) => {
-            this.otpSuccessMessage = 'OTP has been resent to your mobile number.';
+            // Handle new API response structure { success, message, data }
+            const apiResponse = response?.success !== undefined ? response : { success: true, data: response };
+            const otpCode = apiResponse.data?.otpCode;
+            
+            // Store OTP code for development display
+            this.otpCode = otpCode || null;
+            
+            if (otpCode) {
+              console.log('OTP Code (for testing):', otpCode);
+            }
+            
+            this.otpSuccessMessage = apiResponse.message || 'OTP has been resent to your mobile number.';
             this.otpVerificationForm.patchValue({ otp: '' });
             setTimeout(() => {
               this.otpSuccessMessage = '';
@@ -568,11 +442,9 @@ export class RegistrationComponent {
     this.showOtpVerification = false;
     this.registrationMobileNumber = '';
     this.registrationUserId = null;
-    this.resetMobileVerification();
+    this.otpCode = null;
     this.registrationForm.reset();
     this.otpVerificationForm.reset();
-    this.mobileVerificationForm.reset();
-    this.mobileVerificationForm.get('mobileOtp')?.enable();
   }
 
   /**

@@ -6,7 +6,6 @@ import { RouterModule, Routes } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatToolbarModule } from '@angular/material/toolbar';
 
 // Components
 import { CitizenHomeComponent } from './citizen-home/citizen-home.component';
@@ -39,8 +38,7 @@ const routes: Routes = [
     RouterModule.forChild(routes),
     MatCardModule,
     MatButtonModule,
-    MatIconModule,
-    MatToolbarModule
+    MatIconModule
   ]
 })
 export class CitizenModule { }

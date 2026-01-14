@@ -5,6 +5,7 @@ import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { catchError } from 'rxjs/operators';
 import { throwError } from 'rxjs';
+import { AdminService } from '../../admin/admin.service';
 
 /**
  * Login Component
@@ -39,12 +40,15 @@ export class LoginComponent {
   loginSuccessMessage = '';
   passwordLoginErrorMessage = '';
   passwordLoginSuccessMessage = '';
+  otpCode: string | null = null; // Store OTP for development display
+  private lastOfficerUserId: string | null = null;
 
   constructor(
     private fb: FormBuilder,
     private apiService: ApiService,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private adminService: AdminService
   ) {
     // Mobile Login Form with OTP and CAPTCHA
     this.mobileLoginForm = this.fb.group({
@@ -53,12 +57,15 @@ export class LoginComponent {
       captcha: ['', [Validators.required]]
     });
 
-    // Password Login Form (Mobile/Email & Password)
+    // Password Login Form (Citizen: Mobile/Email & Password, Operator: UserID & Password)
     this.passwordLoginForm = this.fb.group({
       username: ['', [Validators.required, this.mobileOrEmailValidator]],
       password: ['', [Validators.required, Validators.minLength(6)]],
       captcha: ['', [Validators.required]]
     });
+
+    // Set initial CAPTCHA validator for password login based on selected tab (Citizen/Operator)
+    this.updatePasswordCaptchaValidator();
 
     // Generate initial CAPTCHAs using API
     this.refreshCaptcha();
@@ -70,11 +77,16 @@ export class LoginComponent {
    */
   onTabChange(index: number): void {
     this.selectedTab = index;
-    this.loginMethod = 'mobile';
+    // Citizens can use both login methods; Operators use only password (UserID & Password)
+    this.loginMethod = this.selectedTab === 0 ? 'mobile' : 'password';
     this.otpSent = false;
     this.otpErrorMessage = '';
     this.otpSuccessMessage = '';
+    this.otpCode = null;
     this.resetForms();
+
+    // Update password CAPTCHA validator when switching between Citizen and Operator
+    this.updatePasswordCaptchaValidator();
   }
 
   /**
@@ -86,14 +98,42 @@ export class LoginComponent {
       this.showOtpFieldForMobile = true;
       this.showCaptchaField = true;
       this.otpSent = false;
+      this.otpCode = null;
       this.mobileLoginForm.patchValue({ otp: '', captcha: '' });
       this.mobileLoginForm.get('otp')?.clearValidators();
       this.mobileLoginForm.get('otp')?.updateValueAndValidity();
       this.refreshCaptcha();
     } else if (method === 'password') {
       this.passwordLoginForm.patchValue({ captcha: '' });
-      this.refreshPasswordCaptcha();
+      // Only refresh CAPTCHA for citizen password login
+      if (this.selectedTab === 0) {
+        this.refreshPasswordCaptcha();
+      }
+      // Update CAPTCHA validators based on user type
+      this.updatePasswordCaptchaValidator();
     }
+  }
+
+  /**
+   * Update CAPTCHA validator for password login form based on selected tab
+   * - Citizen: CAPTCHA required
+   * - Operator (Officer): CAPTCHA not required
+   */
+  private updatePasswordCaptchaValidator(): void {
+    const captchaControl = this.passwordLoginForm.get('captcha');
+    if (!captchaControl) {
+      return;
+    }
+
+    if (this.selectedTab === 0) {
+      // Citizen - require CAPTCHA
+      captchaControl.setValidators([Validators.required]);
+    } else {
+      // Operator - no CAPTCHA required
+      captchaControl.clearValidators();
+      captchaControl.setValue('');
+    }
+    captchaControl.updateValueAndValidity({ emitEvent: false });
   }
 
   /**
@@ -104,7 +144,13 @@ export class LoginComponent {
       return null;
     }
     const value = control.value.trim();
-    
+
+    // Officer UserID pattern: ROLE_CODE@UNIT_LGD_CODE (e.g., DISTRICT_OFFICER@IMW001)
+    const officerUserIdPattern = /^[A-Z_]+@[A-Z0-9]+$/;
+    if (officerUserIdPattern.test(value)) {
+      return null;
+    }
+
     // Check if it's a valid 10-digit mobile number
     const mobilePattern = /^[6-9]\d{9}$/;
     if (mobilePattern.test(value)) {
@@ -136,7 +182,10 @@ export class LoginComponent {
       )
       .subscribe({
         next: (response) => {
-          const captchaData = response?.data || response;
+          // Handle new API response structure { success, message, data }
+          const apiResponse = response?.success !== undefined ? response : { success: true, data: response };
+          const captchaData = apiResponse.success ? apiResponse.data : response;
+          
           if (captchaData?.captchaId && captchaData?.captchaText) {
             this.captchaId = captchaData.captchaId;
             this.captchaText = captchaData.captchaText;
@@ -170,7 +219,10 @@ export class LoginComponent {
       )
       .subscribe({
         next: (response) => {
-          const captchaData = response?.data || response;
+          // Handle new API response structure { success, message, data }
+          const apiResponse = response?.success !== undefined ? response : { success: true, data: response };
+          const captchaData = apiResponse.success ? apiResponse.data : response;
+          
           if (captchaData?.captchaId && captchaData?.captchaText) {
             this.passwordCaptchaId = captchaData.captchaId;
             this.passwordCaptchaText = captchaData.captchaText;
@@ -226,13 +278,13 @@ export class LoginComponent {
   onSendOtp(): void {
     if (this.mobileLoginForm.get('mobile')?.valid) {
       const mobileNumber = this.mobileLoginForm.get('mobile')?.value;
-      const userType = this.selectedTab === 0 ? 'CITIZEN' : 'OPERATOR';
+      const citizenType = this.selectedTab === 0 ? 'CITIZEN' : 'OPERATOR';
       
       this.isSendingOtp = true;
       this.otpErrorMessage = '';
       this.otpSuccessMessage = '';
       
-      this.apiService.sendOTP(mobileNumber, userType)
+      this.apiService.sendOTP(mobileNumber, citizenType)
         .pipe(
           catchError(error => {
             this.isSendingOtp = false;
@@ -260,21 +312,38 @@ export class LoginComponent {
    */
   private handleOtpSuccess(response: any, mobileNumber: string): void {
     console.log('OTP sent successfully:', response);
-    this.otpSent = true;
-    this.otpSuccessMessage = `OTP has been sent to your mobile number: ${mobileNumber}`;
     
-    // Enable OTP field validation
-    this.mobileLoginForm.get('otp')?.setValidators([Validators.required, Validators.pattern(/^\d{6}$/)]);
-    this.mobileLoginForm.get('otp')?.updateValueAndValidity();
+    // Handle new API response structure { success, message, data }
+    const apiResponse = response?.success ? response : { success: true, data: response };
     
-    // Clear OTP and CAPTCHA fields
-    this.mobileLoginForm.patchValue({ otp: '', captcha: '' });
-    this.refreshCaptcha();
-    
-    // Clear success message after 5 seconds
-    setTimeout(() => {
-      this.otpSuccessMessage = '';
-    }, 5000);
+    if (apiResponse.success) {
+      this.otpSent = true;
+      const otpCode = apiResponse.data?.otpCode;
+      const message = apiResponse.message || `OTP has been sent to your mobile number: ${mobileNumber}`;
+      
+      // Store OTP code for development display
+      this.otpCode = otpCode || null;
+      
+      // Show OTP code in console for testing (as per API documentation)
+      if (otpCode) {
+        console.log('OTP Code (for testing):', otpCode);
+      }
+      
+      this.otpSuccessMessage = message;
+      
+      // Enable OTP field validation
+      this.mobileLoginForm.get('otp')?.setValidators([Validators.required, Validators.pattern(/^\d{6}$/)]);
+      this.mobileLoginForm.get('otp')?.updateValueAndValidity();
+      
+      // Clear OTP and CAPTCHA fields
+      this.mobileLoginForm.patchValue({ otp: '', captcha: '' });
+      this.refreshCaptcha();
+      
+      // Clear success message after 5 seconds
+      setTimeout(() => {
+        this.otpSuccessMessage = '';
+      }, 5000);
+    }
   }
 
   /**
@@ -345,14 +414,14 @@ export class LoginComponent {
       const mobileNumber = this.mobileLoginForm.get('mobile')?.value;
       const otp = this.mobileLoginForm.get('otp')?.value;
       const captcha = this.mobileLoginForm.get('captcha')?.value?.toUpperCase();
-      const userType = this.selectedTab === 0 ? 'CITIZEN' : 'OPERATOR';
+      const citizenType = this.selectedTab === 0 ? 'CITIZEN' : 'OPERATOR';
 
       this.isLoggingIn = true;
       this.loginErrorMessage = '';
       this.loginSuccessMessage = '';
 
       // Validate CAPTCHA first (optional pre-validation)
-      this.validateCaptchaAndLogin(mobileNumber, otp || '', captcha, this.captchaId, userType, true);
+      this.validateCaptchaAndLogin(mobileNumber, otp || '', captcha, this.captchaId, citizenType, true);
     } else {
       this.markFormGroupTouched(this.mobileLoginForm);
     }
@@ -366,7 +435,7 @@ export class LoginComponent {
     credential: string, // otp for mobile login, password for password login
     captcha: string, 
     captchaId: string, 
-    userType: string,
+    citizenType: string,
     isMobileLogin: boolean
   ): void {
     // Optional: Pre-validate CAPTCHA before login
@@ -376,14 +445,17 @@ export class LoginComponent {
         catchError(error => {
           // If validation API fails, proceed with login anyway (server will validate)
           console.warn('CAPTCHA validation API failed, proceeding with login:', error);
-          this.proceedWithLogin(identifier, credential, captcha, captchaId, userType, isMobileLogin);
+          this.proceedWithLogin(identifier, credential, captcha, captchaId, citizenType, isMobileLogin);
           return throwError(() => error);
         })
       )
       .subscribe({
         next: (response) => {
-          const isValid = response?.data?.valid !== false && response?.valid !== false;
-          if (isValid === false || (response?.data?.valid === false) || (response?.valid === false)) {
+          // Handle new API response structure { success, message, data }
+          const apiResponse = response?.success !== undefined ? response : { success: true, data: response };
+          const isValid = apiResponse.data?.valid !== false && apiResponse.valid !== false;
+          
+          if (isValid === false || (apiResponse.data?.valid === false) || (apiResponse.valid === false)) {
             if (isMobileLogin) {
               this.isLoggingIn = false;
               this.loginErrorMessage = 'Invalid CAPTCHA. Please try again.';
@@ -403,12 +475,12 @@ export class LoginComponent {
             }
           } else {
             // CAPTCHA is valid, proceed with login
-            this.proceedWithLogin(identifier, credential, captcha, captchaId, userType, isMobileLogin);
+            this.proceedWithLogin(identifier, credential, captcha, captchaId, citizenType, isMobileLogin);
           }
         },
         error: (error) => {
           // Proceed with login even if validation API fails (server will validate)
-          this.proceedWithLogin(identifier, credential, captcha, captchaId, userType, isMobileLogin);
+          this.proceedWithLogin(identifier, credential, captcha, captchaId, citizenType, isMobileLogin);
         }
       });
   }
@@ -421,12 +493,12 @@ export class LoginComponent {
     credential: string, // otp for mobile login, password for password login
     captcha: string, 
     captchaId: string, 
-    userType: string,
+    citizenType: string,
     isMobileLogin: boolean
   ): void {
     if (isMobileLogin) {
       // Mobile login with OTP
-      this.apiService.verifyOTP(identifier, credential, captcha, captchaId, userType)
+      this.apiService.verifyOTP(identifier, credential, captcha, captchaId, citizenType)
         .pipe(
           catchError(error => {
             this.isLoggingIn = false;
@@ -446,7 +518,7 @@ export class LoginComponent {
         });
     } else {
       // Password login
-      this.apiService.passwordLogin(identifier, credential, captcha, captchaId, userType)
+      this.apiService.passwordLogin(identifier, credential, captcha, captchaId, citizenType)
         .pipe(
           catchError(error => {
             this.isPasswordLoggingIn = false;
@@ -473,30 +545,35 @@ export class LoginComponent {
   private handleLoginSuccess(response: any): void {
     console.log('Login successful:', response);
     
+    // Handle new API response structure { success, message, data }
+    const apiResponse = response?.success !== undefined ? response : { success: true, data: response };
+    const responseData = apiResponse.success ? apiResponse.data : response;
+    
     // Extract token and user data from response
-    const token = response?.token || response?.data?.token;
-    const refreshToken = response?.refreshToken || response?.data?.refreshToken;
-    const userType = response?.userType || response?.data?.userType || 'CITIZEN';
+    const token = responseData?.token;
+    const refreshToken = responseData?.refreshToken;
+    const citizenType = responseData?.citizenType || 'CITIZEN';
     const userData = {
-      userId: response?.userId || response?.data?.userId,
-      userType: userType,
-      email: response?.email || response?.data?.email,
-      mobileNumber: response?.mobileNumber || response?.data?.mobileNumber,
-      firstName: response?.firstName || response?.data?.firstName,
-      lastName: response?.lastName || response?.data?.lastName,
-      name: response?.name || response?.data?.name,
-      expiresIn: response?.expiresIn || response?.data?.expiresIn
+      userId: responseData?.userId,
+      userType: citizenType, // Keep userType for backward compatibility
+      citizenType: citizenType,
+      email: responseData?.email,
+      mobileNumber: responseData?.mobileNumber,
+      firstName: responseData?.firstName,
+      lastName: responseData?.lastName,
+      name: responseData?.name,
+      expiresIn: responseData?.expiresIn
     };
 
     if (token) {
       // Store authentication data
       this.authService.setAuthData(token, refreshToken || '', userData);
       
-      this.loginSuccessMessage = 'Login successful! Redirecting...';
+      this.loginSuccessMessage = apiResponse.message || 'Login successful! Redirecting...';
       
       // Redirect based on user type
       setTimeout(() => {
-        if (userType === 'CITIZEN' || this.selectedTab === 0) {
+        if (citizenType === 'CITIZEN' || this.selectedTab === 0) {
           this.router.navigate(['/citizen/home']);
         } else {
           // For operators, redirect to operator dashboard (to be implemented)
@@ -551,37 +628,68 @@ export class LoginComponent {
    */
   onPasswordLogin(): void {
     if (this.passwordLoginForm.valid) {
-      // Basic validation
-      const captchaValue = this.passwordLoginForm.get('captcha')?.value?.toUpperCase();
-      if (!captchaValue || captchaValue.length !== this.passwordCaptchaText.length) {
-        this.passwordLoginForm.get('captcha')?.setErrors({ invalid: true });
-        this.passwordLoginErrorMessage = 'Please enter the CAPTCHA value.';
-        setTimeout(() => {
-          this.passwordLoginErrorMessage = '';
-        }, 3000);
-        return;
-      }
-
-      if (!this.passwordCaptchaId) {
-        this.passwordLoginErrorMessage = 'CAPTCHA not loaded. Please refresh the page.';
-        this.refreshPasswordCaptcha();
-        setTimeout(() => {
-          this.passwordLoginErrorMessage = '';
-        }, 3000);
-        return;
-      }
-
       const username = this.passwordLoginForm.get('username')?.value;
       const password = this.passwordLoginForm.get('password')?.value;
-      const captcha = this.passwordLoginForm.get('captcha')?.value?.toUpperCase();
-      const userType = this.selectedTab === 0 ? 'CITIZEN' : 'OPERATOR';
 
-      this.isPasswordLoggingIn = true;
-      this.passwordLoginErrorMessage = '';
-      this.passwordLoginSuccessMessage = '';
+      // Citizen password login (Mobile/Email & Password with CAPTCHA)
+      if (this.selectedTab === 0) {
+        // Basic CAPTCHA validation
+        const captchaValue = this.passwordLoginForm.get('captcha')?.value?.toUpperCase();
+        if (!captchaValue || captchaValue.length !== this.passwordCaptchaText.length) {
+          this.passwordLoginForm.get('captcha')?.setErrors({ invalid: true });
+          this.passwordLoginErrorMessage = 'Please enter the CAPTCHA value.';
+          setTimeout(() => {
+            this.passwordLoginErrorMessage = '';
+          }, 3000);
+          return;
+        }
 
-      // Validate CAPTCHA first (optional pre-validation)
-      this.validateCaptchaAndLogin(username, password, captcha, this.passwordCaptchaId, userType, false);
+        if (!this.passwordCaptchaId) {
+          this.passwordLoginErrorMessage = 'CAPTCHA not loaded. Please refresh the page.';
+          this.refreshPasswordCaptcha();
+          setTimeout(() => {
+            this.passwordLoginErrorMessage = '';
+          }, 3000);
+          return;
+        }
+
+        const captcha = this.passwordLoginForm.get('captcha')?.value?.toUpperCase();
+        const citizenType = 'CITIZEN';
+
+        this.isPasswordLoggingIn = true;
+        this.passwordLoginErrorMessage = '';
+        this.passwordLoginSuccessMessage = '';
+
+        // Validate CAPTCHA first (optional pre-validation) then proceed with citizen login
+        this.validateCaptchaAndLogin(username, password, captcha, this.passwordCaptchaId, citizenType, false);
+      } else {
+        // Operator (Officer) login: UserID & Password via officer-login API (no CAPTCHA required)
+        this.isPasswordLoggingIn = true;
+        this.passwordLoginErrorMessage = '';
+        this.passwordLoginSuccessMessage = '';
+
+        // Store last officer UserID for redirect to reset password if needed
+        this.lastOfficerUserId = username;
+
+        this.adminService.officerLogin(username, password)
+          .pipe(
+            catchError(error => {
+              this.isPasswordLoggingIn = false;
+              this.handleOfficerLoginError(error);
+              return throwError(() => error);
+            })
+          )
+          .subscribe({
+            next: (response) => {
+              this.isPasswordLoggingIn = false;
+              this.handleOfficerLoginSuccess(response);
+            },
+            error: () => {
+              // Error already handled in catchError
+              this.isPasswordLoggingIn = false;
+            }
+          });
+      }
     } else {
       this.markFormGroupTouched(this.passwordLoginForm);
     }
@@ -593,30 +701,35 @@ export class LoginComponent {
   private handlePasswordLoginSuccess(response: any): void {
     console.log('Password login successful:', response);
     
+    // Handle new API response structure { success, message, data }
+    const apiResponse = response?.success !== undefined ? response : { success: true, data: response };
+    const responseData = apiResponse.success ? apiResponse.data : response;
+    
     // Extract token and user data from response (same as mobile login)
-    const token = response?.token || response?.data?.token;
-    const refreshToken = response?.refreshToken || response?.data?.refreshToken;
-    const userType = response?.userType || response?.data?.userType || 'CITIZEN';
+    const token = responseData?.token;
+    const refreshToken = responseData?.refreshToken;
+    const citizenType = responseData?.citizenType || 'CITIZEN';
     const userData = {
-      userId: response?.userId || response?.data?.userId,
-      userType: userType,
-      email: response?.email || response?.data?.email,
-      mobileNumber: response?.mobileNumber || response?.data?.mobileNumber,
-      firstName: response?.firstName || response?.data?.firstName,
-      lastName: response?.lastName || response?.data?.lastName,
-      name: response?.name || response?.data?.name,
-      expiresIn: response?.expiresIn || response?.data?.expiresIn
+      userId: responseData?.userId,
+      userType: citizenType, // Keep userType for backward compatibility
+      citizenType: citizenType,
+      email: responseData?.email,
+      mobileNumber: responseData?.mobileNumber,
+      firstName: responseData?.firstName,
+      lastName: responseData?.lastName,
+      name: responseData?.name,
+      expiresIn: responseData?.expiresIn
     };
 
     if (token) {
       // Store authentication data
       this.authService.setAuthData(token, refreshToken || '', userData);
       
-      this.passwordLoginSuccessMessage = 'Login successful! Redirecting...';
+      this.passwordLoginSuccessMessage = apiResponse.message || 'Login successful! Redirecting...';
       
       // Redirect based on user type
       setTimeout(() => {
-        if (userType === 'CITIZEN' || this.selectedTab === 0) {
+        if (citizenType === 'CITIZEN' || this.selectedTab === 0) {
           this.router.navigate(['/citizen/home']);
         } else {
           // For operators, redirect to operator dashboard (to be implemented)
@@ -629,6 +742,88 @@ export class LoginComponent {
         this.passwordLoginErrorMessage = '';
       }, 5000);
     }
+  }
+
+  /**
+   * Handle successful officer (operator) login
+   */
+  private handleOfficerLoginSuccess(response: any): void {
+    console.log('Officer login successful:', response);
+
+    // Handle API response structure { success, message, data }
+    const apiResponse = response?.success !== undefined ? response : { success: true, data: response };
+    const responseData = apiResponse.success ? apiResponse.data : response;
+
+    const token = responseData?.token;
+    const refreshToken = responseData?.refreshToken;
+
+    if (token) {
+      // Store officer (admin-side) authentication data
+      localStorage.setItem('adminToken', token);
+      if (refreshToken) {
+        localStorage.setItem('adminRefreshToken', refreshToken);
+      }
+
+      // Store complete officer data including posting information
+      const adminData = {
+        userId: responseData?.userId,
+        email: responseData?.email,
+        mobileNumber: responseData?.mobileNumber,
+        posting: responseData?.posting || null
+      };
+      localStorage.setItem('adminUserData', JSON.stringify(adminData));
+
+      this.passwordLoginSuccessMessage = apiResponse.message || 'Login successful! Redirecting...';
+
+      // Redirect to officer dashboard
+      setTimeout(() => {
+        this.router.navigate(['/officer/home']);
+      }, 1500);
+    } else {
+      this.passwordLoginErrorMessage = 'Invalid response from server. Please try again.';
+      setTimeout(() => {
+        this.passwordLoginErrorMessage = '';
+      }, 5000);
+    }
+  }
+
+  /**
+   * Handle officer (operator) login errors
+   */
+  private handleOfficerLoginError(error: any): void {
+    console.error('Officer login error:', error);
+
+    if (error.error) {
+      if (error.error.message) {
+        // If password reset is required, redirect to officer reset password page
+        if (error.error.message.includes('Password reset required')) {
+          const userid = this.lastOfficerUserId || this.passwordLoginForm.get('username')?.value;
+          if (userid) {
+            this.router.navigate(['/officer/reset-password'], {
+              queryParams: { userid }
+            });
+          }
+          this.passwordLoginErrorMessage = 'Password reset required. Redirecting to reset password page...';
+        } else {
+        this.passwordLoginErrorMessage = error.error.message;
+        }
+      } else if (error.error.error) {
+        this.passwordLoginErrorMessage = error.error.error;
+      } else {
+        this.passwordLoginErrorMessage = 'Login failed. Please check your UserID and password.';
+      }
+    } else if (error.status === 0) {
+      this.passwordLoginErrorMessage = 'Unable to connect to server. Please check your connection.';
+    } else if (error.status === 401) {
+      this.passwordLoginErrorMessage = error.error?.message || 'Invalid UserID or password. Please try again.';
+    } else {
+      this.passwordLoginErrorMessage = 'An error occurred during login. Please try again later.';
+    }
+
+    // Clear error message after 5 seconds
+    setTimeout(() => {
+      this.passwordLoginErrorMessage = '';
+    }, 5000);
   }
 
   /**

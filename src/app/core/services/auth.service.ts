@@ -136,9 +136,13 @@ export class AuthService {
 
     return this.apiService.refreshToken(refreshToken).pipe(
       switchMap((response) => {
-        const newToken = response?.token || response?.data?.token;
-        const newRefreshToken = response?.refreshToken || response?.data?.refreshToken || refreshToken;
-        const expiresIn = response?.expiresIn || response?.data?.expiresIn;
+        // Handle new API response structure { success, message, data }
+        const apiResponse = response?.success !== undefined ? response : { success: true, data: response };
+        const responseData = apiResponse.success ? apiResponse.data : response;
+        
+        const newToken = responseData?.token;
+        const newRefreshToken = responseData?.refreshToken || refreshToken;
+        const expiresIn = responseData?.expiresIn;
 
         if (newToken) {
           // Update stored token
@@ -147,6 +151,21 @@ export class AuthService {
           // Update refresh token if a new one is provided
           if (newRefreshToken && newRefreshToken !== refreshToken) {
             localStorage.setItem(this.REFRESH_TOKEN_KEY, newRefreshToken);
+          }
+          
+          // Update user data if provided
+          if (responseData?.userId || responseData?.citizenType) {
+            const currentUserData = this.getUserData() || {};
+            const updatedUserData = {
+              ...currentUserData,
+              userId: responseData.userId || currentUserData.userId,
+              citizenType: responseData.citizenType || currentUserData.citizenType,
+              email: responseData.email || currentUserData.email,
+              mobileNumber: responseData.mobileNumber || currentUserData.mobileNumber,
+              expiresIn: expiresIn || currentUserData.expiresIn
+            };
+            localStorage.setItem(this.USER_KEY, JSON.stringify(updatedUserData));
+            this.currentUserSubject.next(updatedUserData);
           }
 
           this.refreshTokenInProgress = false;

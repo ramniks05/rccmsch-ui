@@ -16,17 +16,34 @@ export class AuthInterceptor implements HttpInterceptor {
   constructor(private authService: AuthService) {}
 
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    // Get the token
-    const token = this.authService.getToken();
-
-    // Add token to request if available and it's not an auth endpoint
-    if (token && !this.isAuthEndpoint(request.url)) {
-      request = this.addTokenHeader(request, token);
+    // Check if this is an admin endpoint - use admin token
+    const isAdminEndpoint = request.url.includes('/admin/') && !request.url.includes('/admin/auth/');
+    
+    if (isAdminEndpoint) {
+      const adminToken = localStorage.getItem('adminToken');
+      if (adminToken && !this.isAuthEndpoint(request.url)) {
+        request = this.addTokenHeader(request, adminToken);
+      }
+    } else {
+      // Use citizen/operator token for other endpoints
+      const token = this.authService.getToken();
+      if (token && !this.isAuthEndpoint(request.url)) {
+        request = this.addTokenHeader(request, token);
+      }
     }
 
     return next.handle(request).pipe(
       catchError((error: HttpErrorResponse) => {
-        // If error is 401 (Unauthorized), try to refresh token
+        // Skip token refresh for admin endpoints (they use separate token)
+        const isAdminEndpoint = request.url.includes('/admin/') && !request.url.includes('/admin/auth/');
+        
+        if (isAdminEndpoint) {
+          // For admin endpoints, just return error (no token refresh)
+          return throwError(() => error);
+        }
+
+        // If error is 401 (Unauthorized), try to refresh token for citizen/operator
+        const token = this.authService.getToken();
         if (error.status === 401 && !this.isAuthEndpoint(request.url) && token) {
           return this.handle401Error(request, next);
         }
@@ -53,10 +70,15 @@ export class AuthInterceptor implements HttpInterceptor {
   private isAuthEndpoint(url: string): boolean {
     const authEndpoints = [
       '/auth/citizen/register',
-      '/auth/mobile/send-otp',
-      '/auth/mobile/verify-otp',
-      '/auth/password/login',
-      '/auth/verify-registration-otp',
+      '/auth/citizen/send-otp',
+      '/auth/citizen/otp-login',
+      '/auth/citizen/login',
+      '/auth/citizen/registration/send-otp',
+      '/auth/citizen/registration/verify-otp',
+      '/auth/admin/auth/login',
+      '/auth/admin/auth/officer-login',
+      '/auth/admin/auth/reset-password',
+      '/auth/admin/auth/verify-mobile',
       '/auth/captcha/generate',
       '/auth/captcha/validate',
       '/auth/refresh-token'

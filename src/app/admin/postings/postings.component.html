@@ -1,0 +1,200 @@
+<div class="admin-page-container">
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <mat-icon>assignment_ind</mat-icon>
+        Postings Management
+      </h1>
+      <p class="page-subtitle">Manage officer postings and assignments</p>
+    </div>
+    <div class="header-actions">
+      <button mat-raised-button color="primary" (click)="openCreateDialog()" class="create-btn">
+        <mat-icon>person_add</mat-icon>
+        Assign Officer
+      </button>
+      <button mat-raised-button color="primary" routerLink="/admin/home" class="back-btn">
+        <mat-icon>arrow_back</mat-icon>
+        Back to Dashboard
+      </button>
+    </div>
+  </div>
+
+  <div class="page-content">
+    <!-- Error Message -->
+    <div *ngIf="errorMessage" class="alert alert-error">
+      <mat-icon>error</mat-icon>
+      <span>{{ errorMessage }}</span>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div *ngIf="isLoading" class="loading-container">
+      <mat-spinner diameter="50"></mat-spinner>
+      <p>Loading postings...</p>
+    </div>
+
+    <!-- Table Container -->
+    <div *ngIf="!isLoading" class="table-container">
+      <!-- Search Filter -->
+      <div class="table-header">
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>Search</mat-label>
+          <input matInput (keyup)="applyFilter($event)" placeholder="Search postings...">
+          <mat-icon matPrefix>search</mat-icon>
+        </mat-form-field>
+      </div>
+
+      <!-- Data Table -->
+      <div class="table-wrapper">
+        <table mat-table [dataSource]="dataSource" matSort class="data-table">
+          <!-- UserID Column -->
+          <ng-container matColumnDef="postingUserid">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+              <mat-icon class="header-icon">badge</mat-icon>
+              UserID
+            </th>
+            <td mat-cell *matCellDef="let posting">
+              <div class="cell-content">
+                <mat-icon class="cell-icon">fingerprint</mat-icon>
+                <span>{{ posting.postingUserid }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Officer Name Column -->
+          <ng-container matColumnDef="officerName">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+              <mat-icon class="header-icon">person</mat-icon>
+              Officer
+            </th>
+            <td mat-cell *matCellDef="let posting">
+              <div class="cell-content">
+                <mat-icon class="cell-icon">account_circle</mat-icon>
+                <span class="name-text">{{ posting.officerName }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Role Column -->
+          <ng-container matColumnDef="roleName">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+              <mat-icon class="header-icon">work</mat-icon>
+              Role
+            </th>
+            <td mat-cell *matCellDef="let posting">
+              <div class="cell-content">
+                <mat-icon class="cell-icon">badge</mat-icon>
+                <span>{{ posting.roleName }} <span class="code-text">({{ posting.roleCode }})</span></span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Unit Column -->
+          <ng-container matColumnDef="unitName">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+              <mat-icon class="header-icon">location_city</mat-icon>
+              Unit
+            </th>
+            <td mat-cell *matCellDef="let posting">
+              <div class="cell-content">
+                <mat-icon class="cell-icon">place</mat-icon>
+                <span>{{ posting.unitName }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Mobile Column -->
+          <ng-container matColumnDef="mobileNo">
+            <th mat-header-cell *matHeaderCellDef>
+              <mat-icon class="header-icon">phone</mat-icon>
+              Mobile
+            </th>
+            <td mat-cell *matCellDef="let posting">
+              <div class="cell-content">
+                <mat-icon class="cell-icon">phone_android</mat-icon>
+                <span>{{ posting.mobileNo }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- From Date Column -->
+          <ng-container matColumnDef="fromDate">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+              <mat-icon class="header-icon">event</mat-icon>
+              From Date
+            </th>
+            <td mat-cell *matCellDef="let posting">
+              <div class="cell-content">
+                <mat-icon class="cell-icon">calendar_today</mat-icon>
+                <span>{{ posting.fromDate | date:'short' }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- To Date Column -->
+          <ng-container matColumnDef="toDate">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+              <mat-icon class="header-icon">event_available</mat-icon>
+              To Date
+            </th>
+            <td mat-cell *matCellDef="let posting">
+              <div class="cell-content" *ngIf="posting.toDate; else noDate">
+                <mat-icon class="cell-icon">event_busy</mat-icon>
+                <span>{{ posting.toDate | date:'short' }}</span>
+              </div>
+              <ng-template #noDate>
+                <span class="no-data-text">-</span>
+              </ng-template>
+            </td>
+          </ng-container>
+
+          <!-- Current Status Column -->
+          <ng-container matColumnDef="isCurrent">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+              <mat-icon class="header-icon">toggle_on</mat-icon>
+              Status
+            </th>
+            <td mat-cell *matCellDef="let posting">
+              <span [class.active]="posting.isCurrent" [class.inactive]="!posting.isCurrent" class="status-badge">
+                <mat-icon class="status-icon">{{ posting.isCurrent ? 'check_circle' : 'cancel' }}</mat-icon>
+                {{ posting.isCurrent ? 'Current' : 'Closed' }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>
+              <mat-icon class="header-icon">settings</mat-icon>
+              Actions
+            </th>
+            <td mat-cell *matCellDef="let posting">
+              <button mat-icon-button color="primary" matTooltip="View Details" class="action-btn-view" disabled>
+                <mat-icon>visibility</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+          <!-- No data row -->
+          <tr class="mat-row" *matNoDataRow>
+            <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+              <div class="no-data">
+                <mat-icon>inbox</mat-icon>
+                <p>No postings found</p>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- Paginator -->
+      <mat-paginator
+        [pageSizeOptions]="[5, 10, 20, 50]"
+        [pageSize]="10"
+        showFirstLastButtons>
+      </mat-paginator>
+    </div>
+  </div>
+</div>
