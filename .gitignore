@@ -42,3 +42,6 @@ testem.log
 .DS_Store
 Thumbs.db
 
+# Documentation folder (keep locally, don't commit)
+/docs
+

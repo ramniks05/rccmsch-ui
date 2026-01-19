@@ -16,18 +16,51 @@ export class AuthInterceptor implements HttpInterceptor {
   constructor(private authService: AuthService) {}
 
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    // Skip adding token for public endpoints (auth endpoints)
+    if (this.isAuthEndpoint(request.url)) {
+      return next.handle(request);
+    }
+
+    // Special handling for system-settings: GET is public, PUT/POST/DELETE requires admin token
+    const isSystemSettingsEndpoint = request.url.includes('/admin/system-settings');
+    if (isSystemSettingsEndpoint) {
+      // GET requests are public (no token needed)
+      if (request.method === 'GET') {
+        return next.handle(request);
+      }
+      // PUT/POST/DELETE require admin token
+      const adminToken = localStorage.getItem('adminToken');
+      if (!adminToken) {
+        console.error('Admin token not found. Please login as admin.');
+        return throwError(() => new HttpErrorResponse({
+          error: 'Admin authentication required',
+          status: 401,
+          statusText: 'Unauthorized'
+        }));
+      }
+      request = this.addTokenHeader(request, adminToken);
+      return next.handle(request).pipe(
+        catchError((error: HttpErrorResponse) => {
+          if (error.status === 401 || error.status === 403) {
+            console.error('Admin token invalid or expired. Please login again.');
+          }
+          return throwError(() => error);
+        })
+      );
+    }
+
     // Check if this is an admin endpoint - use admin token
     const isAdminEndpoint = request.url.includes('/admin/') && !request.url.includes('/admin/auth/');
     
     if (isAdminEndpoint) {
       const adminToken = localStorage.getItem('adminToken');
-      if (adminToken && !this.isAuthEndpoint(request.url)) {
+      if (adminToken) {
         request = this.addTokenHeader(request, adminToken);
       }
     } else {
       // Use citizen/operator token for other endpoints
       const token = this.authService.getToken();
-      if (token && !this.isAuthEndpoint(request.url)) {
+      if (token) {
         request = this.addTokenHeader(request, token);
       }
     }
@@ -66,6 +99,7 @@ export class AuthInterceptor implements HttpInterceptor {
 
   /**
    * Check if the request is to an authentication endpoint (should not add token)
+   * Note: /admin/system-settings GET is handled separately in intercept()
    */
   private isAuthEndpoint(url: string): boolean {
     const authEndpoints = [

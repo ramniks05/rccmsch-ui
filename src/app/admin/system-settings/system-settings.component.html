@@ -1,0 +1,148 @@
+<div class="admin-page-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <mat-icon>settings</mat-icon>
+        System Settings
+      </h1>
+      <p class="page-subtitle">Manage Header and Footer Configuration</p>
+    </div>
+    <div class="header-actions">
+      <button mat-raised-button color="primary" routerLink="/admin/home" class="back-btn">
+        <mat-icon>arrow_back</mat-icon>
+        Back to Dashboard
+      </button>
+    </div>
+  </div>
+
+  <!-- Page Content -->
+  <div class="page-content">
+    <!-- Loading Spinner -->
+  <div *ngIf="loading" class="loading-container">
+    <mat-spinner></mat-spinner>
+    <p>Loading settings...</p>
+  </div>
+
+  <!-- Settings Form -->
+  <form [formGroup]="settingsForm" (ngSubmit)="saveSettings()" *ngIf="!loading">
+    <div class="form-sections">
+      <!-- Header Settings Section -->
+      <mat-card class="settings-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>title</mat-icon>
+            Header Settings
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Logo URL</mat-label>
+              <input matInput formControlName="logoUrl" placeholder="/assets/images/logo.png">
+              <mat-hint>Path to logo image (e.g., /assets/images/logo.png)</mat-hint>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Header Text *</mat-label>
+              <input matInput formControlName="logoHeader" required placeholder="Revenue & Settlement Department">
+              <mat-error *ngIf="settingsForm.get('logoHeader')?.hasError('required')">
+                Header text is required
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Subheader Text *</mat-label>
+              <input matInput formControlName="logoSubheader" required placeholder="Government of Manipur">
+              <mat-error *ngIf="settingsForm.get('logoSubheader')?.hasError('required')">
+                Subheader text is required
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>State Name</mat-label>
+              <input matInput formControlName="stateName" placeholder="Manipur">
+            </mat-form-field>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Footer Settings Section -->
+      <mat-card class="settings-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>description</mat-icon>
+            Footer Settings
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Footer Text</mat-label>
+              <input matInput formControlName="footerText" placeholder="Revenue & Settlement Department, Government of Manipur">
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Copyright Text</mat-label>
+              <input matInput formControlName="footerCopyright" placeholder="© 2024 Government of Manipur. All rights reserved.">
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Address</mat-label>
+              <textarea matInput formControlName="footerAddress" rows="2" placeholder="Imphal, Manipur, India"></textarea>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Email</mat-label>
+              <input matInput type="email" formControlName="footerEmail" placeholder="info@manipur.gov.in">
+              <mat-error *ngIf="settingsForm.get('footerEmail')?.hasError('email')">
+                Please enter a valid email address
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Phone</mat-label>
+              <input matInput formControlName="footerPhone" placeholder="+91-XXX-XXXXXXX">
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Website URL</mat-label>
+              <input matInput formControlName="footerWebsite" placeholder="https://manipur.gov.in">
+            </mat-form-field>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+      <button mat-raised-button type="button" color="accent" (click)="resetForm()" [disabled]="saving">
+        <mat-icon>refresh</mat-icon>
+        Reset
+      </button>
+      <button mat-raised-button type="submit" color="primary" [disabled]="saving || settingsForm.invalid">
+        <mat-icon *ngIf="!saving">save</mat-icon>
+        <mat-spinner *ngIf="saving" diameter="20" class="button-spinner"></mat-spinner>
+        {{ saving ? 'Saving...' : 'Save Settings' }}
+      </button>
+    </div>
+    </form>
+  </div>
+</div>
+

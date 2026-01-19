@@ -1,8 +1,24 @@
 <mat-toolbar color="primary" class="app-header">
   <div class="header-content">
-    <div class="header-title">
-      <span class="title-main">{{ appTitle }}</span>
-      <span class="title-sub">{{ fullTitle }}</span>
+    <!-- Logo Section -->
+    <div class="logo-section" *ngIf="settings?.logoUrl">
+      <img 
+        [src]="settings!.logoUrl" 
+        alt="Logo" 
+        class="logo-image"
+        (error)="onImageError($event)"
+      />
+    </div>
+
+    <!-- Header Text Section -->
+    <div class="header-text-section">
+      <div class="header-title">
+        <h1 class="title-main">{{ settings?.logoHeader || 'Revenue & Settlement Department' }}</h1>
+        <h2 class="title-sub">{{ settings?.logoSubheader || 'Government of Manipur' }}</h2>
+      </div>
+      <div class="state-section" *ngIf="settings?.stateName">
+        <span class="state-name">{{ settings!.stateName }}</span>
+      </div>
     </div>
   </div>
 </mat-toolbar>
