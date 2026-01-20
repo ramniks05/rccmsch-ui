@@ -1,0 +1,96 @@
+<div class="workflow-permissions-container">
+  <div class="section-header">
+    <div>
+      <h2>
+        <mat-icon>lock</mat-icon>
+        Permissions for: {{ transition.transitionName }}
+      </h2>
+      <p class="transition-info">{{ transition.transitionCode }}</p>
+    </div>
+    <button mat-raised-button color="primary" (click)="openCreateDialog()">
+      <mat-icon>add</mat-icon>
+      Add Permission
+    </button>
+  </div>
+
+  <div *ngIf="isLoading" class="loading-container">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Loading permissions...</p>
+  </div>
+
+  <div *ngIf="!isLoading" class="table-wrapper">
+    <table mat-table [dataSource]="dataSource" class="permissions-table">
+      <ng-container matColumnDef="roleCode">
+        <th mat-header-cell *matHeaderCellDef>Role</th>
+        <td mat-cell *matCellDef="let permission">
+          <span class="role-badge">{{ permission.roleCode }}</span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="unitLevel">
+        <th mat-header-cell *matHeaderCellDef>Unit Level</th>
+        <td mat-cell *matCellDef="let permission">
+          <span *ngIf="permission.unitLevel" class="unit-badge">{{ permission.unitLevel }}</span>
+          <span *ngIf="!permission.unitLevel" class="no-data-text">-</span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="canInitiate">
+        <th mat-header-cell *matHeaderCellDef>Can Initiate</th>
+        <td mat-cell *matCellDef="let permission">
+          <mat-icon *ngIf="permission.canInitiate" color="primary">check_circle</mat-icon>
+          <mat-icon *ngIf="!permission.canInitiate" color="warn">cancel</mat-icon>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="canApprove">
+        <th mat-header-cell *matHeaderCellDef>Can Approve</th>
+        <td mat-cell *matCellDef="let permission">
+          <mat-icon *ngIf="permission.canApprove" color="primary">check_circle</mat-icon>
+          <mat-icon *ngIf="!permission.canApprove" color="warn">cancel</mat-icon>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="hierarchyRule">
+        <th mat-header-cell *matHeaderCellDef>Hierarchy Rule</th>
+        <td mat-cell *matCellDef="let permission">
+          <span *ngIf="permission.hierarchyRule" class="hierarchy-badge">{{ permission.hierarchyRule }}</span>
+          <span *ngIf="!permission.hierarchyRule" class="no-data-text">-</span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="isActive">
+        <th mat-header-cell *matHeaderCellDef>Status</th>
+        <td mat-cell *matCellDef="let permission">
+          <span [class.active]="permission.isActive !== false" [class.inactive]="permission.isActive === false" class="status-badge">
+            {{ permission.isActive !== false ? 'Active' : 'Inactive' }}
+          </span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>Actions</th>
+        <td mat-cell *matCellDef="let permission">
+          <button mat-icon-button color="primary" (click)="openEditDialog(permission)" matTooltip="Edit">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button color="warn" (click)="deletePermission(permission)" matTooltip="Delete">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+      <tr class="mat-row" *matNoDataRow>
+        <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+          <div class="no-data">
+            <mat-icon>lock_open</mat-icon>
+            <p>No permissions found. Add permissions to control who can use this transition.</p>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </div>
+</div>

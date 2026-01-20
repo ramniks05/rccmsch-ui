@@ -1,0 +1,29 @@
+@import '../workflow-dialog/workflow-dialog.component.scss';
+
+.transition-form {
+  min-width: 600px;
+}
+
+.form-row {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+
+  .half-width {
+    flex: 1;
+  }
+}
+
+@media (max-width: 700px) {
+  .form-row {
+    flex-direction: column;
+
+    .half-width {
+      width: 100%;
+    }
+  }
+
+  .transition-form {
+    min-width: 100%;
+  }
+}

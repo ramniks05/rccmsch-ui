@@ -1,0 +1,17 @@
+@import '../workflow-dialog/workflow-dialog.component.scss';
+
+.state-form {
+  min-width: 500px;
+}
+
+.checkbox-group {
+  display: flex;
+  gap: 24px;
+  margin-top: 16px;
+
+  mat-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+}

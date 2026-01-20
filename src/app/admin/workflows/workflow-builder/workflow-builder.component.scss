@@ -1,0 +1,126 @@
+@import '../../administrative-units/administrative-units.component.scss';
+
+.workflow-builder-container {
+  min-height: calc(100vh - 128px);
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  padding: 40px 20px;
+}
+
+.workflow-info {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.info-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  backdrop-filter: blur(10px);
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+
+  &.active {
+    background: rgba(132, 250, 176, 0.3);
+  }
+
+  &.inactive {
+    background: rgba(255, 154, 158, 0.3);
+  }
+}
+
+.tabs-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  background-color: var(--surface);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid #e0e0e0;
+  background: #fafafa;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 16px 24px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #666;
+  transition: all 0.3s ease;
+  border-bottom: 3px solid transparent;
+  position: relative;
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  &:hover:not(:disabled) {
+    background: #f0f0f0;
+    color: #667eea;
+  }
+
+  &.active {
+    color: #667eea;
+    border-bottom-color: #667eea;
+    background: white;
+    font-weight: 600;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .tab-hint {
+    font-size: 0.75rem;
+    font-weight: normal;
+    opacity: 0.7;
+    margin-left: 4px;
+  }
+}
+
+.tab-content {
+  padding: 24px;
+  min-height: 400px;
+}
+
+@media (max-width: 768px) {
+  .tabs {
+    flex-direction: column;
+  }
+
+  .tab-btn {
+    border-bottom: 1px solid #e0e0e0;
+    border-right: none;
+
+    &.active {
+      border-bottom-color: #667eea;
+      border-left: 3px solid #667eea;
+    }
+  }
+}

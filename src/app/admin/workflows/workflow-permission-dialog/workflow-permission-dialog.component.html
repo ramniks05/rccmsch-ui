@@ -1,0 +1,73 @@
+<h2 mat-dialog-title>
+  <mat-icon>{{ data.mode === 'create' ? 'add' : 'edit' }}</mat-icon>
+  {{ data.mode === 'create' ? 'Create' : 'Edit' }} Permission
+</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="permissionForm" class="permission-form">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Role Code *</mat-label>
+      <mat-select formControlName="roleCode">
+        <mat-option *ngFor="let role of data.roleCodes" [value]="role">
+          {{ role }}
+        </mat-option>
+      </mat-select>
+      <mat-icon matPrefix>person</mat-icon>
+      <mat-error *ngIf="permissionForm.get('roleCode')?.hasError('required')">Role code is required</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Unit Level</mat-label>
+      <mat-select formControlName="unitLevel">
+        <mat-option [value]="null">None</mat-option>
+        <mat-option *ngFor="let level of unitLevels" [value]="level">
+          {{ level }}
+        </mat-option>
+      </mat-select>
+      <mat-icon matPrefix>location_city</mat-icon>
+    </mat-form-field>
+
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="half-width">
+        <mat-label>Hierarchy Rule</mat-label>
+        <mat-select formControlName="hierarchyRule">
+          <mat-option [value]="''">None</mat-option>
+          <mat-option *ngFor="let rule of hierarchyRules" [value]="rule">
+            {{ rule }}
+          </mat-option>
+        </mat-select>
+        <mat-icon matPrefix>account_tree</mat-icon>
+      </mat-form-field>
+    </div>
+
+    <div class="checkbox-group">
+      <mat-checkbox formControlName="canInitiate">
+        <mat-icon>play_arrow</mat-icon>
+        Can Initiate
+      </mat-checkbox>
+      <mat-checkbox formControlName="canApprove">
+        <mat-icon>check_circle</mat-icon>
+        Can Approve
+      </mat-checkbox>
+      <mat-checkbox formControlName="isActive">
+        <mat-icon>toggle_on</mat-icon>
+        Active
+      </mat-checkbox>
+    </div>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Conditions</mat-label>
+      <textarea matInput formControlName="conditions" rows="2" placeholder="Optional conditions"></textarea>
+      <mat-icon matPrefix>code</mat-icon>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()" [disabled]="isSubmitting">Cancel</button>
+  <button mat-raised-button color="primary" (click)="onSubmit()" [disabled]="permissionForm.invalid || isSubmitting">
+    <mat-spinner diameter="20" *ngIf="isSubmitting" class="inline-spinner"></mat-spinner>
+    <span *ngIf="!isSubmitting">{{ data.mode === 'create' ? 'Create' : 'Update' }}</span>
+    <span *ngIf="isSubmitting">Saving...</span>
+  </button>
+</mat-dialog-actions>

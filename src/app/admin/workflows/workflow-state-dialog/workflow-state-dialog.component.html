@@ -1,0 +1,57 @@
+<h2 mat-dialog-title>
+  <mat-icon>{{ data.mode === 'create' ? 'add' : 'edit' }}</mat-icon>
+  {{ data.mode === 'create' ? 'Create' : 'Edit' }} State
+</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="stateForm" class="state-form">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>State Code *</mat-label>
+      <input matInput formControlName="stateCode" placeholder="e.g., CITIZEN_APPLICATION" [readonly]="data.mode === 'edit'">
+      <mat-icon matPrefix>code</mat-icon>
+      <mat-error *ngIf="stateForm.get('stateCode')?.hasError('required')">State code is required</mat-error>
+      <mat-error *ngIf="stateForm.get('stateCode')?.hasError('pattern')">Only uppercase letters and underscores allowed</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>State Name *</mat-label>
+      <input matInput formControlName="stateName" placeholder="e.g., Citizen Application">
+      <mat-icon matPrefix>description</mat-icon>
+      <mat-error *ngIf="stateForm.get('stateName')?.hasError('required')">State name is required</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>State Order *</mat-label>
+      <input matInput type="number" formControlName="stateOrder" min="1">
+      <mat-icon matPrefix>sort</mat-icon>
+      <mat-error *ngIf="stateForm.get('stateOrder')?.hasError('required')">State order is required</mat-error>
+      <mat-error *ngIf="stateForm.get('stateOrder')?.hasError('min')">Order must be at least 1</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Description</mat-label>
+      <textarea matInput formControlName="description" rows="2"></textarea>
+      <mat-icon matPrefix>info</mat-icon>
+    </mat-form-field>
+
+    <div class="checkbox-group">
+      <mat-checkbox formControlName="isInitialState">
+        <mat-icon>play_arrow</mat-icon>
+        Initial State
+      </mat-checkbox>
+      <mat-checkbox formControlName="isFinalState">
+        <mat-icon>stop</mat-icon>
+        Final State
+      </mat-checkbox>
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()" [disabled]="isSubmitting">Cancel</button>
+  <button mat-raised-button color="primary" (click)="onSubmit()" [disabled]="stateForm.invalid || isSubmitting">
+    <mat-spinner diameter="20" *ngIf="isSubmitting" class="inline-spinner"></mat-spinner>
+    <span *ngIf="!isSubmitting">{{ data.mode === 'create' ? 'Create' : 'Update' }}</span>
+    <span *ngIf="isSubmitting">Saving...</span>
+  </button>
+</mat-dialog-actions>

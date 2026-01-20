@@ -34,6 +34,15 @@ import { PostingsComponent, PostingDialogComponent } from './postings/postings.c
 import { CaseTypesComponent, CaseTypeDialogComponent } from './case-types/case-types.component';
 import { FormSchemaBuilderComponent, FormFieldDialogComponent } from './form-schema-builder/form-schema-builder.component';
 import { SystemSettingsComponent } from './system-settings/system-settings.component';
+import { WorkflowListComponent } from './workflows/workflow-list/workflow-list.component';
+import { WorkflowBuilderComponent } from './workflows/workflow-builder/workflow-builder.component';
+import { WorkflowDialogComponent } from './workflows/workflow-dialog/workflow-dialog.component';
+import { WorkflowStatesComponent } from './workflows/workflow-states/workflow-states.component';
+import { WorkflowStateDialogComponent } from './workflows/workflow-state-dialog/workflow-state-dialog.component';
+import { WorkflowTransitionsComponent } from './workflows/workflow-transitions/workflow-transitions.component';
+import { WorkflowTransitionDialogComponent } from './workflows/workflow-transition-dialog/workflow-transition-dialog.component';
+import { WorkflowPermissionsComponent } from './workflows/workflow-permissions/workflow-permissions.component';
+import { WorkflowPermissionDialogComponent } from './workflows/workflow-permission-dialog/workflow-permission-dialog.component';
 
 /**
  * Routes for Admin Module
@@ -90,6 +99,18 @@ const routes: Routes = [
     component: SystemSettingsComponent,
     canActivate: [AdminGuard],
     data: { breadcrumb: 'System Settings' }
+  },
+  {
+    path: 'workflows',
+    component: WorkflowListComponent,
+    canActivate: [AdminGuard],
+    data: { breadcrumb: 'Workflows' }
+  },
+  {
+    path: 'workflows/:id',
+    component: WorkflowBuilderComponent,
+    canActivate: [AdminGuard],
+    data: { breadcrumb: 'Workflow Builder' }
   }
 ];
 
@@ -111,7 +132,16 @@ const routes: Routes = [
     CaseTypeDialogComponent,
     FormSchemaBuilderComponent,
     FormFieldDialogComponent,
-    SystemSettingsComponent
+    SystemSettingsComponent,
+    WorkflowListComponent,
+    WorkflowBuilderComponent,
+    WorkflowDialogComponent,
+    WorkflowStatesComponent,
+    WorkflowStateDialogComponent,
+    WorkflowTransitionsComponent,
+    WorkflowTransitionDialogComponent,
+    WorkflowPermissionsComponent,
+    WorkflowPermissionDialogComponent
   ],
   imports: [
     CommonModule,

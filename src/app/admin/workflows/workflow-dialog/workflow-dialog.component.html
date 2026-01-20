@@ -1,0 +1,46 @@
+<h2 mat-dialog-title>
+  <mat-icon>{{ data.mode === 'create' ? 'add' : 'edit' }}</mat-icon>
+  {{ data.mode === 'create' ? 'Create' : 'Edit' }} Workflow
+</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="workflowForm" class="workflow-form">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Workflow Code *</mat-label>
+      <input matInput formControlName="workflowCode" placeholder="e.g., MUTATION_GIFT_SALE" [readonly]="data.mode === 'edit'">
+      <mat-icon matPrefix>code</mat-icon>
+      <mat-hint>Use uppercase letters and underscores only (e.g., MUTATION_GIFT_SALE)</mat-hint>
+      <mat-error *ngIf="workflowForm.get('workflowCode')?.hasError('required')">Workflow code is required</mat-error>
+      <mat-error *ngIf="workflowForm.get('workflowCode')?.hasError('pattern')">Only uppercase letters and underscores allowed</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Workflow Name *</mat-label>
+      <input matInput formControlName="workflowName" placeholder="e.g., Mutation (after Gift/Sale Deeds)">
+      <mat-icon matPrefix>description</mat-icon>
+      <mat-error *ngIf="workflowForm.get('workflowName')?.hasError('required')">Workflow name is required</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Description</mat-label>
+      <textarea matInput formControlName="description" rows="3" placeholder="Enter workflow description"></textarea>
+      <mat-icon matPrefix>info</mat-icon>
+    </mat-form-field>
+
+    <mat-checkbox formControlName="isActive" class="full-width">
+      <mat-icon>toggle_on</mat-icon>
+      Active
+    </mat-checkbox>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()" [disabled]="isSubmitting">
+    Cancel
+  </button>
+  <button mat-raised-button color="primary" (click)="onSubmit()" [disabled]="workflowForm.invalid || isSubmitting">
+    <mat-spinner diameter="20" *ngIf="isSubmitting" class="inline-spinner"></mat-spinner>
+    <span *ngIf="!isSubmitting">{{ data.mode === 'create' ? 'Create' : 'Update' }}</span>
+    <span *ngIf="isSubmitting">Saving...</span>
+  </button>
+</mat-dialog-actions>

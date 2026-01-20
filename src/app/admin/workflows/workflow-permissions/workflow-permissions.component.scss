@@ -1,0 +1,39 @@
+@import '../workflow-states/workflow-states.component.scss';
+
+.workflow-permissions-container {
+  .transition-info {
+    color: #666;
+    font-size: 0.9rem;
+    margin: 4px 0 0 0;
+  }
+
+  .role-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    background: #667eea;
+    color: white;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .unit-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    background: #e3f2fd;
+    color: #1976d2;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+
+  .hierarchy-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    background: #f3e5f5;
+    color: #7b1fa2;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+}
