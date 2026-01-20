@@ -12,8 +12,9 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { CitizenHomeComponent } from './citizen-home/citizen-home.component';
 import { LandProcessTypesComponent } from './land-process-types/land-process-types.component';
 import { SharedModule } from '../shared/shared.module';
-import { MutationGiftSalesComponent } from './mutation-gift-sales/mutation-gift-sales.component';
 import { ServicesLayoutComponent } from './services-layout/services-layout.component';
+import { DynamicCaseFormComponent } from './dynamic-case-form/dynamic-case-form.component';
+import { MyProfileComponent } from './my-profile/my-profile.component';
 
 /**
  * Routes for Citizen Module
@@ -23,12 +24,17 @@ const routes: Routes = [
   {
     path: '',
     component: CitizenHomeComponent,
-    data: { breadcrumb: 'Home' }
+    data: { breadcrumb: 'Home' },
   },
   {
     path: 'home',
     component: CitizenHomeComponent,
-    data: { breadcrumb: 'Home' }
+    data: { breadcrumb: 'Home' },
+  },
+  {
+    path: 'my-profile',
+    component: MyProfileComponent,
+    data: { breadcrumb: 'My Profile' },
   },
   {
     path: 'services',
@@ -41,12 +47,12 @@ const routes: Routes = [
         data: { breadcrumb: 'Home' },
       },
       {
-        path: 'mutation-gift-sales',
-        component: MutationGiftSalesComponent,
-        data: { breadcrumb: 'Mutation / Gift / Sales' }
-      }
-    ]
-  }
+        path: 'case-form/:caseTypeId/:icon',
+        component: DynamicCaseFormComponent,
+        data: { breadcrumb: 'Case Form' },
+      },
+    ],
+  },
 ];
 
 /**
@@ -57,8 +63,9 @@ const routes: Routes = [
   declarations: [
     CitizenHomeComponent,
     LandProcessTypesComponent,
-    MutationGiftSalesComponent,
-    ServicesLayoutComponent
+    ServicesLayoutComponent,
+    DynamicCaseFormComponent,
+    MyProfileComponent,
   ],
   imports: [
     CommonModule,
@@ -67,8 +74,7 @@ const routes: Routes = [
     MatButtonModule,
     MatIconModule,
     MatToolbarModule,
-    SharedModule
-  ]
+    SharedModule,
+  ],
 })
-export class CitizenModule { }
-
+export class CitizenModule {}

@@ -16,7 +16,7 @@ const routes: Routes = [
   {
     path: 'registration',
     loadChildren: () => import('./pages/registration.module').then(m => m.RegistrationModule),
-    data: { breadcrumb: 'Registration' }
+    data: { breadcrumb: 'Home' }
   },
   {
     path: 'citizen',

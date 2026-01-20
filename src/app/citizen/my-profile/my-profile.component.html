@@ -1,0 +1,100 @@
+<div class="container">
+  <div class="profile-container">
+    <h2 class="page-title">
+      <mat-icon>person</mat-icon>
+      My Profile
+    </h2>
+
+    <form [formGroup]="profileForm">
+      <div class="row">
+        <mat-form-field appearance="outline" class="col-md-4">
+          <mat-label>First Name</mat-label>
+          <input matInput formControlName="firstName" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="col-md-4">
+          <mat-label>Last Name</mat-label>
+          <input matInput formControlName="lastName" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="col-md-4">
+          <mat-label>Email</mat-label>
+          <input matInput formControlName="email" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="col-md-4">
+          <mat-label>Mobile Number</mat-label>
+          <input matInput formControlName="mobileNumber" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="col-md-4">
+          <mat-label>Date of Birth</mat-label>
+          <input matInput [matDatepicker]="dob" formControlName="dateOfBirth" />
+          <mat-datepicker-toggle matSuffix [for]="dob"></mat-datepicker-toggle>
+          <mat-datepicker #dob></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="col-md-4">
+          <mat-label>Gender</mat-label>
+          <mat-select formControlName="gender">
+            <mat-option value="MALE">Male</mat-option>
+            <mat-option value="FEMALE">Female</mat-option>
+            <mat-option value="OTHER">Other</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="col-md-8">
+          <mat-label>Address</mat-label>
+          <textarea matInput rows="2" formControlName="address"></textarea>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="col-md-4">
+          <mat-label>District</mat-label>
+          <input matInput formControlName="district" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="col-md-4">
+          <mat-label>Pincode</mat-label>
+          <input matInput formControlName="pincode" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="col-md-4">
+          <mat-label>Aadhaar Number</mat-label>
+          <input matInput formControlName="aadharNumber" />
+        </mat-form-field>
+      </div>
+
+      <div class="actions">
+        <button
+          mat-stroked-button
+          color="primary"
+          *ngIf="!isEditMode"
+          (click)="enableEdit()"
+          type="button"
+        >
+          Edit Profile
+        </button>
+
+        <button
+          mat-raised-button
+          color="primary"
+          *ngIf="isEditMode"
+          (click)="saveProfile()"
+          type="button"
+        >
+          Save Changes
+        </button>
+
+        <button
+          mat-button
+          color="warn"
+          *ngIf="isEditMode"
+          (click)="cancelEdit()"
+          type="button"
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

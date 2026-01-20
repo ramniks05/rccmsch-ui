@@ -51,6 +51,10 @@ export class CitizenHomeComponent implements OnInit {
     this.router.navigate(["/citizen/services"])
   }
 
+  myProfile() {
+    this.router.navigate(["/citizen/my-profile"])
+  }
+
   /**
    * Logout user
    */

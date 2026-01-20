@@ -44,7 +44,7 @@ export class AdminHomeComponent implements OnInit {
   logout(): void {
     this.authService.sendData(null);
     this.adminService.logout();
-    this.router.navigate(['/admin/login']);
+    this.router.navigate(['/home']);
   }
 }
 

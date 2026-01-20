@@ -1,0 +1,155 @@
+<div class="container">
+  <!-- Title -->
+  <h2 class="page-title">
+    <mat-icon>{{ icon }}</mat-icon>
+    {{ caseTypeName }}
+  </h2>
+
+  <form *ngIf="form" [formGroup]="form" (ngSubmit)="submit()">
+    <div class="row">
+      <div
+        *ngFor="let field of fields"
+        class="col-lg-4 col-md-6 col-sm-12 mb-3"
+      >
+        <!-- MATERIAL CONTROLS -->
+        <ng-container *ngIf="field.fieldType !== 'FILE'">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>
+              {{ field.fieldLabel }}
+              <!-- <span *ngIf="field.isRequired" class="required">*</span> -->
+            </mat-label>
+
+            <!-- TEXT -->
+            <input
+              matInput
+              *ngIf="field.fieldType === 'TEXT'"
+              [formControlName]="field.fieldName"
+              [placeholder]="field.placeholder"
+            />
+
+            <!-- NUMBER -->
+            <input
+              matInput
+              type="number"
+              *ngIf="field.fieldType === 'NUMBER'"
+              [formControlName]="field.fieldName"
+              [placeholder]="field.placeholder"
+            />
+
+            <!-- DATE -->
+            <input
+              matInput
+              *ngIf="field.fieldType === 'DATE'"
+              [matDatepicker]="picker"
+              [formControlName]="field.fieldName"
+            />
+            <mat-datepicker-toggle
+              matSuffix
+              [for]="picker"
+              *ngIf="field.fieldType === 'DATE'"
+            ></mat-datepicker-toggle>
+            <mat-datepicker #picker></mat-datepicker>
+
+            <!-- SELECT -->
+            <mat-select
+              *ngIf="field.fieldType === 'SELECT'"
+              [formControlName]="field.fieldName"
+            >
+              <mat-option value="">-- Select --</mat-option>
+              <mat-option
+                *ngFor="let opt of field.fieldOptions | jsonParse"
+                [value]="opt.value"
+              >
+                {{ opt.label }}
+              </mat-option>
+            </mat-select>
+
+            <!-- TEXTAREA -->
+            <textarea
+              matInput
+              *ngIf="field.fieldType === 'TEXTAREA'"
+              rows="3"
+              [formControlName]="field.fieldName"
+              [placeholder]="field.placeholder"
+            ></textarea>
+
+            <!-- Error -->
+            <mat-error
+              *ngIf="
+                form.get(field.fieldName)?.touched &&
+                form.get(field.fieldName)?.invalid
+              "
+            >
+              This field is required / invalid
+            </mat-error>
+
+            <!-- Hint -->
+            <mat-hint *ngIf="field.helpText">
+              {{ field.helpText }}
+            </mat-hint>
+          </mat-form-field>
+        </ng-container>
+
+        <!-- FILE INPUT (OUTSIDE mat-form-field) -->
+        <ng-container *ngIf="field.fieldType === 'FILE'">
+          <div
+            class="mat-file-field"
+            [class.mat-file-error]="
+              form.get(field.fieldName)?.touched &&
+              form.get(field.fieldName)?.invalid
+            "
+          >
+            <label class="mat-file-label">
+              {{ field.fieldLabel }}
+              <span *ngIf="field.isRequired" class="required">*</span>
+            </label>
+
+            <div class="mat-file-control">
+              <button
+                mat-stroked-button
+                color="primary"
+                type="button"
+                (click)="fileInput.click()"
+              >
+                Choose File
+              </button>
+
+              <span class="file-name">
+                {{ form.get(field.fieldName)?.value?.name || "No file chosen" }}
+              </span>
+
+              <input
+                #fileInput
+                type="file"
+                hidden
+                (change)="onFileChange($event, field.fieldName)"
+              />
+            </div>
+
+            <!-- Error -->
+            <div
+              class="mat-file-error-text"
+              *ngIf="
+                form.get(field.fieldName)?.touched &&
+                form.get(field.fieldName)?.invalid
+              "
+            >
+              This field is required / invalid
+            </div>
+
+            <!-- Hint -->
+            <div class="mat-file-hint" *ngIf="field.helpText">
+              {{ field.helpText }}
+            </div>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button mat-raised-button color="primary" type="submit">
+        Submit Application
+      </button>
+    </div>
+  </form>
+</div>

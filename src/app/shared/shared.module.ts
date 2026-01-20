@@ -10,7 +10,6 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatCardModule } from '@angular/material/card';
 import { MatSelectModule } from '@angular/material/select';
 import { MatMenuModule } from '@angular/material/menu';
-// import { MaskEmailPipe } from './components/pipes/mask-email.pipe';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -19,7 +18,6 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatStepperModule } from '@angular/material/stepper';
-// import { BreadcrumbsComponent } from './components/breadcrumbs/breadcrumbs.component';
 // import { ViewDialogComponent } from './components/view-dialog/view-dialog.component';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatPaginatorModule } from '@angular/material/paginator';
@@ -31,6 +29,7 @@ import { HeaderComponent } from './components/header/header.component';
 import { FooterComponent } from './components/footer/footer.component';
 import { MaskEmailPipe } from '../core/pipes/mask-email.pipe';
 import { BreadcrumbsComponent } from './components/breadcrumbs/breadcrumbs.component';
+import { JsonParsePipe } from '../core/pipes/json-parse.pipe';
 
 /**
  * Shared Module
@@ -41,7 +40,8 @@ import { BreadcrumbsComponent } from './components/breadcrumbs/breadcrumbs.compo
     HeaderComponent,
     FooterComponent,
     MaskEmailPipe,
-    BreadcrumbsComponent
+    BreadcrumbsComponent,
+    JsonParsePipe
   ],
   imports: [
     ReactiveFormsModule,
@@ -52,8 +52,6 @@ import { BreadcrumbsComponent } from './components/breadcrumbs/breadcrumbs.compo
     MatButtonModule,
     MatExpansionModule,
     MatCardModule,
-    MatIconModule,
-    MatButtonModule,
     MatCardModule,
     MatSelectModule,
     MatMenuModule,
@@ -89,7 +87,8 @@ import { BreadcrumbsComponent } from './components/breadcrumbs/breadcrumbs.compo
     MatPaginatorModule,
     MatTableModule,
     MaskEmailPipe,
-    BreadcrumbsComponent
+    BreadcrumbsComponent,
+    JsonParsePipe
   ]
 })
 export class SharedModule { }
