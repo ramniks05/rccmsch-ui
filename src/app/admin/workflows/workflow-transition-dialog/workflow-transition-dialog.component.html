@@ -1,0 +1,79 @@
+<h2 mat-dialog-title>
+  <mat-icon>{{ data.mode === 'create' ? 'add' : 'edit' }}</mat-icon>
+  {{ data.mode === 'create' ? 'Create' : 'Edit' }} Transition
+</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="transitionForm" class="transition-form">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Transition Code *</mat-label>
+      <input matInput formControlName="transitionCode" placeholder="e.g., SUBMIT_APPLICATION" [readonly]="data.mode === 'edit'">
+      <mat-icon matPrefix>code</mat-icon>
+      <mat-hint *ngIf="data.mode === 'create' && data.transitions && data.transitions.length > 0">
+        Existing codes: {{ getExistingCodes() }}
+      </mat-hint>
+      <mat-error *ngIf="transitionForm.get('transitionCode')?.hasError('required')">Transition code is required</mat-error>
+      <mat-error *ngIf="transitionForm.get('transitionCode')?.hasError('pattern')">Only uppercase letters and underscores allowed</mat-error>
+      <mat-error *ngIf="transitionForm.get('transitionCode')?.hasError('duplicateCode')">
+        This transition code already exists in this workflow. Please use a different code.
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Transition Name *</mat-label>
+      <input matInput formControlName="transitionName" placeholder="e.g., Submit Application">
+      <mat-icon matPrefix>description</mat-icon>
+      <mat-error *ngIf="transitionForm.get('transitionName')?.hasError('required')">Transition name is required</mat-error>
+    </mat-form-field>
+
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="half-width">
+        <mat-label>From State *</mat-label>
+        <mat-select formControlName="fromStateId">
+          <mat-option *ngFor="let state of data.states" [value]="state.id">
+            {{ state.stateName }} ({{ state.stateCode }})
+          </mat-option>
+        </mat-select>
+        <mat-icon matPrefix>arrow_back</mat-icon>
+        <mat-error *ngIf="transitionForm.get('fromStateId')?.hasError('required')">From state is required</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="half-width">
+        <mat-label>To State *</mat-label>
+        <mat-select formControlName="toStateId">
+          <mat-option *ngFor="let state of data.states" [value]="state.id">
+            {{ state.stateName }} ({{ state.stateCode }})
+          </mat-option>
+        </mat-select>
+        <mat-icon matPrefix>arrow_forward</mat-icon>
+        <mat-error *ngIf="transitionForm.get('toStateId')?.hasError('required')">To state is required</mat-error>
+      </mat-form-field>
+    </div>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Description</mat-label>
+      <textarea matInput formControlName="description" rows="2"></textarea>
+      <mat-icon matPrefix>info</mat-icon>
+    </mat-form-field>
+
+    <div class="checkbox-group">
+      <mat-checkbox formControlName="requiresComment">
+        <mat-icon>comment</mat-icon>
+        Requires Comment
+      </mat-checkbox>
+      <mat-checkbox formControlName="isActive">
+        <mat-icon>toggle_on</mat-icon>
+        Active
+      </mat-checkbox>
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()" [disabled]="isSubmitting">Cancel</button>
+  <button mat-raised-button color="primary" (click)="onSubmit()" [disabled]="transitionForm.invalid || isSubmitting">
+    <mat-spinner diameter="20" *ngIf="isSubmitting" class="inline-spinner"></mat-spinner>
+    <span *ngIf="!isSubmitting">{{ data.mode === 'create' ? 'Create' : 'Update' }}</span>
+    <span *ngIf="isSubmitting">Saving...</span>
+  </button>
+</mat-dialog-actions>

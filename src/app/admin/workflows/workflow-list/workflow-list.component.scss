@@ -1,0 +1,7 @@
+@import '../../administrative-units/administrative-units.component.scss';
+
+.action-btn-view {
+  &:hover {
+    background-color: rgba(255, 152, 0, 0.1);
+  }
+}

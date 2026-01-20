@@ -1,0 +1,95 @@
+<div class="workflow-builder-container">
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <mat-icon>account_tree</mat-icon>
+        {{ workflow?.workflowName || 'Workflow Builder' }}
+      </h1>
+      <p class="page-subtitle">{{ workflow?.description || 'Configure workflow states, transitions, and permissions' }}</p>
+      <div class="workflow-info" *ngIf="workflow">
+        <span class="info-badge">
+          <mat-icon>code</mat-icon>
+          Code: {{ workflow.workflowCode }}
+        </span>
+        <span class="info-badge" [class.active]="workflow.isActive !== false" [class.inactive]="workflow.isActive === false">
+          <mat-icon>{{ workflow.isActive !== false ? 'check_circle' : 'cancel' }}</mat-icon>
+          {{ workflow.isActive !== false ? 'Active' : 'Inactive' }}
+        </span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button mat-raised-button color="primary" routerLink="/admin/workflows" class="back-btn">
+        <mat-icon>arrow_back</mat-icon>
+        Back to Workflows
+      </button>
+    </div>
+  </div>
+
+  <div class="page-content">
+    <!-- Loading Spinner -->
+    <div *ngIf="isLoading" class="loading-container">
+      <mat-spinner diameter="50"></mat-spinner>
+      <p>Loading workflow...</p>
+    </div>
+
+    <!-- Tabs -->
+    <div *ngIf="!isLoading" class="tabs-container">
+      <div class="tabs">
+        <button 
+          class="tab-btn" 
+          [class.active]="activeTab === 'states'"
+          (click)="activeTab = 'states'"
+        >
+          <mat-icon>list</mat-icon>
+          States
+        </button>
+        <button 
+          class="tab-btn" 
+          [class.active]="activeTab === 'transitions'"
+          (click)="activeTab = 'transitions'"
+        >
+          <mat-icon>swap_horiz</mat-icon>
+          Transitions
+        </button>
+        <button 
+          class="tab-btn" 
+          [class.active]="activeTab === 'permissions'"
+          (click)="activeTab = 'permissions'"
+          [disabled]="!selectedTransition"
+        >
+          <mat-icon>lock</mat-icon>
+          Permissions
+          <span *ngIf="!selectedTransition" class="tab-hint">(Select a transition first)</span>
+        </button>
+      </div>
+
+      <!-- States Tab -->
+      <div *ngIf="activeTab === 'states'" class="tab-content">
+        <app-workflow-states 
+          [workflowId]="workflowId"
+          [states]="states"
+          (statesUpdated)="onStatesUpdated()"
+        ></app-workflow-states>
+      </div>
+
+      <!-- Transitions Tab -->
+      <div *ngIf="activeTab === 'transitions'" class="tab-content">
+        <app-workflow-transitions 
+          [workflowId]="workflowId"
+          [states]="states"
+          [transitions]="transitions"
+          (transitionsUpdated)="onTransitionsUpdated()"
+          (transitionSelected)="selectTransition($event)"
+        ></app-workflow-transitions>
+      </div>
+
+      <!-- Permissions Tab -->
+      <div *ngIf="activeTab === 'permissions' && selectedTransition" class="tab-content">
+        <app-workflow-permissions 
+          [transition]="selectedTransition"
+          [states]="states"
+        ></app-workflow-permissions>
+      </div>
+    </div>
+  </div>
+</div>

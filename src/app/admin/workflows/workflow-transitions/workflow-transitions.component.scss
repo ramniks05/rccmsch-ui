@@ -1,0 +1,46 @@
+@import '../workflow-states/workflow-states.component.scss';
+
+.workflow-transitions-container {
+  .info-message {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+    background: #fff3cd;
+    border-radius: 4px;
+    color: #856404;
+    margin-bottom: 16px;
+
+    mat-icon {
+      color: #ffc107;
+    }
+  }
+
+  .state-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    background: #e3f2fd;
+    color: #1976d2;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+
+  .status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+
+    &.active {
+      background: #c8e6c9;
+      color: #2e7d32;
+    }
+
+    &.inactive {
+      background: #ffcdd2;
+      color: #c62828;
+    }
+  }
+}
