@@ -11,6 +11,7 @@ import { ActivatedRoute } from '@angular/router';
 @Component({
   selector: 'app-dynamic-stepper-form',
   templateUrl: './dynamic-stepper-form.component.html',
+  styleUrls: ['./dynamic-stepper-form.component.scss'],
 })
 export class DynamicStepperFormComponent implements OnInit {
   categories: any[] = [];
