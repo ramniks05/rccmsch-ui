@@ -51,6 +51,8 @@ import { RegistrationFormsComponent } from './registration-forms/registration-fo
 import { RegistrationFormFieldDialogComponent } from './registration-forms/registration-form-field-dialog/registration-form-field-dialog.component';
 import { RegistrationFormGroupsComponent } from './registration-forms/registration-form-groups/registration-form-groups.component';
 import { RegistrationFormGroupDialogComponent } from './registration-forms/registration-form-groups/registration-form-group-dialog/registration-form-group-dialog.component';
+import { ModuleFormsComponent } from './module-forms/module-forms.component';
+import { DocumentTemplatesComponent } from './document-templates/document-templates.component';
 
 /**
  * Routes for Admin Module
@@ -143,6 +145,18 @@ const routes: Routes = [
     component: RegistrationFormsComponent,
     canActivate: [AdminGuard],
     data: { breadcrumb: 'Registration Forms' }
+  },
+  {
+    path: 'module-forms',
+    component: ModuleFormsComponent,
+    canActivate: [AdminGuard],
+    data: { breadcrumb: 'Module Forms Configuration' }
+  },
+  {
+    path: 'document-templates',
+    component: DocumentTemplatesComponent,
+    canActivate: [AdminGuard],
+    data: { breadcrumb: 'Document Templates' }
   }
 ];
 
@@ -184,7 +198,9 @@ const routes: Routes = [
     RegistrationFormsComponent,
     RegistrationFormFieldDialogComponent,
     RegistrationFormGroupsComponent,
-    RegistrationFormGroupDialogComponent
+    RegistrationFormGroupDialogComponent,
+    ModuleFormsComponent,
+    DocumentTemplatesComponent
   ],
   imports: [
     CommonModule,

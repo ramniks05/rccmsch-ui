@@ -1,0 +1,170 @@
+<div class="document-editor-container">
+  <div class="card">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+      <div>
+        <h5 class="mb-0">
+          <i class="bi bi-file-earmark-text"></i> {{ getDocumentTypeLabel() }} Document
+        </h5>
+        <small *ngIf="document">
+          <span class="badge" [ngClass]="getStatusBadgeClass()">{{ documentStatus }}</span>
+          <span *ngIf="document.updatedAt" class="ms-2">
+            Last updated: {{ document.updatedAt | date:'short' }}
+          </span>
+        </small>
+      </div>
+      <div class="btn-group">
+        <button 
+          *ngIf="!editMode && canEdit()" 
+          class="btn btn-sm btn-light" 
+          (click)="enableEdit()"
+          [disabled]="loading">
+          <i class="bi bi-pencil"></i> Edit
+        </button>
+        <button 
+          class="btn btn-sm btn-light" 
+          (click)="togglePreview()"
+          [disabled]="loading">
+          <i class="bi" [ngClass]="previewMode ? 'bi-eye-slash' : 'bi-eye'"></i>
+          {{ previewMode ? 'Hide' : 'Show' }} Preview
+        </button>
+        <button 
+          *ngIf="document"
+          class="btn btn-sm btn-light" 
+          (click)="printDocument()"
+          [disabled]="loading">
+          <i class="bi bi-printer"></i> Print
+        </button>
+        <button 
+          *ngIf="document"
+          class="btn btn-sm btn-light" 
+          (click)="exportToPDF()"
+          [disabled]="loading">
+          <i class="bi bi-file-pdf"></i> PDF
+        </button>
+      </div>
+    </div>
+
+    <div class="card-body">
+      <!-- Loading State -->
+      <div *ngIf="loading" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2">Loading document...</p>
+      </div>
+
+      <!-- No Template -->
+      <div *ngIf="!loading && !template" class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle"></i> No template configured for this document type.
+      </div>
+
+      <!-- Document Editor/Viewer -->
+      <div *ngIf="!loading && template">
+        <!-- Template Info -->
+        <div class="alert alert-info mb-3">
+          <strong>Template:</strong> {{ template.templateName }}
+          <span *ngIf="template.version" class="ms-2">(Version {{ template.version }})</span>
+          <span *ngIf="template.allowEditAfterSign" class="badge bg-warning ms-2">Editable After Sign</span>
+          <span *ngIf="!template.allowEditAfterSign" class="badge bg-info ms-2">Locked After Sign</span>
+        </div>
+
+        <!-- Editor Mode -->
+        <div *ngIf="editMode" class="mb-3">
+          <label for="contentHtml" class="form-label fw-bold">Document Content (HTML)</label>
+          <textarea 
+            id="contentHtml"
+            class="form-control font-monospace"
+            rows="20"
+            [(ngModel)]="contentHtml"
+            placeholder="Enter HTML content"></textarea>
+          <small class="form-text text-muted">
+            Edit the HTML content. Use placeholders like {{'{{'}}caseNumber{{'}}'}} for dynamic data.
+          </small>
+        </div>
+
+        <!-- Preview Mode -->
+        <div *ngIf="previewMode" class="document-preview mb-3">
+          <div class="preview-label fw-bold mb-2">Preview:</div>
+          <div class="preview-content border rounded p-4 bg-white" [innerHTML]="getSanitizedHtml()"></div>
+        </div>
+
+        <!-- Read-only View -->
+        <div *ngIf="!editMode && !previewMode && document" class="document-view">
+          <div class="border rounded p-4 bg-light" [innerHTML]="getSanitizedHtml()"></div>
+        </div>
+
+        <!-- No Document Yet -->
+        <div *ngIf="!editMode && !document" class="alert alert-secondary">
+          <i class="bi bi-info-circle"></i> No document created yet. Click "Edit" to create one using the template.
+        </div>
+
+        <!-- Action Buttons -->
+        <div *ngIf="editMode" class="d-flex gap-2 mt-3">
+          <button 
+            class="btn btn-secondary" 
+            (click)="saveDraft()"
+            [disabled]="saving">
+            <span *ngIf="!saving">
+              <i class="bi bi-save"></i> Save as Draft
+            </span>
+            <span *ngIf="saving">
+              <span class="spinner-border spinner-border-sm me-2"></span> Saving...
+            </span>
+          </button>
+          
+          <button 
+            class="btn btn-info" 
+            (click)="saveFinal()"
+            [disabled]="saving">
+            <i class="bi bi-check-circle"></i> Save as Final
+          </button>
+          
+          <button 
+            *ngIf="documentStatus !== 'SIGNED'"
+            class="btn btn-success" 
+            (click)="signDocument()"
+            [disabled]="saving">
+            <i class="bi bi-pen"></i> Sign Document
+          </button>
+          
+          <button 
+            class="btn btn-outline-secondary" 
+            (click)="cancelEdit()"
+            [disabled]="saving">
+            <i class="bi bi-x-circle"></i> Cancel
+          </button>
+        </div>
+
+        <!-- Document Status Info -->
+        <div *ngIf="!editMode && document" class="mt-3">
+          <div class="card bg-light">
+            <div class="card-body">
+              <h6 class="card-title">Document Information</h6>
+              <div class="row">
+                <div class="col-md-6">
+                  <p class="mb-1"><strong>Status:</strong> 
+                    <span class="badge" [ngClass]="getStatusBadgeClass()">{{ documentStatus }}</span>
+                  </p>
+                  <p class="mb-1" *ngIf="document.createdAt">
+                    <strong>Created:</strong> {{ document.createdAt | date:'medium' }}
+                  </p>
+                  <p class="mb-1" *ngIf="document.updatedAt">
+                    <strong>Updated:</strong> {{ document.updatedAt | date:'medium' }}
+                  </p>
+                </div>
+                <div class="col-md-6">
+                  <p class="mb-1" *ngIf="document.createdBy">
+                    <strong>Created By:</strong> {{ document.createdBy }}
+                  </p>
+                  <p class="mb-1">
+                    <strong>Template:</strong> {{ template.templateName }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -23,6 +23,8 @@ import { OfficerHomeComponent } from './officer-home/officer-home.component';
 import { OfficerMyCasesComponent } from './officer-my-cases/officer-my-cases.component';
 import { OfficerCaseDetailComponent } from './officer-case-detail/officer-case-detail.component';
 import { WorkflowActionDialogComponent } from './workflow-action-dialog/workflow-action-dialog.component';
+import { HearingFormComponent } from './hearing-form/hearing-form.component';
+import { DocumentEditorComponent } from './document-editor/document-editor.component';
 
 const routes: Routes = [
   {
@@ -61,7 +63,9 @@ const routes: Routes = [
     OfficerHomeComponent,
     OfficerMyCasesComponent,
     OfficerCaseDetailComponent,
-    WorkflowActionDialogComponent
+    WorkflowActionDialogComponent,
+    HearingFormComponent,
+    DocumentEditorComponent
   ],
   imports: [
     CommonModule,

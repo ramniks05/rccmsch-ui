@@ -1,0 +1,209 @@
+<div class="hearing-form-container">
+  <div class="card">
+    <div class="card-header bg-info text-white">
+      <h5 class="mb-0">
+        <i class="bi bi-calendar-event"></i> Hearing Form
+      </h5>
+    </div>
+    <div class="card-body">
+      <!-- Loading State -->
+      <div *ngIf="loading" class="text-center py-4">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2">Loading hearing form...</p>
+      </div>
+
+      <!-- No Schema -->
+      <div *ngIf="!loading && formSchema.length === 0" class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle"></i> No hearing form configured for this case type.
+      </div>
+
+      <!-- Form -->
+      <div *ngIf="!loading && formSchema.length > 0">
+        <!-- View Mode Header -->
+        <div *ngIf="viewMode && submittedData" class="alert alert-success d-flex justify-content-between align-items-center">
+          <div>
+            <i class="bi bi-check-circle"></i> 
+            <strong>Hearing form submitted</strong>
+            <span *ngIf="submittedData.submittedAt"> on {{ submittedData.submittedAt | date:'medium' }}</span>
+          </div>
+          <button class="btn btn-sm btn-primary" (click)="enableEdit()">
+            <i class="bi bi-pencil"></i> Edit
+          </button>
+        </div>
+
+        <!-- Form Fields -->
+        <div class="row g-3">
+          <div *ngFor="let field of formSchema" class="col-md-6">
+            <div class="mb-3">
+              <label [for]="field.fieldName" class="form-label">
+                {{ field.fieldLabel }}
+                <span *ngIf="field.isRequired" class="text-danger">*</span>
+              </label>
+
+              <!-- Read-only view -->
+              <div *ngIf="viewMode" class="form-control-plaintext">
+                <strong>{{ getFieldValue(field) || '-' }}</strong>
+              </div>
+
+              <!-- Text Input -->
+              <input 
+                *ngIf="!viewMode && field.fieldType === 'TEXT'"
+                [id]="field.fieldName"
+                type="text"
+                class="form-control"
+                [(ngModel)]="formData[field.fieldName]"
+                [placeholder]="field.placeholder || ''"
+                [required]="field.isRequired">
+
+              <!-- Text Area -->
+              <textarea 
+                *ngIf="!viewMode && field.fieldType === 'TEXTAREA'"
+                [id]="field.fieldName"
+                class="form-control"
+                rows="3"
+                [(ngModel)]="formData[field.fieldName]"
+                [placeholder]="field.placeholder || ''"
+                [required]="field.isRequired"></textarea>
+
+              <!-- Number Input -->
+              <input 
+                *ngIf="!viewMode && field.fieldType === 'NUMBER'"
+                [id]="field.fieldName"
+                type="number"
+                class="form-control"
+                [(ngModel)]="formData[field.fieldName]"
+                [placeholder]="field.placeholder || ''"
+                [required]="field.isRequired">
+
+              <!-- Date Input -->
+              <input 
+                *ngIf="!viewMode && field.fieldType === 'DATE'"
+                [id]="field.fieldName"
+                type="date"
+                class="form-control"
+                [(ngModel)]="formData[field.fieldName]"
+                [required]="field.isRequired">
+
+              <!-- DateTime Input -->
+              <input 
+                *ngIf="!viewMode && field.fieldType === 'DATETIME'"
+                [id]="field.fieldName"
+                type="datetime-local"
+                class="form-control"
+                [(ngModel)]="formData[field.fieldName]"
+                [required]="field.isRequired">
+
+              <!-- Select Dropdown -->
+              <select 
+                *ngIf="!viewMode && field.fieldType === 'SELECT'"
+                [id]="field.fieldName"
+                class="form-select"
+                [(ngModel)]="formData[field.fieldName]"
+                [required]="field.isRequired">
+                <option value="">-- Select --</option>
+                <option *ngFor="let option of getOptions(field)" [value]="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
+
+              <!-- Multi-Select -->
+              <select 
+                *ngIf="!viewMode && field.fieldType === 'MULTISELECT'"
+                [id]="field.fieldName"
+                class="form-select"
+                multiple
+                [(ngModel)]="formData[field.fieldName]"
+                [required]="field.isRequired">
+                <option *ngFor="let option of getOptions(field)" [value]="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
+
+              <!-- Checkbox -->
+              <div *ngIf="!viewMode && field.fieldType === 'CHECKBOX'" class="form-check">
+                <input 
+                  [id]="field.fieldName"
+                  type="checkbox"
+                  class="form-check-input"
+                  [(ngModel)]="formData[field.fieldName]">
+                <label [for]="field.fieldName" class="form-check-label">
+                  {{ field.helpText || 'Yes' }}
+                </label>
+              </div>
+
+              <!-- Radio Buttons -->
+              <div *ngIf="!viewMode && field.fieldType === 'RADIO'">
+                <div *ngFor="let option of getOptions(field)" class="form-check">
+                  <input 
+                    [id]="field.fieldName + '_' + option.value"
+                    type="radio"
+                    class="form-check-input"
+                    [name]="field.fieldName"
+                    [value]="option.value"
+                    [(ngModel)]="formData[field.fieldName]"
+                    [required]="field.isRequired">
+                  <label [for]="field.fieldName + '_' + option.value" class="form-check-label">
+                    {{ option.label }}
+                  </label>
+                </div>
+              </div>
+
+              <!-- File Upload -->
+              <input 
+                *ngIf="!viewMode && field.fieldType === 'FILE'"
+                [id]="field.fieldName"
+                type="file"
+                class="form-control"
+                [required]="field.isRequired">
+
+              <!-- Help Text -->
+              <small *ngIf="!viewMode && field.helpText" class="form-text text-muted">
+                {{ field.helpText }}
+              </small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Remarks -->
+        <div class="mb-3 mt-3">
+          <label for="remarks" class="form-label">Remarks</label>
+          <textarea 
+            *ngIf="!viewMode"
+            id="remarks"
+            class="form-control"
+            rows="3"
+            [(ngModel)]="remarks"
+            placeholder="Enter any additional remarks"></textarea>
+          <div *ngIf="viewMode" class="form-control-plaintext">
+            {{ remarks || '-' }}
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="d-flex gap-2">
+          <button 
+            *ngIf="!viewMode"
+            class="btn btn-primary" 
+            (click)="submitForm()" 
+            [disabled]="submitting">
+            <span *ngIf="!submitting">
+              <i class="bi bi-save"></i> Submit Hearing Form
+            </span>
+            <span *ngIf="submitting">
+              <span class="spinner-border spinner-border-sm me-2"></span> Submitting...
+            </span>
+          </button>
+          <button 
+            *ngIf="!viewMode && submittedData"
+            class="btn btn-secondary" 
+            (click)="cancelEdit()"
+            [disabled]="submitting">
+            <i class="bi bi-x-circle"></i> Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,39 @@
+.card {
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.template-card {
+  transition: transform 0.2s, box-shadow 0.2s;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  }
+}
+
+.font-monospace {
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+}
+
+.bg-light {
+  background-color: #f8f9fa !important;
+}
+
+.placeholder-buttons {
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 10px;
+  background-color: #fff;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.card-footer {
+  padding: 0.5rem 1rem;
+}
+
+textarea {
+  resize: vertical;
+}
