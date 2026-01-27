@@ -1,0 +1,123 @@
+<div class="login-page-container">
+  <!-- Top Menu Bar -->
+  <div class="top-menu-bar mt-2">
+    <div class="top-menu-content">
+      <div class="top-menu-left">
+        <a routerLink="/home" class="menu-link">
+          <mat-icon>home</mat-icon>
+          <span>Home</span>
+        </a>
+        <a href="#" class="menu-link">
+          <mat-icon>info</mat-icon>
+          <span>About Us</span>
+        </a>
+        <a href="#" class="menu-link">
+          <mat-icon>contact_support</mat-icon>
+          <span>Contact Us</span>
+        </a>
+      </div>
+      <div class="top-menu-right">
+        <span class="menu-item">
+          <mat-icon>people</mat-icon>
+          <span>Active Users: <strong>{{ activeUsers }}</strong></span>
+        </span>
+        <span class="menu-item language-selector">
+          <mat-icon>language</mat-icon>
+          <label class="language-label">
+            Language:
+            <select class="language-dropdown" aria-label="Language">
+              <option value="en">English</option>
+            </select>
+          </label>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="main-content-area">
+    <div class="content-wrapper">
+      <!-- Auth Cards Container -->
+      <div class="auth-cards-container">
+        <!-- Login Card -->
+        <div class="auth-card-wrapper">
+          <mat-card class="auth-card login-card">
+            <mat-card-header class="auth-card-header">
+              <div class="auth-header-icon">
+                <mat-icon>login</mat-icon>
+              </div>
+              <mat-card-title class="auth-card-title">Sign In</mat-card-title>
+              <mat-card-subtitle class="auth-card-subtitle">Access your existing account</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content class="auth-card-content">
+              <app-login></app-login>
+
+              <!-- Admin Login Link -->
+              <div class="admin-login-section">
+                <hr class="divider" />
+                <button mat-stroked-button color="accent" routerLink="/admin/login" class="admin-login-btn">
+                  <mat-icon>admin_panel_settings</mat-icon>
+                  Admin Login
+                </button>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <!-- Registration Card -->
+        <div class="auth-card-wrapper">
+          <mat-card class="auth-card registration-card">
+            <mat-card-header class="auth-card-header">
+              <div class="auth-header-icon">
+                <mat-icon>person_add</mat-icon>
+              </div>
+              <mat-card-title class="auth-card-title">New User?</mat-card-title>
+              <mat-card-subtitle class="auth-card-subtitle">Create your account to get started</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content class="auth-card-content">
+              <div class="registration-content">
+                <p class="registration-description">
+                  Register as a citizen or lawyer to access online services, track cases, and submit applications.
+                </p>
+                
+                <div class="registration-options">
+                  <button mat-raised-button color="primary" routerLink="/registration" class="registration-btn">
+                    <mat-icon>person</mat-icon>
+                    <span>Register as Citizen</span>
+                  </button>
+                  
+                  <button mat-stroked-button color="primary" routerLink="/registration/lawyer" class="registration-btn">
+                    <mat-icon>gavel</mat-icon>
+                    <span>Register as Lawyer</span>
+                  </button>
+                </div>
+
+                <div class="registration-benefits">
+                  <h4 class="benefits-title">Benefits of Registration:</h4>
+                  <ul class="benefits-list">
+                    <li>
+                      <mat-icon>check_circle</mat-icon>
+                      <span>Track your case status online</span>
+                    </li>
+                    <li>
+                      <mat-icon>check_circle</mat-icon>
+                      <span>Submit applications digitally</span>
+                    </li>
+                    <li>
+                      <mat-icon>check_circle</mat-icon>
+                      <span>Access case documents anytime</span>
+                    </li>
+                    <li>
+                      <mat-icon>check_circle</mat-icon>
+                      <span>Receive updates and notifications</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

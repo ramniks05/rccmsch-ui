@@ -1,0 +1,225 @@
+<div class="case-detail-container">
+  <!-- Header -->
+  <div class="header-section">
+    <button mat-icon-button (click)="goBack()" class="back-button">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <h2>Case Details</h2>
+    <div class="header-actions">
+      <button mat-raised-button (click)="refresh()" [disabled]="loading">
+        <mat-icon>refresh</mat-icon>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading-container">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Loading case details...</p>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error && !loading" class="error-container">
+    <mat-icon color="warn">error</mat-icon>
+    <p>{{ error }}</p>
+    <button mat-raised-button color="primary" (click)="loadCaseDetails()">Retry</button>
+  </div>
+
+  <!-- Case Details -->
+  <div *ngIf="!loading && !error && caseData" class="case-content">
+    <!-- Case Information Card -->
+    <mat-card class="info-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>description</mat-icon>
+          Case Information
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="info-grid">
+          <div class="info-item">
+            <label>Case Number:</label>
+            <span class="value">{{ caseData.caseNumber }}</span>
+          </div>
+          <div class="info-item">
+            <label>Case Type:</label>
+            <span class="value">{{ caseData.caseTypeName }}</span>
+          </div>
+          <div class="info-item">
+            <label>Case Nature:</label>
+            <span class="value">{{ caseData.caseNatureName }}</span>
+          </div>
+          <div class="info-item">
+            <label>Current Status:</label>
+            <span [class]="'status-badge ' + getStatusClass(caseData.currentStateName || caseData.status)">
+              {{ caseData.currentStateName || caseData.status }}
+            </span>
+          </div>
+          <div class="info-item">
+            <label>Priority:</label>
+            <span [class]="'priority-badge ' + getPriorityClass(caseData.priority)">
+              {{ caseData.priority }}
+            </span>
+          </div>
+          <div class="info-item">
+            <label>Application Date:</label>
+            <span class="value">{{ caseData.applicationDate | date: 'dd/MM/yyyy' }}</span>
+          </div>
+          <div class="info-item" *ngIf="caseData.assignedToOfficerName">
+            <label>Assigned To:</label>
+            <span class="value">{{ caseData.assignedToOfficerName }} ({{ caseData.assignedToRole }})</span>
+          </div>
+          <div class="info-item" *ngIf="caseData.assignedToUnitName">
+            <label>Unit:</label>
+            <span class="value">{{ caseData.assignedToUnitName }}</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Applicant Information Card -->
+    <mat-card class="info-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>person</mat-icon>
+          Applicant Information
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="info-grid">
+          <div class="info-item">
+            <label>Name:</label>
+            <span class="value">{{ caseData.applicantName }}</span>
+          </div>
+          <div class="info-item">
+            <label>Mobile:</label>
+            <span class="value">{{ caseData.applicantMobile }}</span>
+          </div>
+          <div class="info-item" *ngIf="caseData.applicantEmail">
+            <label>Email:</label>
+            <span class="value">{{ caseData.applicantEmail }}</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Case Details Card -->
+    <mat-card class="info-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>info</mat-icon>
+          Case Details
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="info-item">
+          <label>Subject:</label>
+          <p class="value">{{ caseData.subject }}</p>
+        </div>
+        <div class="info-item" *ngIf="caseData.description">
+          <label>Description:</label>
+          <p class="value">{{ caseData.description }}</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Form Data Card -->
+    <mat-card class="info-card" *ngIf="hasParsedCaseData()">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>assignment</mat-icon>
+          Form Data
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="form-data-grid">
+          <div class="form-data-item" *ngFor="let item of parsedCaseData | keyvalue">
+            <label>{{ item.key | titlecase }}:</label>
+            <span class="value">{{ item.value }}</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Workflow Actions Card -->
+    <mat-card class="info-card actions-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>play_circle</mat-icon>
+          Available Actions
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div *ngIf="loadingTransitions" class="loading-small">
+          <mat-spinner diameter="30"></mat-spinner>
+          <span>Loading actions...</span>
+        </div>
+        <div *ngIf="!loadingTransitions && transitions.length === 0" class="no-actions">
+          <mat-icon>info</mat-icon>
+          <p>No actions available at this time</p>
+        </div>
+        <div *ngIf="!loadingTransitions && transitions.length > 0" class="action-buttons">
+          <button
+            *ngFor="let transition of transitions"
+            mat-raised-button
+            [class]="'action-btn ' + getActionClass(transition.transitionCode)"
+            (click)="handleActionClick(transition)"
+            [disabled]="executing">
+            <mat-icon>
+              {{ transition.transitionCode.includes('APPROVE') ? 'check_circle' : 
+                 transition.transitionCode.includes('REJECT') ? 'cancel' : 
+                 transition.transitionCode.includes('RETURN') ? 'undo' : 'play_arrow' }}
+            </mat-icon>
+            {{ transition.transitionName }}
+            <span *ngIf="transition.requiresComment" class="comment-required">*</span>
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Workflow History Card -->
+    <mat-card class="info-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>history</mat-icon>
+          Workflow History
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div *ngIf="loadingHistory" class="loading-small">
+          <mat-spinner diameter="30"></mat-spinner>
+          <span>Loading history...</span>
+        </div>
+        <div *ngIf="!loadingHistory && history.length === 0" class="no-history">
+          <p>No history available</p>
+        </div>
+        <div *ngIf="!loadingHistory && history.length > 0" class="history-timeline">
+          <div *ngFor="let entry of history" class="history-entry">
+            <div class="history-icon">
+              <mat-icon>arrow_forward</mat-icon>
+            </div>
+            <div class="history-content">
+              <div class="history-header">
+                <strong>{{ entry.transitionName }}</strong>
+                <span class="history-date">{{ entry.performedAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+              <div class="history-details">
+                <span class="performed-by">
+                  by {{ entry.performedByOfficerName }} ({{ entry.performedByRole }})
+                </span>
+                <span class="state-change">
+                  {{ entry.fromStateCode }} → {{ entry.toStateCode }}
+                </span>
+              </div>
+              <div class="history-comments" *ngIf="entry.comments">
+                <mat-icon>comment</mat-icon>
+                <span>{{ entry.comments }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

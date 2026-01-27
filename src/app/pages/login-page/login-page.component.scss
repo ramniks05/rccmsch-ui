@@ -1,0 +1,465 @@
+.login-page-container {
+  min-height: calc(100vh - 64px);
+  background-color: #f5f5f5;
+  overflow-x: hidden;
+}
+
+// Top Menu Bar
+.top-menu-bar {
+  background-color: var(--primary-color);
+  color: white;
+  padding: 10px 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.top-menu-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.top-menu-left {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.menu-item mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.language-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.language-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.language-dropdown {
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.language-dropdown option {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.top-menu-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.menu-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: white;
+  text-decoration: none;
+  font-size: 0.9rem;
+  padding: 6px 12px;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+
+.menu-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.menu-link mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+// Main Content Area
+.main-content-area {
+  padding: 40px 20px;
+  min-height: calc(100vh - 200px);
+  background: linear-gradient(to bottom, #f5f5f5 0%, #ffffff 100%);
+}
+
+.content-wrapper {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+// Auth Cards Container
+.auth-cards-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.auth-card-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.auth-card {
+  height: 100%;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border: 1px solid #e8eaf0;
+
+  &:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    transform: translateY(-4px);
+  }
+}
+
+.auth-card-header {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+  color: white;
+  padding: 32px 32px 24px;
+  text-align: center;
+  position: relative;
+}
+
+.auth-header-icon {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 20px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+
+  mat-icon {
+    font-size: 36px;
+    width: 36px;
+    height: 36px;
+    color: white;
+  }
+}
+
+.auth-card:hover .auth-header-icon {
+  transform: scale(1.1);
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.auth-card-title {
+  color: white;
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+}
+
+.auth-card-subtitle {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1rem;
+  margin: 0;
+}
+
+.auth-card-content {
+  padding: 32px;
+  background: white;
+}
+
+// Login Card Specific
+.login-card {
+  .auth-card-header {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  }
+}
+
+// Registration Card Specific
+.registration-card {
+  .auth-card-header {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  }
+}
+
+.registration-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.registration-description {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #555;
+  margin: 0;
+  text-align: center;
+}
+
+.registration-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.registration-btn {
+  width: 100%;
+  padding: 14px 24px;
+  font-size: 16px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 52px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+
+  mat-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+}
+
+.registration-benefits {
+  margin-top: 8px;
+  padding-top: 24px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.benefits-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  margin: 0 0 16px 0;
+}
+
+.benefits-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.benefits-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #555;
+
+  mat-icon {
+    color: #28a745;
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  span {
+    flex: 1;
+  }
+}
+
+.admin-login-section {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #e0e0e0;
+  text-align: center;
+}
+
+.admin-login-btn {
+  width: 100%;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+
+  mat-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+  }
+}
+
+.divider {
+  margin: 0 0 20px 0;
+  border: none;
+  border-top: 1px solid #e0e0e0;
+}
+
+// Responsive Design
+@media (max-width: 1024px) {
+  .auth-cards-container {
+    gap: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .top-menu-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .top-menu-left,
+  .top-menu-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .main-content-area {
+    padding: 32px 16px;
+  }
+
+  .auth-cards-container {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .auth-card-header {
+    padding: 24px 24px 20px;
+  }
+
+  .auth-header-icon {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 16px;
+
+    mat-icon {
+      font-size: 32px;
+      width: 32px;
+      height: 32px;
+    }
+  }
+
+  .auth-card-title {
+    font-size: 1.5rem;
+  }
+
+  .auth-card-subtitle {
+    font-size: 0.95rem;
+  }
+
+  .auth-card-content {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .top-menu-bar {
+    padding: 8px 0;
+  }
+
+  .top-menu-content {
+    padding: 0 12px;
+  }
+
+  .top-menu-left,
+  .top-menu-right {
+    gap: 8px;
+  }
+
+  .menu-item {
+    font-size: 0.8rem;
+  }
+
+  .menu-link {
+    padding: 4px 8px;
+    font-size: 0.85rem;
+  }
+
+  .main-content-area {
+    padding: 24px 12px;
+  }
+
+  .auth-cards-container {
+    gap: 20px;
+  }
+
+  .auth-card-header {
+    padding: 20px 16px 16px;
+  }
+
+  .auth-header-icon {
+    width: 56px;
+    height: 56px;
+    margin-bottom: 12px;
+
+    mat-icon {
+      font-size: 28px;
+      width: 28px;
+      height: 28px;
+    }
+  }
+
+  .auth-card-title {
+    font-size: 1.25rem;
+  }
+
+  .auth-card-subtitle {
+    font-size: 0.875rem;
+  }
+
+  .auth-card-content {
+    padding: 20px 16px;
+  }
+
+  .registration-btn {
+    padding: 12px 20px;
+    font-size: 14px;
+    min-height: 48px;
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+  }
+
+  .benefits-title {
+    font-size: 1rem;
+  }
+
+  .benefits-list li {
+    font-size: 0.9rem;
+  }
+}

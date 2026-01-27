@@ -33,15 +33,15 @@ export class WorkflowStatesComponent implements OnInit, OnChanges {
   }
 
   openCreateDialog(): void {
-    const maxOrder = this.states.length > 0 
+    const maxOrder = this.states.length > 0
       ? Math.max(...this.states.map(s => s.stateOrder || 0), 0)
-      : 0;
+      : null;
     const dialogRef = this.dialog.open(WorkflowStateDialogComponent, {
       width: '600px',
       data: { 
         mode: 'create',
         workflowId: this.workflowId,
-        defaultOrder: maxOrder + 1
+        defaultOrder: maxOrder !== null ? maxOrder + 1 : null
       }
     });
 

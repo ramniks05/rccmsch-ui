@@ -1,117 +1,56 @@
 <div class="home-container">
-  <!-- Top Menu Bar -->
-  <div class="top-menu-bar mt-2">
-    <div class="top-menu-content">
-      <div class="top-menu-left">
-        <a href="#" class="menu-link">
-          <mat-icon>home</mat-icon>
-          <span>Home</span>
-        </a>
-        <a href="#" class="menu-link">
-          <mat-icon>info</mat-icon>
-          <span>About Us</span>
-        </a>
-        <a href="#" class="menu-link">
-          <mat-icon>contact_support</mat-icon>
-          <span>Contact Us</span>
-        </a>
+  <!-- Top Navigation Bar -->
+  <div class="top-nav-bar">
+    <div class="nav-content">
+      <div class="nav-left">
+        <span class="site-name">Revenue Court Case Management System</span>
       </div>
-      <div class="top-menu-right">
-        <span class="menu-item">
-          <mat-icon>people</mat-icon>
-          <span>Active Users: <strong>{{ activeUsers }}</strong></span>
-        </span>
-        <span class="menu-item language-selector">
-          <mat-icon>language</mat-icon>
-          <label for="langSelect">Language:</label>
-          <select id="langSelect" class="language-dropdown">
-            <option value="en">English</option>
-          </select>
-        </span>
+      <div class="nav-right">
+        <button mat-raised-button color="primary" routerLink="/home/login" class="login-btn">
+          <mat-icon>login</mat-icon>
+          <span>Login / Register</span>
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- Main Content Area -->
-  <div class="main-content-area">
-    <div class="content-wrapper">
-      <div class="two-column-layout">
-        <!-- Left Column: Guidelines -->
-        <div class="guidelines-column">
-          <mat-card class="guidelines-card">
-            <mat-card-header>
-              <mat-card-title class="guidelines-title">
-                <mat-icon>info</mat-icon>
-                Guidelines
-              </mat-card-title>
-            </mat-card-header>
-            <mat-card-content class="guidelines-content">
-              <p class="guideline-text">
-                If you are a new user, please first click on "<strong>Registration</strong>" to create your account, then proceed to "<strong>Login</strong>". If you already have an account, please follow the instructions below:
-              </p>
-
-              <div class="login-method-guidelines">
-                <h4 class="method-title">Mobile Number Login:</h4>
-                <ol class="guidelines-list">
-                  <li>Select "<strong>Citizen</strong>" or "<strong>Operator</strong>" as your login type.</li>
-                  <li>Choose "<strong>Mobile Number</strong>" login method.</li>
-                  <li>Enter your <strong>10-digit Mobile Number</strong> in the Mobile No. field.</li>
-                  <li>Click the "<strong>Send OTP</strong>" button to receive OTP on your mobile number.</li>
-                  <li>Enter the <strong>6-digit OTP</strong> received on your mobile number.</li>
-                  <li>Enter the <strong>CAPTCHA</strong> code displayed in the image.</li>
-                  <li>Click the "<strong>Sign in</strong>" button to access your account.</li>
-                </ol>
-
-                <h4 class="method-title">Mobile/Email & Password Login:</h4>
-                <ol class="guidelines-list">
-                  <li>Select "<strong>Citizen</strong>" or "<strong>Operator</strong>" as your login type.</li>
-                  <li>Choose "<strong>Mobile/Email & Password</strong>" login method.</li>
-                  <li>Enter your <strong>Mobile Number or Email</strong> in the username field.</li>
-                  <li>Enter your <strong>Password</strong> in the password field.</li>
-                  <li>Enter the <strong>CAPTCHA</strong> code displayed in the image.</li>
-                  <li>Click the "<strong>Sign in</strong>" button to access your account.</li>
-                </ol>
-              </div>
-
-              <div class="important-notice">
-                <mat-card-header>
-                  <mat-card-title class="notice-title">
-                    <mat-icon>warning</mat-icon>
-                    Important Notice
-                  </mat-card-title>
-                </mat-card-header>
-                <p class="notice-text">
-                  Citizens applying for case registration are requested to verify all case details on the online portal before submitting their application. Ensure that all required documents are properly scanned and uploaded as per the specifications mentioned in the guidelines.
-                </p>
-              </div>
-            </mat-card-content>
-          </mat-card>
+  <!-- About and Services Section -->
+  <section class="about-services-section">
+    <div class="section-container">
+      <div class="about-services-content">
+        <div class="about-section">
+          <h2 class="section-title">About the System</h2>
+          <p class="about-text">
+            The Revenue Court Case Management System (RCCMS) is an online platform designed to streamline 
+            and digitize the management of revenue court cases in Manipur. This comprehensive system enables 
+            citizens to track their cases, access documents, submit applications, and stay updated on case 
+            proceedings. The system provides transparency, efficiency, and easy access to case-related information 
+            for both citizens and court operators, making the entire process more accessible and user-friendly.
+          </p>
         </div>
-
-        <!-- Right Column: Login Form -->
-        <div class="login-column">
-          <mat-card class="login-card">
-            <mat-card-header>
-              <mat-card-title class="login-card-title">
-                Online Services Login
-              </mat-card-title>
-            </mat-card-header>
-            <mat-card-content class="login-card-content">
-              <app-login></app-login>
-
-              <!-- Admin Login Link -->
-              <div class="admin-login-section">
-                <hr class="divider" />
-                <button mat-stroked-button color="accent" routerLink="/admin/login" class="admin-login-btn">
-                  <mat-icon>admin_panel_settings</mat-icon>
-                  Admin Login
-                </button>
-              </div>
-            </mat-card-content>
-          </mat-card>
+        
+        <div class="services-section">
+          <h2 class="section-title">Services</h2>
+          <div class="services-grid">
+            <div class="service-item">
+              <mat-icon>description</mat-icon>
+              <span>Case Filing</span>
+            </div>
+            <div class="service-item">
+              <mat-icon>gavel</mat-icon>
+              <span>Cause Case</span>
+            </div>
+            <div class="service-item">
+              <mat-icon>assignment</mat-icon>
+              <span>Order</span>
+            </div>
+            <div class="service-item">
+              <mat-icon>balance</mat-icon>
+              <span>Judgement</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
+  </section>
 </div>
-

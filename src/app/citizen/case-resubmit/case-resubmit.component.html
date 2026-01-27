@@ -132,7 +132,10 @@
                     form.get(field.fieldName)?.invalid
                   "
                 >
-                  <label class="mat-file-label">
+                  <label 
+                    [attr.for]="getFileInputId(field)" 
+                    class="mat-file-label"
+                  >
                     {{ field.fieldLabel }}
                     <span *ngIf="field.isRequired" class="required">*</span>
                   </label>
@@ -142,6 +145,7 @@
                       mat-stroked-button
                       color="primary"
                       type="button"
+                      [attr.aria-label]="'Choose file for ' + field.fieldLabel"
                       (click)="fileInput.click()"
                     >
                       Choose File
@@ -153,8 +157,10 @@
 
                     <input
                       #fileInput
+                      [id]="getFileInputId(field)"
                       type="file"
-                      hidden
+                      [attr.aria-label]="field.fieldLabel"
+                      style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;"
                       (change)="onFileChange($event, field.fieldName)"
                     />
                   </div>

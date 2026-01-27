@@ -74,6 +74,8 @@ export class FormBuilderComponent implements OnInit {
 
   /**
    * Load form schema from backend
+   * Form schemas are now linked to Case Type (not Case Nature)
+   * GET /api/admin/form-schemas/case-types/{caseTypeId} — Public endpoint (no auth required)
    */
   loadFormSchema(caseTypeId: number): void {
     this.loading = true;
@@ -94,7 +96,7 @@ export class FormBuilderComponent implements OnInit {
           if (apiResponse.success && apiResponse.data) {
             this.formSchema = apiResponse.data;
             if (this.formSchema) {
-              this.caseTypeName = this.formSchema.caseTypeName;
+              this.caseTypeName = this.formSchema.caseTypeName || this.formSchema.caseTypeCode || 'Case Form';
               this.buildForm(this.formSchema);
             }
           } else {

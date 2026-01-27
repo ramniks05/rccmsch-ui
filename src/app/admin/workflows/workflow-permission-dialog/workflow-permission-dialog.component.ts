@@ -31,11 +31,11 @@ export class WorkflowPermissionDialogComponent implements OnInit {
     this.permissionForm = this.fb.group({
       roleCode: ['', Validators.required],
       unitLevel: [null],
-      canInitiate: [false],
-      canApprove: [false],
+      canInitiate: [null],
+      canApprove: [null],
       hierarchyRule: [''],
       conditions: [''],
-      isActive: [true]
+      isActive: [null]
     });
   }
 
@@ -44,11 +44,11 @@ export class WorkflowPermissionDialogComponent implements OnInit {
       this.permissionForm.patchValue({
         roleCode: this.data.permission.roleCode,
         unitLevel: this.data.permission.unitLevel || null,
-        canInitiate: this.data.permission.canInitiate,
-        canApprove: this.data.permission.canApprove,
+        canInitiate: this.data.permission.canInitiate ?? null,
+        canApprove: this.data.permission.canApprove ?? null,
         hierarchyRule: this.data.permission.hierarchyRule || '',
         conditions: this.data.permission.conditions || '',
-        isActive: this.data.permission.isActive !== false
+        isActive: this.data.permission.isActive ?? null
       });
     }
   }
@@ -63,11 +63,11 @@ export class WorkflowPermissionDialogComponent implements OnInit {
     const permission: WorkflowPermission = {
       roleCode: formValue.roleCode,
       unitLevel: formValue.unitLevel || null,
-      canInitiate: formValue.canInitiate,
-      canApprove: formValue.canApprove,
+      canInitiate: formValue.canInitiate ?? undefined,
+      canApprove: formValue.canApprove ?? undefined,
       hierarchyRule: formValue.hierarchyRule || undefined,
       conditions: formValue.conditions || undefined,
-      isActive: formValue.isActive
+      isActive: formValue.isActive ?? undefined
     };
 
     if (this.data.mode === 'create') {

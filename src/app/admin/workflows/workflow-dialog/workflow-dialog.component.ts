@@ -24,7 +24,7 @@ export class WorkflowDialogComponent implements OnInit {
       workflowCode: ['', [Validators.required, Validators.pattern(/^[A-Z_]+$/)]],
       workflowName: ['', Validators.required],
       description: [''],
-      isActive: [true]
+      isActive: [null]
     });
   }
 
@@ -34,7 +34,7 @@ export class WorkflowDialogComponent implements OnInit {
         workflowCode: this.data.workflow.workflowCode,
         workflowName: this.data.workflow.workflowName,
         description: this.data.workflow.description || '',
-        isActive: this.data.workflow.isActive !== false
+        isActive: this.data.workflow.isActive ?? null
       });
       // Disable code editing in edit mode
       this.workflowForm.get('workflowCode')?.disable();
@@ -52,7 +52,7 @@ export class WorkflowDialogComponent implements OnInit {
       workflowCode: formValue.workflowCode,
       workflowName: formValue.workflowName,
       description: formValue.description,
-      isActive: formValue.isActive
+      isActive: formValue.isActive ?? undefined
     };
 
     if (this.data.mode === 'create') {

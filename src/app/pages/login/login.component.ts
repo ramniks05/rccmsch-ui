@@ -153,8 +153,8 @@ export class LoginComponent {
     }
     const value = control.value.trim();
 
-    // Officer UserID pattern: ROLE_CODE@UNIT_LGD_CODE (e.g., DISTRICT_OFFICER@IMW001)
-    const officerUserIdPattern = /^[A-Z_]+@[A-Z0-9]+$/;
+    // Officer UserID pattern: ROLE_CODE@COURT_CODE (e.g., SDC@DC_COURT_IMPHAL_EAST)
+    const officerUserIdPattern = /^[A-Z_]+@[A-Z0-9_]+$/;
     if (officerUserIdPattern.test(value)) {
       return null;
     }

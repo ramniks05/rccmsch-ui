@@ -65,18 +65,20 @@ export class LandProcessTypesComponent {
     this.router.navigate([caseData.route, caseData.id, caseData.icon, caseData.title]);
   }
 
+  /** Load case natures (legal matters) via Case Natures API. */
   getCaseTypes() {
-    this.caseTypeService.getCaseTypes().subscribe({
-      next: (res) => {
-        this.processes = res.data
-          .filter((ct: any) => ct.isActive)
-          .map((ct: any) => ({
-            id: ct.id,
-            title: ct.name,
-            code: ct.code,
-            description: ct.description,
-            icon: this.caseTypeConfig[ct.code]?.icon || 'description',
-            route: this.caseTypeConfig[ct.code]?.route || '/cases',
+    this.caseTypeService.getCaseNatures().subscribe({
+      next: (res: any) => {
+        const data = res?.data ?? (Array.isArray(res) ? res : []);
+        this.processes = (Array.isArray(data) ? data : [])
+          .filter((cn: any) => cn.isActive !== false)
+          .map((cn: any) => ({
+            id: cn.id,
+            title: cn.name,
+            code: cn.code,
+            description: cn.description,
+            icon: this.caseTypeConfig[cn.code]?.icon || 'description',
+            route: this.caseTypeConfig[cn.code]?.route || '/citizen/services/case-form',
           }));
       },
       error: (err) => console.error(err),

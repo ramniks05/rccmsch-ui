@@ -13,6 +13,11 @@ export class FormSchemaService {
     this.caseTypesUrl = `${this.baseUrl}/admin/form-schemas/case-types`;
   }
 
+  /**
+   * Get Form Schema for a Case Type
+   * GET /api/admin/form-schemas/case-types/{caseTypeId} — No authentication required (Public endpoint)
+   * @param caseTypeId - The ID of the case type (filing type: NEW_FILE, APPEAL, etc.)
+   */
   getFormSchema(caseTypeId: number): Observable<any> {
     return this.http.get<any>(`${this.caseTypesUrl}/${caseTypeId}`);
   }

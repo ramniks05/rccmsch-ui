@@ -5,7 +5,7 @@
         <mat-icon>folder_special</mat-icon>
         Case Types Management
       </h1>
-      <p class="page-subtitle">Manage case types for the system</p>
+      <p class="page-subtitle">Manage case types (filing types: NEW_FILE, APPEAL, REVISION, etc.)</p>
     </div>
     <div class="header-actions">
       <button mat-raised-button color="primary" (click)="openCreateDialog()" class="create-btn">
@@ -20,21 +20,17 @@
   </div>
 
   <div class="page-content">
-    <!-- Error Message -->
     <div *ngIf="errorMessage" class="alert alert-error">
       <mat-icon>error</mat-icon>
       <span>{{ errorMessage }}</span>
     </div>
 
-    <!-- Loading Spinner -->
     <div *ngIf="isLoading" class="loading-container">
       <mat-spinner diameter="50"></mat-spinner>
       <p>Loading case types...</p>
     </div>
 
-    <!-- Table Container -->
     <div *ngIf="!isLoading" class="table-container">
-      <!-- Search Filter -->
       <div class="table-header">
         <mat-form-field appearance="outline" class="search-field">
           <mat-label>Search</mat-label>
@@ -43,97 +39,55 @@
         </mat-form-field>
       </div>
 
-      <!-- Data Table -->
       <div class="table-wrapper">
         <table mat-table [dataSource]="dataSource" matSort class="data-table">
-          <!-- ID Column -->
           <ng-container matColumnDef="id">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>
-              <mat-icon class="header-icon">tag</mat-icon>
-              ID
-            </th>
-            <td mat-cell *matCellDef="let caseType">
-              <div class="cell-content">
-                <mat-icon class="cell-icon">fingerprint</mat-icon>
-                <span>{{ caseType.id }}</span>
-              </div>
-            </td>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header><mat-icon class="header-icon">tag</mat-icon> ID</th>
+            <td mat-cell *matCellDef="let row"><div class="cell-content"><span>{{ row.id }}</span></div></td>
           </ng-container>
-
-          <!-- Code Column -->
-          <ng-container matColumnDef="code">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>
-              <mat-icon class="header-icon">code</mat-icon>
-              Code
-            </th>
-            <td mat-cell *matCellDef="let caseType">
-              <div class="cell-content">
-                <mat-icon class="cell-icon">qr_code</mat-icon>
-                <span class="code-text">{{ caseType.code }}</span>
-              </div>
-            </td>
+          <ng-container matColumnDef="typeCode">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header><mat-icon class="header-icon">code</mat-icon> Type Code</th>
+            <td mat-cell *matCellDef="let row"><div class="cell-content"><span class="code-text">{{ row.typeCode }}</span></div></td>
           </ng-container>
-
-          <!-- Name Column -->
-          <ng-container matColumnDef="name">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>
-              <mat-icon class="header-icon">description</mat-icon>
-              Name
-            </th>
-            <td mat-cell *matCellDef="let caseType">
-              <div class="cell-content">
-                <mat-icon class="cell-icon">folder</mat-icon>
-                <span class="name-text">{{ caseType.name }}</span>
-              </div>
-            </td>
+          <ng-container matColumnDef="typeName">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header><mat-icon class="header-icon">description</mat-icon> Type Name</th>
+            <td mat-cell *matCellDef="let row"><div class="cell-content"><span class="name-text">{{ row.typeName }}</span></div></td>
           </ng-container>
-
-          <!-- Description Column -->
-          <ng-container matColumnDef="description">
-            <th mat-header-cell *matHeaderCellDef>
-              <mat-icon class="header-icon">info</mat-icon>
-              Description
-            </th>
-            <td mat-cell *matCellDef="let caseType">
-              <div class="cell-content" *ngIf="caseType.description; else noDescription">
-                <mat-icon class="cell-icon">text_snippet</mat-icon>
-                <span>{{ caseType.description }}</span>
-              </div>
-              <ng-template #noDescription>
-                <span class="no-data-text">-</span>
-              </ng-template>
-            </td>
+          <ng-container matColumnDef="caseNatureName">
+            <th mat-header-cell *matHeaderCellDef><mat-icon class="header-icon">folder_special</mat-icon> Case Nature</th>
+            <td mat-cell *matCellDef="let row"><div class="cell-content"><span>{{ row.caseNatureName }}</span></div></td>
           </ng-container>
-
-          <!-- Active Status Column -->
-          <ng-container matColumnDef="isActive">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>
-              <mat-icon class="header-icon">toggle_on</mat-icon>
-              Status
-            </th>
-            <td mat-cell *matCellDef="let caseType">
-              <span [class.active]="caseType.isActive" [class.inactive]="!caseType.isActive" class="status-badge">
-                <mat-icon class="status-icon">{{ caseType.isActive ? 'check_circle' : 'cancel' }}</mat-icon>
-                {{ caseType.isActive ? 'Active' : 'Inactive' }}
+          <ng-container matColumnDef="courtLevel">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header><mat-icon class="header-icon">account_balance</mat-icon> Court Level</th>
+            <td mat-cell *matCellDef="let row"><div class="cell-content"><span>{{ row.courtLevel }}</span></div></td>
+          </ng-container>
+          <ng-container matColumnDef="isAppeal">
+            <th mat-header-cell *matHeaderCellDef><mat-icon class="header-icon">swap_vert</mat-icon> Appeal</th>
+            <td mat-cell *matCellDef="let row">
+              <span [class.active]="row.isAppeal" [class.inactive]="!row.isAppeal" class="status-badge">
+                {{ row.isAppeal ? 'Yes' : 'No' }}
               </span>
             </td>
           </ng-container>
-
-          <!-- Actions Column -->
+          <ng-container matColumnDef="isActive">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header><mat-icon class="header-icon">toggle_on</mat-icon> Status</th>
+            <td mat-cell *matCellDef="let row">
+              <span [class.active]="row.isActive" [class.inactive]="!row.isActive" class="status-badge">
+                {{ row.isActive ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+          </ng-container>
           <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef>
-              <mat-icon class="header-icon">settings</mat-icon>
-              Actions
-            </th>
-            <td mat-cell *matCellDef="let caseType">
+            <th mat-header-cell *matHeaderCellDef><mat-icon class="header-icon">settings</mat-icon> Actions</th>
+            <td mat-cell *matCellDef="let row">
               <div class="action-buttons-cell">
-                <button mat-icon-button color="accent" [routerLink]="['/admin/form-schema-builder', caseType.id]" matTooltip="Manage Form Schema" class="action-btn-form">
+                <button mat-icon-button color="accent" [routerLink]="['/admin/form-schema-builder', row.id]" matTooltip="Manage Form Schema" class="action-btn-form">
                   <mat-icon>build</mat-icon>
                 </button>
-                <button mat-icon-button color="primary" (click)="openEditDialog(caseType)" matTooltip="Edit Case Type" class="action-btn-edit">
+                <button mat-icon-button color="primary" (click)="openEditDialog(row)" matTooltip="Edit Case Type" class="action-btn-edit">
                   <mat-icon>edit</mat-icon>
                 </button>
-                <button mat-icon-button color="warn" (click)="deleteCaseType(caseType)" matTooltip="Delete Case Type" class="action-btn-delete">
+                <button mat-icon-button color="warn" (click)="deleteCaseType(row)" matTooltip="Delete Case Type" class="action-btn-delete">
                   <mat-icon>delete</mat-icon>
                 </button>
               </div>
@@ -143,24 +97,15 @@
           <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
           <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
 
-          <!-- No data row -->
           <tr class="mat-row" *matNoDataRow>
             <td class="mat-cell" [attr.colspan]="displayedColumns.length">
-              <div class="no-data">
-                <mat-icon>inbox</mat-icon>
-                <p>No case types found</p>
-              </div>
+              <div class="no-data"><mat-icon>inbox</mat-icon><p>No case types found</p></div>
             </td>
           </tr>
         </table>
       </div>
 
-      <!-- Paginator -->
-      <mat-paginator
-        [pageSizeOptions]="[5, 10, 20, 50]"
-        [pageSize]="10"
-        showFirstLastButtons>
-      </mat-paginator>
+      <mat-paginator [pageSizeOptions]="[5, 10, 20, 50]" [pageSize]="10" showFirstLastButtons></mat-paginator>
     </div>
   </div>
 </div>

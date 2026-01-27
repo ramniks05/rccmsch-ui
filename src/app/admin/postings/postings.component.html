@@ -88,6 +88,23 @@
             </td>
           </ng-container>
 
+          <!-- Court Column -->
+          <ng-container matColumnDef="courtName">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+              <mat-icon class="header-icon">account_balance</mat-icon>
+              Court
+            </th>
+            <td mat-cell *matCellDef="let posting">
+              <div class="cell-content">
+                <mat-icon class="cell-icon">gavel</mat-icon>
+                <div class="court-info">
+                  <span class="name-text">{{ posting.courtName }}</span>
+                  <span class="code-text">({{ posting.courtCode }})</span>
+                </div>
+              </div>
+            </td>
+          </ng-container>
+
           <!-- Unit Column -->
           <ng-container matColumnDef="unitName">
             <th mat-header-cell *matHeaderCellDef mat-sort-header>
@@ -97,7 +114,7 @@
             <td mat-cell *matCellDef="let posting">
               <div class="cell-content">
                 <mat-icon class="cell-icon">place</mat-icon>
-                <span>{{ posting.unitName }}</span>
+                <span>{{ posting.unitName || '-' }}</span>
               </div>
             </td>
           </ng-container>

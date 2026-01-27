@@ -1,0 +1,188 @@
+<div class="admin-page-container">
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <mat-icon>account_balance</mat-icon>
+        Courts Management
+      </h1>
+      <p class="page-subtitle">Manage courts for the system</p>
+    </div>
+    <div class="header-actions">
+      <button mat-raised-button color="primary" (click)="openCreateDialog()" class="create-btn">
+        <mat-icon>add</mat-icon>
+        Create New Court
+      </button>
+      <button mat-raised-button color="primary" routerLink="/admin/home" class="back-btn">
+        <mat-icon>arrow_back</mat-icon>
+        Back to Dashboard
+      </button>
+    </div>
+  </div>
+
+  <div class="page-content">
+    <!-- Error Message -->
+    <div *ngIf="errorMessage" class="alert alert-error">
+      <mat-icon>error</mat-icon>
+      <span>{{ errorMessage }}</span>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div *ngIf="isLoading" class="loading-container">
+      <mat-spinner diameter="50"></mat-spinner>
+      <p>Loading courts...</p>
+    </div>
+
+    <!-- Table Container -->
+    <div *ngIf="!isLoading" class="table-container">
+      <!-- Search Filter -->
+      <div class="table-header">
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>Search</mat-label>
+          <input matInput (keyup)="applyFilter($event)" placeholder="Search courts...">
+          <mat-icon matPrefix>search</mat-icon>
+        </mat-form-field>
+      </div>
+
+      <!-- Data Table -->
+      <div class="table-wrapper">
+        <table mat-table [dataSource]="dataSource" matSort class="data-table">
+          <!-- ID Column -->
+          <ng-container matColumnDef="id">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+              <mat-icon class="header-icon">tag</mat-icon>
+              ID
+            </th>
+            <td mat-cell *matCellDef="let court">
+              <div class="cell-content">
+                <mat-icon class="cell-icon">fingerprint</mat-icon>
+                <span>{{ court.id }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Court Code Column -->
+          <ng-container matColumnDef="courtCode">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+              <mat-icon class="header-icon">code</mat-icon>
+              Court Code
+            </th>
+            <td mat-cell *matCellDef="let court">
+              <div class="cell-content">
+                <mat-icon class="cell-icon">qr_code</mat-icon>
+                <span class="code-text">{{ court.courtCode }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Court Name Column -->
+          <ng-container matColumnDef="courtName">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+              <mat-icon class="header-icon">description</mat-icon>
+              Court Name
+            </th>
+            <td mat-cell *matCellDef="let court">
+              <div class="cell-content">
+                <mat-icon class="cell-icon">gavel</mat-icon>
+                <span class="name-text">{{ court.courtName }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Court Level Column -->
+          <ng-container matColumnDef="courtLevel">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+              <mat-icon class="header-icon">account_balance</mat-icon>
+              Court Level
+            </th>
+            <td mat-cell *matCellDef="let court">
+              <div class="cell-content">
+                <mat-icon class="cell-icon">layers</mat-icon>
+                <span>{{ court.courtLevel }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Court Type Column -->
+          <ng-container matColumnDef="courtType">
+            <th mat-header-cell *matHeaderCellDef>
+              <mat-icon class="header-icon">category</mat-icon>
+              Court Type
+            </th>
+            <td mat-cell *matCellDef="let court">
+              <div class="cell-content">
+                <mat-icon class="cell-icon">label</mat-icon>
+                <span>{{ court.courtType }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Unit Name Column -->
+          <ng-container matColumnDef="unitName">
+            <th mat-header-cell *matHeaderCellDef>
+              <mat-icon class="header-icon">location_city</mat-icon>
+              Administrative Unit
+            </th>
+            <td mat-cell *matCellDef="let court">
+              <div class="cell-content">
+                <mat-icon class="cell-icon">place</mat-icon>
+                <span>{{ court.unitName }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Active Status Column -->
+          <ng-container matColumnDef="isActive">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+              <mat-icon class="header-icon">toggle_on</mat-icon>
+              Status
+            </th>
+            <td mat-cell *matCellDef="let court">
+              <span [class.active]="court.isActive" [class.inactive]="!court.isActive" class="status-badge">
+                <mat-icon class="status-icon">{{ court.isActive ? 'check_circle' : 'cancel' }}</mat-icon>
+                {{ court.isActive ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>
+              <mat-icon class="header-icon">settings</mat-icon>
+              Actions
+            </th>
+            <td mat-cell *matCellDef="let court">
+              <div class="action-buttons-cell">
+                <button mat-icon-button color="primary" (click)="openEditDialog(court)" matTooltip="Edit Court" class="action-btn-edit">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button mat-icon-button color="warn" (click)="deleteCourt(court)" matTooltip="Delete Court" class="action-btn-delete">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+          <!-- No data row -->
+          <tr class="mat-row" *matNoDataRow>
+            <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+              <div class="no-data">
+                <mat-icon>inbox</mat-icon>
+                <p>No courts found</p>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- Paginator -->
+      <mat-paginator
+        [pageSizeOptions]="[5, 10, 20, 50]"
+        [pageSize]="10"
+        showFirstLastButtons>
+      </mat-paginator>
+    </div>
+  </div>
+</div>

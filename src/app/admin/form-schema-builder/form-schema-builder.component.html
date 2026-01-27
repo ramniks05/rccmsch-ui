@@ -45,9 +45,17 @@
           <mat-icon>info</mat-icon>
           <p>No active fields to preview. Add some fields and mark them as active to see the preview.</p>
         </div>
-        <form [formGroup]="previewForm" class="preview-form" *ngIf="formSchema && formSchema.fields.length > 0 && hasActiveFields()">
-          <ng-container *ngFor="let field of getSortedFields()">
-          <div *ngIf="field.isActive" class="preview-field">
+        <div *ngIf="showPreview && formSchema && formSchema.fields && formSchema.fields.length > 0 && hasActiveFields() && !previewFormReady" class="preview-loading">
+          <mat-spinner diameter="36"></mat-spinner>
+          <p>Building preview...</p>
+        </div>
+        <form [formGroup]="previewForm" class="preview-form" *ngIf="showPreview && formSchema && formSchema.fields && formSchema.fields.length > 0 && hasActiveFields() && previewFormReady">
+          <ng-container *ngFor="let group of getGroupedFields()">
+            <div class="form-group-section" *ngIf="hasActiveFieldsInGroup(group)">
+              <h3 class="group-title">{{ group.groupLabel }}</h3>
+              <div class="group-fields">
+                <ng-container *ngFor="let field of group.fields">
+                  <div *ngIf="field.isActive" class="preview-field">
             
             <!-- Use sanitized field name if available, fallback to original -->
             <ng-container [ngSwitch]="field.fieldType">
@@ -131,7 +139,10 @@
 
             </ng-container>
 
-          </div>
+                  </div>
+                </ng-container>
+              </div>
+            </div>
           </ng-container>
         </form>
       </mat-card-content>
@@ -140,7 +151,57 @@
 
   <!-- Edit Mode - Field Management -->
   <div *ngIf="!showPreview && formSchema && !loading" class="fields-management">
+    <!-- Field Groups Management Section -->
     <div class="section-header">
+      <h3>
+        <mat-icon>folder</mat-icon>
+        Field Groups
+      </h3>
+      <button mat-raised-button color="accent" (click)="openFieldGroupDialog()">
+        <mat-icon>add</mat-icon>
+        Create Group
+      </button>
+    </div>
+
+    <div *ngIf="fieldGroups.length === 0" class="empty-state">
+      <mat-icon>folder_open</mat-icon>
+      <p>No field groups created yet. Create a group to organize your form fields.</p>
+    </div>
+
+    <div *ngIf="fieldGroups.length > 0" class="field-groups-list">
+      <mat-card *ngFor="let group of fieldGroups" class="group-card">
+        <mat-card-content>
+          <div class="group-info">
+            <div class="group-header">
+              <div>
+                <h4>{{ group.groupLabel }}</h4>
+                <span class="group-code">{{ group.groupCode }}</span>
+              </div>
+              <div class="group-badges">
+                <span class="badge" [class.active]="group.isActive">
+                  {{ group.isActive ? 'Active' : 'Inactive' }}
+                </span>
+                <span class="badge order-badge">Order: {{ group.displayOrder }}</span>
+              </div>
+            </div>
+            <div class="group-details" *ngIf="group.description">
+              <p>{{ group.description }}</p>
+            </div>
+          </div>
+        </mat-card-content>
+        <mat-card-actions align="end">
+          <button mat-icon-button color="primary" (click)="openFieldGroupDialog(group)" matTooltip="Edit">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button color="warn" (click)="deleteFieldGroup(group)" matTooltip="Delete">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </mat-card-actions>
+      </mat-card>
+    </div>
+
+    <!-- Form Fields Management Section -->
+    <div class="section-header" style="margin-top: 32px;">
       <h3>
         <mat-icon>list</mat-icon>
         Form Fields
@@ -157,61 +218,81 @@
     </div>
 
     <div *ngIf="formSchema.fields.length > 0" class="fields-list">
-      <mat-card *ngFor="let field of getSortedFields(); let i = index" class="field-card">
-        <mat-card-content>
-          <div class="field-info">
-            <div class="field-header">
-              <div class="field-title">
-                <mat-icon class="field-icon">{{ getFieldIcon(field.fieldType) }}</mat-icon>
-                <div>
-                  <h4>{{ field.fieldLabel }}</h4>
-                  <span class="field-name">{{ field.fieldName }}</span>
+      <ng-container *ngFor="let item of getFlatFieldsForList()">
+        <div *ngIf="item.type === 'group'" class="field-group-section">
+          <h4 class="group-header">{{ item.groupLabel }}</h4>
+        </div>
+        <mat-card *ngIf="item.type === 'field'" class="field-card">
+          <mat-card-content>
+            <div class="field-info">
+              <div class="field-header">
+                <div class="field-title">
+                  <mat-icon class="field-icon">{{ getFieldIcon(item.field.fieldType) }}</mat-icon>
+                  <div>
+                    <h4>{{ item.field.fieldLabel }}</h4>
+                    <span class="field-name">{{ item.field.fieldName }}</span>
+                  </div>
+                </div>
+                <div class="field-badges">
+                  <span class="badge" [class.required]="item.field.isRequired" [class.active]="item.field.isActive">
+                    {{ item.field.isRequired ? 'Required' : 'Optional' }}
+                  </span>
+                  <span class="badge type-badge">{{ getFieldTypeLabel(item.field.fieldType) }}</span>
+                  <span class="badge order-badge">Order: {{ item.field.displayOrder }}</span>
                 </div>
               </div>
-              <div class="field-badges">
-                <span class="badge" [class.required]="field.isRequired" [class.active]="field.isActive">
-                  {{ field.isRequired ? 'Required' : 'Optional' }}
-                </span>
-                <span class="badge type-badge">{{ getFieldTypeLabel(field.fieldType) }}</span>
-                <span class="badge order-badge">Order: {{ field.displayOrder }}</span>
+              <div class="field-details">
+                <div class="detail-item" *ngIf="item.field.placeholder">
+                  <mat-icon>label</mat-icon>
+                  <span>Placeholder: {{ item.field.placeholder }}</span>
+                </div>
+                <div class="detail-item" *ngIf="item.field.helpText">
+                  <mat-icon>help</mat-icon>
+                  <span>{{ item.field.helpText }}</span>
+                </div>
+                <div class="detail-item" *ngIf="item.field.defaultValue">
+                  <mat-icon>text_fields</mat-icon>
+                  <span>Default: {{ item.field.defaultValue }}</span>
+                </div>
+                <div class="detail-item" *ngIf="item.field.fieldOptions">
+                  <mat-icon>list</mat-icon>
+                  <span>Options: {{ getFieldOptionsDisplay(item.field) }}</span>
+                </div>
               </div>
             </div>
-            
-            <div class="field-details">
-              <div class="detail-item" *ngIf="field.placeholder">
-                <mat-icon>label</mat-icon>
-                <span>Placeholder: {{ field.placeholder }}</span>
-              </div>
-              <div class="detail-item" *ngIf="field.helpText">
-                <mat-icon>help</mat-icon>
-                <span>{{ field.helpText }}</span>
-              </div>
-              <div class="detail-item" *ngIf="field.defaultValue">
-                <mat-icon>text_fields</mat-icon>
-                <span>Default: {{ field.defaultValue }}</span>
-              </div>
-              <div class="detail-item" *ngIf="field.fieldOptions">
-                <mat-icon>list</mat-icon>
-                <span>Options: {{ getFieldOptionsDisplay(field) }}</span>
-              </div>
-            </div>
-          </div>
-        </mat-card-content>
-        <mat-card-actions align="end">
-          <button mat-icon-button (click)="moveFieldUp(i)" [disabled]="i === 0" matTooltip="Move Up">
-            <mat-icon>arrow_upward</mat-icon>
-          </button>
-          <button mat-icon-button (click)="moveFieldDown(i)" [disabled]="i === getSortedFieldsCount() - 1" matTooltip="Move Down">
-            <mat-icon>arrow_downward</mat-icon>
-          </button>
-          <button mat-icon-button color="primary" (click)="openFieldDialog(field, i)" matTooltip="Edit">
-            <mat-icon>edit</mat-icon>
-          </button>
-          <button mat-icon-button color="warn" (click)="deleteField(i)" matTooltip="Delete">
-            <mat-icon>delete</mat-icon>
-          </button>
-        </mat-card-actions>
-      </mat-card>
+          </mat-card-content>
+          <mat-card-actions align="end">
+            <button mat-icon-button
+                    type="button"
+                    matTooltip="Move Up"
+                    [disabled]="item.sortedIndex === 0"
+                    (click)="moveFieldUpBySortedIndex(item.sortedIndex)">
+              <mat-icon>arrow_upward</mat-icon>
+            </button>
+            <button mat-icon-button
+                    type="button"
+                    matTooltip="Move Down"
+                    [disabled]="item.sortedIndex === getSortedFieldsCount() - 1"
+                    (click)="moveFieldDownBySortedIndex(item.sortedIndex)">
+              <mat-icon>arrow_downward</mat-icon>
+            </button>
+            <button mat-icon-button
+                    type="button"
+                    color="primary"
+                    matTooltip="Edit"
+                    (click)="editFieldByIndex(item.field)">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button
+                    type="button"
+                    color="warn"
+                    matTooltip="Delete"
+                    (click)="deleteFieldByIndex(item.schemaIndex)">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </mat-card-actions>
+        </mat-card>
+      </ng-container>
     </div>
   </div>
 </div>

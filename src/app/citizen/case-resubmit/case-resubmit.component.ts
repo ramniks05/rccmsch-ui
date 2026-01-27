@@ -90,10 +90,11 @@ export class CaseResubmitComponent implements OnInit {
   }
 
   loadSchema(caseTypeId: number): void {
+    // Form schemas are now linked to Case Type (not Case Nature)
     this.schemaService.getFormSchema(caseTypeId).subscribe({
       next: (res) => {
         const data = res.data;
-        this.caseTypeName = data.caseTypeName;
+        this.caseTypeName = data.caseTypeName || data.caseTypeCode || 'Case Form';
         this.fields = data.fields
           .filter((f: any) => f.isActive)
           .sort((a: any, b: any) => a.displayOrder - b.displayOrder);
@@ -214,5 +215,13 @@ export class CaseResubmitComponent implements OnInit {
         console.error('Case resubmission error:', error);
       }
     });
+  }
+
+  /**
+   * Get unique ID for file input to ensure label for attribute matches
+   */
+  getFileInputId(field: any): string {
+    const id = field.id || field.fieldName;
+    return `file-input-resubmit-${id}`;
   }
 }
