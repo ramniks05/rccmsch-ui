@@ -1,12 +1,7 @@
-import { HomeData } from 'src/assets/home-model';
-import { HOME_DATA } from './../../../assets/mock-home-data';
 import { Component, OnInit } from '@angular/core';
-
-interface Banner {
-  imageUrl: string;
-  title: string;
-  subtitle: string;
-}
+import { HomeData, Service } from 'src/assets/home-model';
+import { HOME_DATA } from '../../../assets/mock-home-data';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-index',
@@ -14,94 +9,54 @@ interface Banner {
   styleUrls: ['./index.component.scss'],
 })
 export class IndexComponent implements OnInit {
-  // component.ts (snippet)
-  highlights = [
-    {
-      title: 'New Circular Issued',
-      description: 'Important circular regarding administrative changes.',
-      icon: 'description',
-    },
-    {
-      title: 'Transfer Policy Update',
-      description: 'Latest update on transfer & posting guidelines.',
-      icon: 'swap_horiz',
-    },
-    {
-      title: 'Training Schedule',
-      description: 'Upcoming capacity building programs.',
-      icon: 'school',
-    },
-  ];
-
-  notices = [
-    'Departmental Promotion Committee meeting on 12 Feb',
-    'Annual Property Return submission deadline extended',
-    'New HRMS module launched',
-  ];
-
-  // sidebar-menu.component.ts (menu structure)
-  menu = [
-    {
-      label: 'Dashboard',
-      icon: 'dashboard',
-    },
-    {
-      label: 'Services',
-      icon: 'miscellaneous_services',
-      children: ['Land Records', 'Mutation', 'Revenue Courts', 'Certificates'],
-    },
-    {
-      label: 'Applications',
-      icon: 'assignment',
-      children: ['Apply Online', 'Track Status', 'Pending Applications'],
-    },
-    {
-      label: 'Circulars',
-      icon: 'description',
-    },
-    {
-      label: 'Help & Support',
-      icon: 'support_agent',
-    },
-  ];
-
-  banners: Banner[] = [
-    {
-      imageUrl: '../../../assets/home-banner.jpg',
-      title: 'Digital Land Services',
-      subtitle: 'Transparent, citizen-centric revenue governance',
-    },
-    {
-      imageUrl: '../../../assets/manipurlegislativeassembly.jpg',
-      title: 'Fast & Secure Applications',
-      subtitle: 'Track applications and services online',
-    },
-    {
-      imageUrl: '../../../assets/sc-manipur-organe.jpeg',
-      title: 'Single Unified Portal',
-      subtitle: 'All land & revenue services at one place',
-    },
-  ];
-
+  // ================= DATA =================
   data: HomeData = HOME_DATA;
+
+  banners = this.data.banners ?? [];
+  highlights = this.data.highlights ?? [];
+  services: Service[] = this.data.services ?? [];
+  menu = this.data.menu ?? [];
+  marqueeText = this.data.marqueeText ?? '';
+
   animatedStatistics: number[] = [];
-  marqueeText =
-    'Online services available | Apply digitally | Transparent governance';
   activeBanner = 0;
 
+  constructor(private router: Router) {}
+
   ngOnInit(): void {
-    setInterval(() => {
-      this.activeBanner = (this.activeBanner + 1) % this.banners.length;
-    }, 5000);
-    document.documentElement.style.setProperty(
-      '--primary-color',
-      this.data.stateConfig.primaryColor,
-    );
+    this.setThemeColor();
+    this.startBannerRotation();
     this.animateStatistics();
   }
 
+  // ================= UI HELPERS =================
+  toggle(index: number): void {
+    this.services = this.services.map((service, i) => ({
+      ...service,
+      open: i === index ? !service.open : false,
+    }));
+  }
+
+  // ================= PRIVATE METHODS =================
+  private startBannerRotation(): void {
+    if (!this.banners.length) return;
+
+    setInterval(() => {
+      this.activeBanner = (this.activeBanner + 1) % this.banners.length;
+    }, 5000);
+  }
+
+  private setThemeColor(): void {
+    document.documentElement.style.setProperty(
+      '--primary-color',
+      this.data.stateConfig?.primaryColor ?? '#007bff',
+    );
+  }
+
   private animateStatistics(): void {
-    this.data.statistics.forEach((stat: any, index: any) => {
+    if (!this.data.statistics?.length) return;
+
+    this.data.statistics.forEach((stat, index) => {
       let current = 0;
       const step = Math.ceil(stat.value / 60);
 
@@ -114,5 +69,13 @@ export class IndexComponent implements OnInit {
         this.animatedStatistics[index] = current;
       }, 20);
     });
+  }
+
+  goToLogin() {
+    this.router.navigate(["home/login"])
+  }
+
+  goToRegistration() {
+    this.router.navigate(["registration"])
   }
 }

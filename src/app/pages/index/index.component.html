@@ -20,6 +20,7 @@
       <!-- CENTER : Secondary Logo (Project / Portal) -->
       <div class="col-lg-2 col-md-2 col-sm-12 text-center portal-logo">
         <img src="../../../assets/swatchh-bharat.png" alt="Portal Logo" />
+        <!-- <img src="../../../assets/Digital_India_logo.png" alt="Portal Logo" /> -->
       </div>
 
       <!-- RIGHT : Accessibility + Auth -->
@@ -77,12 +78,12 @@
 
         <!-- ROW 2 : AUTH ACTIONS -->
         <div class="auth-buttons">
-          <button class="login-btn">
+          <button class="login-btn" (click)="goToLogin()">
             <mat-icon>lock</mat-icon>
             Login
           </button>
 
-          <button class="register-btn">
+          <button class="register-btn" (click)="goToRegistration()">
             <mat-icon>person_add</mat-icon>
             Register
           </button>
@@ -122,7 +123,7 @@
 </nav>
 
 <!-- ===== NEXT SECTION : Sidebar + Content (Below Banner) ===== -->
-<section class="container sidebarMenu__outer next-section">
+<section class="container-services sidebarMenu__outer next-section">
   <div class="row">
     <!-- LEFT : SAME SIDEBAR -->
     <!-- LEFT : SIDEBAR -->
@@ -167,40 +168,37 @@
           </div>
         </div>
       </section>
-
     </div>
 
+    <!-- SECTION HEADER -->
+    <div class="section-header">
+      <h2>Latest Updates & Highlights</h2>
+      <p>Important announcements, circulars and department updates</p>
+    </div>
 
-      <!-- SECTION HEADER -->
-      <div class="section-header">
-        <h2>Latest Updates & Highlights</h2>
-        <p>Important announcements, circulars and department updates</p>
+    <!-- CARDS GRID -->
+    <div class="row">
+      <div class="col-md-6 col-lg-8 mb-4">
+        <div class="row">
+          <div class="col-md-6 col-lg-4 mb-4" *ngFor="let item of highlights">
+            <div class="info-card">
+              <div class="card-icon">
+                <mat-icon>{{ item.icon }}</mat-icon>
+              </div>
+
+              <div class="card-body">
+                <h5>{{ item.title }}</h5>
+                <h2 class="stat-value">{{ item.description }}</h2>
+              </div>
+
+              <div class="card-footer">
+                <a href="javascript:void(0)">View Details →</a>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-
-      <!-- CARDS GRID -->
-      <div class="row">
-        <div class="col-md-6 col-lg-8 mb-4">
-          <div class="row">
-            <div class="col-md-6 col-lg-4 mb-4" *ngFor="let item of highlights">
-          <div class="info-card">
-            <div class="card-icon">
-              <mat-icon>{{ item.icon }}</mat-icon>
-            </div>
-
-            <div class="card-body">
-              <h5>{{ item.title }}</h5>
-              <p>{{ item.description }}</p>
-            </div>
-
-            <div class="card-footer">
-              <a href="javascript:void(0)">View Details →</a>
-            </div>
-          </div>
-        </div>
-
-          </div>
-        </div>
-         <!-- Info Cards Column -->
+      <!-- Info Cards Column -->
       <div class="col-md-6 col-lg-4 mb-4">
         <div class="card">
           <h5 class="card-title pt-20 asbb p-1 fw-bold whats_new">
@@ -250,18 +248,104 @@
           </div>
         </div>
       </div>
-      </div>
+    </div>
 
-      <!-- NOTICE BOARD -->
-      <div class="notice-board">
-        <h3>Notice Board</h3>
-        <ul>
-          <li *ngFor="let notice of notices">
-            <mat-icon>campaign</mat-icon>
-            <span>{{ notice }}</span>
-          </li>
-        </ul>
+    <div class="container-services my-4">
+      <div class="row">
+        <!-- SECTION 1 : Documents Available -->
+        <div class="col-lg-4 col-md-6 mb-4">
+          <div class="doc-section">
+            <h5 class="section-title">📄 Documents Available</h5>
+
+            <div class="doc-item">
+              <span class="pdf-icon">PDF</span>
+              <a href="#">The Manipur Revenue Code (Amendment) Act, 2021</a>
+            </div>
+
+            <div class="doc-item">
+              <span class="pdf-icon">PDF</span>
+              <a href="#">The Manipur Revenue Code (Amendment) Act, 2020</a>
+            </div>
+
+            <div class="doc-item">
+              <span class="pdf-icon">PDF</span>
+              <a href="#">The Manipur Revenue Code (Amendment) Act, 2019</a>
+            </div>
+
+            <div class="doc-item highlight">
+              <span class="pdf-icon">PDF</span>
+              <a href="#">Manipur Revenue Code Bill – 2006 (E-Book)</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 2 : Vision -->
+        <div class="col-lg-4 col-md-6 mb-4">
+          <div class="vm-section vision">
+            <h5 class="vm-title">
+              <span class="vm-icon vision-icon"></span>
+              VISION
+            </h5>
+            <p>
+              Computerization of all the revenue courts of the state to ensure
+              100% transparency in proceedings and to make information related
+              to cases, due dates, orders passed by courts and proceedings
+              available to litigants, advocates and the general public.
+            </p>
+          </div>
+        </div>
+
+        <!-- SECTION 3 : Mission -->
+        <div class="col-lg-4 col-md-12 mb-4">
+          <div class="vm-section mission">
+            <h5 class="vm-title">
+              <span class="vm-icon mission-icon"></span>
+              MISSION
+            </h5>
+            <p>
+              To bring all 3073 revenue courts of the state, from Naib Tehsildar
+              Court to the Revenue Council, onto a unified online platform for
+              viewing case status, proceedings, due dates and orders passed by
+              the courts.
+            </p>
+          </div>
+        </div>
       </div>
+    </div>
+
+    <section class="services-section">
+      <div class="container-services">
+        <h3 class="text-center section-title mb-4">Services</h3>
+
+        <div class="row">
+          <ng-container *ngFor="let service of services; let i = index">
+            <div class="col-lg-4 col-md-6 mb-4">
+              <div class="service-card" [class.active]="service.open">
+                <!-- Header -->
+                <div class="service-header" (click)="toggle(i)">
+                  <div class="service-left">
+                    <mat-icon class="service-icon">{{ service.icon }}</mat-icon>
+                    <span class="service-title">{{ service.title }}</span>
+                  </div>
+
+                  <mat-icon class="chevron">
+                    {{ service.open ? "expand_less" : "expand_more" }}
+                  </mat-icon>
+                </div>
+
+                <!-- Body -->
+                <div class="service-body" *ngIf="service.open">
+                  <ul>
+                    <li *ngFor="let item of service.items">
+                      <a [href]="item.link">• {{ item.label }}</a>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </ng-container>
+        </div>
+      </div>
+    </section>
   </div>
 </section>
-

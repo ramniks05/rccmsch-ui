@@ -13,8 +13,6 @@ export class AppComponent {
       if (event instanceof NavigationEnd) {
         const hiddenRoutes = ['/home/index', '/error'];
         this.showHeader = !hiddenRoutes.includes(event.urlAfterRedirects);
-        console.log(this.showHeader);
-
       }
     });
   }

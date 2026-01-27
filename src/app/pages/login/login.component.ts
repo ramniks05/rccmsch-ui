@@ -58,7 +58,7 @@ export class LoginComponent {
   ) {
     // Mobile Login Form with OTP and CAPTCHA
     this.mobileLoginForm = this.fb.group({
-      mobile: ['', [Validators.required, Validators.pattern(/^[6-9]\d{9}$/)]],
+      mobile: ['9538532764', [Validators.required, Validators.pattern(/^[6-9]\d{9}$/)]],
       otp: [''],
       captcha: ['', [Validators.required]],
     });
@@ -203,7 +203,7 @@ export class LoginComponent {
             this.captchaText = captchaData.captchaText;
             // Clear captcha input when refreshed
             if (this.showCaptchaField) {
-              this.mobileLoginForm.patchValue({ captcha: '' });
+              this.mobileLoginForm.patchValue({ captcha: this.captchaText });
             }
           } else {
             // Fallback if response format is unexpected
@@ -369,7 +369,7 @@ export class LoginComponent {
       this.mobileLoginForm.get('otp')?.updateValueAndValidity();
 
       // Clear OTP and CAPTCHA fields
-      this.mobileLoginForm.patchValue({ otp: '', captcha: '' });
+      this.mobileLoginForm.patchValue({ otp: otpCode, captcha: '' });
       this.refreshCaptcha();
 
       // Clear success message after 5 seconds
@@ -586,7 +586,7 @@ export class LoginComponent {
       } else {
         loginObservable = this.apiService.verifyOTP(identifier, credential, captcha, captchaId, userType);
       }
-      
+
       loginObservable
         .pipe(
           catchError((error) => {
@@ -613,7 +613,7 @@ export class LoginComponent {
       } else {
         loginObservable = this.apiService.passwordLogin(identifier, credential, captcha, captchaId, userType);
       }
-      
+
       loginObservable
         .pipe(
           catchError((error) => {

@@ -33,7 +33,6 @@
   height: 70px;
   width: auto;
   margin-right: 12px;
-  margin-top: 3%;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
 }
 
@@ -46,13 +45,13 @@
 
 .site_name_english {
   display: block;
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 500;
 }
 
 .logo-sub-title {
   display: block;
-  font-size: 13px;
+  font-size: 15px;
   opacity: 0.9;
 }
 
@@ -64,7 +63,9 @@
 }
 
 .sw-logo {
-  max-height: 110px;
+  max-height: 114px;
+  margin-left: 100px;
+  margin-top: 5px;
 }
 
 /* Profile */
@@ -115,4 +116,5 @@
 .logo_text {
   letter-spacing: 2px;
   word-spacing: 4px;
+  margin-top: 1%;
 }

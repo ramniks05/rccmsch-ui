@@ -12,7 +12,8 @@ export class LandProcessTypesComponent {
   caseTypeConfig: Record<string, { icon: string; route: string }> = {
     MUTATION_GIFT_SALE: {
       icon: 'assignment',
-      route: '/citizen/services/stepper-case-form',
+      route: '/citizen/services/case-form',
+      // route: '/citizen/services/stepper-case-form',
     },
     MUTATION_DEATH: {
       icon: 'person_off',
