@@ -1,0 +1,233 @@
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h4 class="mb-0">Document Template Configuration</h4>
+          <p class="mb-0 small">Configure HTML templates for Notice, Ordersheet, and Judgement documents per case nature</p>
+        </div>
+        <div class="card-body">
+          <!-- Selection Section -->
+          <div class="row mb-4">
+            <div class="col-md-4">
+              <label for="caseNature" class="form-label fw-bold">Case Nature <span class="text-danger">*</span></label>
+              <select 
+                id="caseNature" 
+                class="form-select" 
+                [(ngModel)]="selectedCaseNatureId" 
+                (change)="onCaseNatureChange()"
+                [disabled]="loading">
+                <option [ngValue]="null">-- Select Case Nature --</option>
+                <option *ngFor="let nature of caseNatures" [ngValue]="nature.id">
+                  {{ nature.name }} ({{ nature.code }})
+                </option>
+              </select>
+              <small class="form-text text-muted">Default configuration level</small>
+            </div>
+            <div class="col-md-3">
+              <label for="caseType" class="form-label fw-bold">Case Type Override <span class="text-muted">(Optional)</span></label>
+              <select 
+                id="caseType" 
+                class="form-select" 
+                [(ngModel)]="selectedCaseTypeId" 
+                (change)="onCaseTypeChange()"
+                [disabled]="loading || !selectedCaseNatureId">
+                <option [ngValue]="null">-- None (Default) --</option>
+                <option *ngFor="let type of caseTypes" [ngValue]="type.id">
+                  {{ type.typeName }}
+                </option>
+              </select>
+              <small class="form-text text-muted">Override for case type</small>
+            </div>
+            <div class="col-md-3">
+              <label for="moduleType" class="form-label fw-bold">Document Type <span class="text-danger">*</span></label>
+              <select 
+                id="moduleType" 
+                class="form-select" 
+                [(ngModel)]="selectedModuleType" 
+                (change)="onModuleTypeChange()"
+                [disabled]="loading || !selectedCaseNatureId">
+                <option *ngFor="let type of moduleTypes" [value]="type">
+                  {{ getModuleTypeLabel(type) }}
+                </option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label fw-bold">Filter</label>
+              <div class="form-check">
+                <input 
+                  type="checkbox" 
+                  id="activeOnly" 
+                  class="form-check-input" 
+                  [(ngModel)]="activeOnly"
+                  (change)="toggleActiveOnly()"
+                  [disabled]="loading || !selectedCaseNatureId">
+                <label class="form-check-label" for="activeOnly">Active Only</label>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Info Alert for Override -->
+          <div *ngIf="selectedCaseTypeId" class="alert alert-info mb-4">
+            <i class="bi bi-info-circle"></i> 
+            <strong>Case Type Override Active:</strong> Templates configured here will override the case nature default for this specific case type.
+          </div>
+
+          <!-- Loading Indicator -->
+          <div *ngIf="loading" class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Loading...</p>
+          </div>
+
+          <!-- Templates List -->
+          <div *ngIf="!loading && selectedCaseNatureId && !showTemplateForm">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="mb-0">Templates ({{ templates.length }})</h5>
+              <button class="btn btn-success" (click)="addTemplate()">
+                <i class="bi bi-plus-circle"></i> Add Template
+              </button>
+            </div>
+
+            <div *ngIf="templates.length === 0" class="alert alert-info">
+              <i class="bi bi-info-circle"></i> No templates configured for this document type. Click "Add Template" to create one.
+            </div>
+
+            <div *ngIf="templates.length > 0" class="row">
+              <div *ngFor="let template of templates" class="col-md-6 col-lg-4 mb-3">
+                <div class="card h-100 template-card">
+                  <div class="card-header">
+                    <h6 class="mb-0">{{ template.templateName }}</h6>
+                    <small class="text-muted">Version {{ template.version || 1 }}</small>
+                  </div>
+                  <div class="card-body">
+                    <div class="mb-2">
+                      <strong>Status:</strong>
+                      <span *ngIf="template.isActive" class="badge bg-success ms-2">Active</span>
+                      <span *ngIf="!template.isActive" class="badge bg-secondary ms-2">Inactive</span>
+                    </div>
+                    <div class="mb-2">
+                      <strong>Edit After Sign:</strong>
+                      <span *ngIf="template.allowEditAfterSign" class="badge bg-warning ms-2">Allowed</span>
+                      <span *ngIf="!template.allowEditAfterSign" class="badge bg-info ms-2">Not Allowed</span>
+                    </div>
+                    <div *ngIf="template.createdAt" class="text-muted small">
+                      Created: {{ template.createdAt | date:'short' }}
+                    </div>
+                    <div *ngIf="template.updatedAt" class="text-muted small">
+                      Updated: {{ template.updatedAt | date:'short' }}
+                    </div>
+                  </div>
+                  <div class="card-footer bg-transparent">
+                    <button class="btn btn-sm btn-info me-1" (click)="viewTemplate(template)" title="Preview">
+                      <i class="bi bi-eye"></i>
+                    </button>
+                    <button class="btn btn-sm btn-primary me-1" (click)="editTemplate(template)" title="Edit">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm btn-secondary me-1" (click)="duplicateTemplate(template)" title="Duplicate">
+                      <i class="bi bi-files"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger" (click)="deleteTemplate(template)" title="Delete">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Template Form -->
+          <div *ngIf="showTemplateForm" class="border rounded p-4 bg-light">
+            <h5 class="mb-3">{{ editingTemplate ? 'Edit Template' : 'Add New Template' }}</h5>
+            
+            <div class="row g-3">
+              <div class="col-md-8">
+                <label for="templateName" class="form-label">Template Name <span class="text-danger">*</span></label>
+                <input 
+                  type="text" 
+                  id="templateName" 
+                  class="form-control" 
+                  [(ngModel)]="templateForm.templateName"
+                  placeholder="e.g., Default Notice Template">
+              </div>
+              
+              <div class="col-md-4">
+                <label for="version" class="form-label">Version</label>
+                <input 
+                  type="number" 
+                  id="version" 
+                  class="form-control" 
+                  [(ngModel)]="templateForm.version"
+                  min="1">
+              </div>
+
+              <div class="col-12">
+                <div class="form-check form-check-inline">
+                  <input 
+                    type="checkbox" 
+                    id="isActive" 
+                    class="form-check-input" 
+                    [(ngModel)]="templateForm.isActive">
+                  <label class="form-check-label" for="isActive">Active</label>
+                </div>
+                <div class="form-check form-check-inline">
+                  <input 
+                    type="checkbox" 
+                    id="allowEditAfterSign" 
+                    class="form-check-input" 
+                    [(ngModel)]="templateForm.allowEditAfterSign">
+                  <label class="form-check-label" for="allowEditAfterSign">Allow Edit After Sign</label>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <label class="form-label">Available Placeholders</label>
+                <div class="placeholder-buttons mb-2">
+                  <button 
+                    *ngFor="let placeholder of availablePlaceholders" 
+                    type="button"
+                    class="btn btn-sm btn-outline-secondary me-1 mb-1"
+                    (click)="insertPlaceholder(placeholder)">
+                    {{ placeholder }}
+                  </button>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <label for="templateHtml" class="form-label">HTML Template <span class="text-danger">*</span></label>
+                <textarea 
+                  id="templateHtml" 
+                  class="form-control font-monospace" 
+                  rows="15"
+                  [(ngModel)]="templateForm.templateHtml"
+                  placeholder="Enter HTML template content"></textarea>
+                <small class="form-text text-muted">Use placeholders like {{'{{'}}caseNumber{{'}}'}} for dynamic content</small>
+              </div>
+
+              <div class="col-12">
+                <label for="templateData" class="form-label">Template Metadata (JSON)</label>
+                <textarea 
+                  id="templateData" 
+                  class="form-control font-monospace" 
+                  rows="5"
+                  [(ngModel)]="templateForm.templateData"></textarea>
+                <small class="form-text text-muted">Store additional metadata as JSON (optional). Example: {{"{ \"placeholders\": [\"{{caseNumber}}\", \"{{applicantName}}\"] }"}}</small>
+              </div>
+
+              <div class="col-12">
+                <button class="btn btn-primary me-2" (click)="saveTemplate()" [disabled]="loading">
+                  <i class="bi bi-save"></i> {{ editingTemplate ? 'Update Template' : 'Create Template' }}
+                </button>
+                <button class="btn btn-secondary" (click)="cancelTemplateForm()" [disabled]="loading">
+                  <i class="bi bi-x-circle"></i> Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

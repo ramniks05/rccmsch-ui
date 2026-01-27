@@ -28,9 +28,9 @@ export class WorkflowStateDialogComponent implements OnInit {
     this.stateForm = this.fb.group({
       stateCode: ['', [Validators.required, Validators.pattern(/^[A-Z_]+$/)]],
       stateName: ['', Validators.required],
-      stateOrder: [1, [Validators.required, Validators.min(1)]],
-      isInitialState: [false],
-      isFinalState: [false],
+      stateOrder: [null, [Validators.required, Validators.min(1)]],
+      isInitialState: [null],
+      isFinalState: [null],
       description: ['']
     });
   }
@@ -41,12 +41,12 @@ export class WorkflowStateDialogComponent implements OnInit {
         stateCode: this.data.state.stateCode,
         stateName: this.data.state.stateName,
         stateOrder: this.data.state.stateOrder,
-        isInitialState: this.data.state.isInitialState,
-        isFinalState: this.data.state.isFinalState,
+        isInitialState: this.data.state.isInitialState ?? null,
+        isFinalState: this.data.state.isFinalState ?? null,
         description: this.data.state.description || ''
       });
       this.stateForm.get('stateCode')?.disable();
-    } else if (this.data.defaultOrder) {
+    } else if (this.data.defaultOrder !== null && this.data.defaultOrder !== undefined) {
       this.stateForm.patchValue({
         stateOrder: this.data.defaultOrder
       });
@@ -64,8 +64,8 @@ export class WorkflowStateDialogComponent implements OnInit {
       stateCode: formValue.stateCode,
       stateName: formValue.stateName,
       stateOrder: formValue.stateOrder,
-      isInitialState: formValue.isInitialState,
-      isFinalState: formValue.isFinalState,
+      isInitialState: formValue.isInitialState ?? undefined,
+      isFinalState: formValue.isFinalState ?? undefined,
       description: formValue.description
     };
 

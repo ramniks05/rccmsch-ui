@@ -174,7 +174,7 @@
           Mobile No. / Email
         </ng-container>
         <ng-template #officerUserIdLabel>
-          UserID (ROLE@LGD)
+          UserID (ROLE@COURT_CODE)
         </ng-template>
         <span class="required-star">*</span>
       </label>
@@ -182,7 +182,7 @@
         <input 
           matInput 
           formControlName="username" 
-          [placeholder]="selectedTab === 0 ? 'Please Enter Mobile No. or Email' : 'e.g., DISTRICT_OFFICER@IMW001'">
+          [placeholder]="selectedTab === 0 ? 'Please Enter Mobile No. or Email' : 'e.g., SDC@DC_COURT_IMPHAL_EAST'">
         <mat-icon matPrefix>{{ selectedTab === 0 ? 'person' : 'badge' }}</mat-icon>
         <mat-error *ngIf="passwordLoginForm.get('username')?.hasError('required') && passwordLoginForm.get('username')?.touched">
           {{ selectedTab === 0 ? 'Mobile number or email is required' : 'UserID is required' }}
@@ -192,7 +192,7 @@
             Please enter a valid mobile number or email
           </ng-container>
           <ng-template #officerUserIdError>
-            Invalid UserID format. Expected: ROLE@LGD_CODE (e.g., DISTRICT_OFFICER@IMW001)
+            Invalid UserID format. Expected: ROLE@COURT_CODE (e.g., SDC@DC_COURT_IMPHAL_EAST)
           </ng-template>
         </mat-error>
       </mat-form-field>

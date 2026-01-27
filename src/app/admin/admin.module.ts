@@ -33,7 +33,10 @@ import { AdministrativeUnitsComponent, AdminUnitDialogComponent } from './admini
 import { OfficersComponent, OfficerDialogComponent } from './officers/officers.component';
 import { PostingsComponent, PostingDialogComponent } from './postings/postings.component';
 import { CaseTypesComponent, CaseTypeDialogComponent } from './case-types/case-types.component';
-import { FormSchemaBuilderComponent, FormFieldDialogComponent } from './form-schema-builder/form-schema-builder.component';
+import { ActsComponent, ActDialogComponent } from './acts/acts.component';
+import { CaseNaturesComponent, CaseNatureDialogComponent } from './case-natures/case-natures.component';
+import { CourtsComponent, CourtDialogComponent } from './courts/courts.component';
+import { FormSchemaBuilderComponent, FormFieldDialogComponent, FormFieldGroupDialogComponent } from './form-schema-builder/form-schema-builder.component';
 import { SystemSettingsComponent } from './system-settings/system-settings.component';
 import { WorkflowListComponent } from './workflows/workflow-list/workflow-list.component';
 import { WorkflowBuilderComponent } from './workflows/workflow-builder/workflow-builder.component';
@@ -50,6 +53,8 @@ import { RegistrationFormsComponent } from './registration-forms/registration-fo
 import { RegistrationFormFieldDialogComponent } from './registration-forms/registration-form-field-dialog/registration-form-field-dialog.component';
 import { RegistrationFormGroupsComponent } from './registration-forms/registration-form-groups/registration-form-groups.component';
 import { RegistrationFormGroupDialogComponent } from './registration-forms/registration-form-groups/registration-form-group-dialog/registration-form-group-dialog.component';
+import { ModuleFormsComponent } from './module-forms/module-forms.component';
+import { DocumentTemplatesComponent } from './document-templates/document-templates.component';
 
 /**
  * Routes for Admin Module
@@ -96,6 +101,24 @@ const routes: Routes = [
     data: { breadcrumb: 'Case Types' }
   },
   {
+    path: 'acts',
+    component: ActsComponent,
+    canActivate: [AdminGuard],
+    data: { breadcrumb: 'Acts' }
+  },
+  {
+    path: 'case-natures',
+    component: CaseNaturesComponent,
+    canActivate: [AdminGuard],
+    data: { breadcrumb: 'Case Natures' }
+  },
+  {
+    path: 'courts',
+    component: CourtsComponent,
+    canActivate: [AdminGuard],
+    data: { breadcrumb: 'Courts' }
+  },
+  {
     path: 'form-schema-builder/:caseTypeId',
     component: FormSchemaBuilderComponent,
     canActivate: [AdminGuard],
@@ -124,6 +147,18 @@ const routes: Routes = [
     component: RegistrationFormsComponent,
     canActivate: [AdminGuard],
     data: { breadcrumb: 'Registration Forms' }
+  },
+  {
+    path: 'module-forms',
+    component: ModuleFormsComponent,
+    canActivate: [AdminGuard],
+    data: { breadcrumb: 'Module Forms Configuration' }
+  },
+  {
+    path: 'document-templates',
+    component: DocumentTemplatesComponent,
+    canActivate: [AdminGuard],
+    data: { breadcrumb: 'Document Templates' }
   }
 ];
 
@@ -143,8 +178,15 @@ const routes: Routes = [
     PostingDialogComponent,
     CaseTypesComponent,
     CaseTypeDialogComponent,
+    ActsComponent,
+    ActDialogComponent,
+    CaseNaturesComponent,
+    CaseNatureDialogComponent,
+    CourtsComponent,
+    CourtDialogComponent,
     FormSchemaBuilderComponent,
     FormFieldDialogComponent,
+    FormFieldGroupDialogComponent,
     SystemSettingsComponent,
     WorkflowListComponent,
     WorkflowBuilderComponent,
@@ -160,7 +202,9 @@ const routes: Routes = [
     RegistrationFormsComponent,
     RegistrationFormFieldDialogComponent,
     RegistrationFormGroupsComponent,
-    RegistrationFormGroupDialogComponent
+    RegistrationFormGroupDialogComponent,
+    ModuleFormsComponent,
+    DocumentTemplatesComponent
   ],
   imports: [
     CommonModule,

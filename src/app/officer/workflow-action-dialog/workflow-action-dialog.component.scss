@@ -1,0 +1,104 @@
+h2[mat-dialog-title] {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 0;
+
+  .action-icon {
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+
+    &.action-approve {
+      color: #4caf50;
+    }
+
+    &.action-reject {
+      color: #f44336;
+    }
+
+    &.action-return {
+      color: #ff9800;
+    }
+  }
+}
+
+.dialog-content {
+  padding: 16px 0;
+  min-width: 400px;
+}
+
+.info-section {
+  margin-bottom: 24px;
+  padding: 16px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+
+  p {
+    margin: 8px 0;
+
+    &.description {
+      color: rgba(0, 0, 0, 0.7);
+      font-style: italic;
+      margin-top: 12px;
+    }
+  }
+
+  .state-change {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: rgba(0, 0, 0, 0.6);
+    }
+
+    .from-state,
+    .to-state {
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .from-state {
+      background-color: #e3f2fd;
+      color: #1976d2;
+    }
+
+    .to-state {
+      background-color: #c8e6c9;
+      color: #2e7d32;
+    }
+  }
+}
+
+.action-form {
+  .full-width {
+    width: 100%;
+  }
+
+  .required-hint {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #ff9800;
+    font-size: 12px;
+
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+  }
+}
+
+mat-dialog-actions {
+  padding: 16px 24px;
+  border-top: 1px solid #e0e0e0;
+  margin-top: 16px;
+}

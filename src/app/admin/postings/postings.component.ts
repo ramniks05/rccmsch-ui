@@ -19,7 +19,7 @@ import { throwError } from 'rxjs';
   styleUrls: ['./postings.component.scss']
 })
 export class PostingsComponent implements OnInit, AfterViewInit {
-  displayedColumns: string[] = ['postingUserid', 'officerName', 'roleName', 'unitName', 'mobileNo', 'fromDate', 'toDate', 'isCurrent', 'actions'];
+  displayedColumns: string[] = ['postingUserid', 'officerName', 'roleName', 'courtName', 'unitName', 'mobileNo', 'fromDate', 'toDate', 'isCurrent', 'actions'];
   dataSource = new MatTableDataSource<any>([]);
   
   @ViewChild(MatPaginator) paginator!: MatPaginator;
@@ -28,7 +28,7 @@ export class PostingsComponent implements OnInit, AfterViewInit {
   isLoading = false;
   errorMessage = '';
   officers: any[] = [];
-  adminUnits: any[] = [];
+  courts: any[] = [];
   roles: any[] = [];
 
   constructor(
@@ -40,7 +40,7 @@ export class PostingsComponent implements OnInit, AfterViewInit {
   ngOnInit(): void {
     this.loadPostings();
     this.loadOfficers();
-    this.loadAdminUnits();
+    this.loadCourts();
     this.loadRoles();
   }
 
@@ -93,14 +93,14 @@ export class PostingsComponent implements OnInit, AfterViewInit {
   }
 
   /**
-   * Load admin units for dropdown
+   * Load courts for dropdown
    */
-  loadAdminUnits(): void {
-    this.adminService.getAllAdminUnits().subscribe({
+  loadCourts(): void {
+    this.adminService.getAllCourts().subscribe({
       next: (response) => {
         const apiResponse = response?.success !== undefined ? response : { success: true, data: response };
         if (apiResponse.success) {
-          this.adminUnits = apiResponse.data || [];
+          this.courts = apiResponse.data || [];
         }
       }
     });
@@ -151,7 +151,7 @@ export class PostingsComponent implements OnInit, AfterViewInit {
       data: { 
         mode: 'create',
         officers: this.officers,
-        adminUnits: this.adminUnits,
+        courts: this.courts,
         roles: this.roles
       }
     });
@@ -220,24 +220,24 @@ export class PostingsComponent implements OnInit, AfterViewInit {
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Administrative Unit *</mat-label>
-          <mat-select formControlName="unitId">
-            <mat-option *ngFor="let unit of data.adminUnits" [value]="unit.unitId">
-              {{ unit.unitName }} ({{ unit.unitLevel }})
+          <mat-label>Court *</mat-label>
+          <mat-select formControlName="courtId">
+            <mat-option *ngFor="let court of data.courts" [value]="court.id">
+              {{ court.courtName }} ({{ court.courtType }}) - {{ court.unitName || 'N/A' }}
             </mat-option>
           </mat-select>
-          <mat-error *ngIf="postingForm.get('unitId')?.hasError('required')">Administrative unit is required</mat-error>
+          <mat-error *ngIf="postingForm.get('courtId')?.hasError('required')">Court is required</mat-error>
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Role *</mat-label>
-          <mat-select formControlName="roleCode" [disabled]="!postingForm.get('unitId')?.value">
+          <mat-select formControlName="roleCode" [disabled]="!postingForm.get('courtId')?.value">
             <mat-option *ngFor="let role of availableRoles" [value]="role.roleCode">
               <mat-icon class="role-option-icon">{{ getRoleIcon(role.roleCode) }}</mat-icon>
               {{ role.roleName }} ({{ role.roleCode }})
             </mat-option>
           </mat-select>
-          <mat-hint *ngIf="!postingForm.get('unitId')?.value">Please select an administrative unit first</mat-hint>
+          <mat-hint *ngIf="!postingForm.get('courtId')?.value">Please select a court first</mat-hint>
           <mat-error *ngIf="postingForm.get('roleCode')?.hasError('required')">Role is required</mat-error>
         </mat-form-field>
       </form>
@@ -293,14 +293,14 @@ export class PostingDialogComponent {
   ) {
     this.postingForm = this.fb.group({
       officerId: ['', Validators.required],
-      unitId: ['', Validators.required],
+      courtId: ['', Validators.required],
       roleCode: ['', Validators.required]
     });
 
-    // Filter roles when unit is selected
-    this.postingForm.get('unitId')?.valueChanges.subscribe(unitId => {
-      if (unitId) {
-        this.filterRolesByUnit(unitId);
+    // Filter roles when court is selected
+    this.postingForm.get('courtId')?.valueChanges.subscribe(courtId => {
+      if (courtId) {
+        this.filterRolesByCourt(courtId);
       } else {
         this.availableRoles = [];
         this.postingForm.patchValue({ roleCode: '' });
@@ -309,18 +309,18 @@ export class PostingDialogComponent {
   }
 
   /**
-   * Filter roles based on selected administrative unit level
+   * Filter roles based on selected court level
    */
-  filterRolesByUnit(unitId: number): void {
-    const selectedUnit = this.data.adminUnits.find((unit: any) => unit.unitId === unitId);
-    if (!selectedUnit) {
+  filterRolesByCourt(courtId: number): void {
+    const selectedCourt = this.data.courts.find((court: any) => court.id === courtId);
+    if (!selectedCourt) {
       this.availableRoles = [];
       return;
     }
 
-    const unitLevel = selectedUnit.unitLevel;
+    const courtLevel = selectedCourt.courtLevel;
     
-    // Map unit levels to their respective officer roles
+    // Map court levels to their respective officer roles
     const levelRoleMap: any = {
       'STATE': 'STATE_ADMIN',
       'DISTRICT': 'DISTRICT_OFFICER',
@@ -328,14 +328,14 @@ export class PostingDialogComponent {
       'CIRCLE': 'CIRCLE_OFFICER'
     };
 
-    const officerRoleCode = levelRoleMap[unitLevel];
+    const officerRoleCode = levelRoleMap[courtLevel];
     
     // Filter roles: respective officer role + DEALING_ASSISTANT (available at all levels)
     this.availableRoles = this.data.roles.filter((role: any) => 
       role.roleCode === officerRoleCode || role.roleCode === 'DEALING_ASSISTANT'
     );
 
-    // Reset role selection when unit changes
+    // Reset role selection when court changes
     this.postingForm.patchValue({ roleCode: '' });
   }
 

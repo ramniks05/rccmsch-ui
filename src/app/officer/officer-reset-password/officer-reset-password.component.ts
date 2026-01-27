@@ -24,7 +24,7 @@ export class OfficerResetPasswordComponent implements OnInit {
     private adminService: AdminService
   ) {
     this.resetForm = this.fb.group({
-      userid: ['', [Validators.required, Validators.pattern('^[A-Z_]+@[A-Z0-9]+$')]],
+      userid: ['', [Validators.required, Validators.pattern('^[A-Z_]+@[A-Z0-9_]+$')]],
       newPassword: ['', [
         Validators.required,
         Validators.minLength(8),

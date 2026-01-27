@@ -1,0 +1,58 @@
+<h2 mat-dialog-title>
+  <mat-icon [class]="'action-icon action-' + transition.transitionCode.toLowerCase()">
+    {{ transition.transitionCode.includes('APPROVE') ? 'check_circle' : 
+       transition.transitionCode.includes('REJECT') ? 'cancel' : 
+       transition.transitionCode.includes('RETURN') ? 'undo' : 'play_arrow' }}
+  </mat-icon>
+  {{ transition.transitionName }}
+</h2>
+
+<mat-dialog-content>
+  <div class="dialog-content">
+    <div class="info-section" *ngIf="caseNumber">
+      <p><strong>Case Number:</strong> {{ caseNumber }}</p>
+    </div>
+
+    <div class="info-section">
+      <p><strong>Action:</strong> {{ transition.transitionName }}</p>
+      <p *ngIf="transition.description" class="description">{{ transition.description }}</p>
+      <p class="state-change">
+        <strong>State Change:</strong> 
+        <span class="from-state">{{ transition.fromStateCode }}</span>
+        <mat-icon>arrow_forward</mat-icon>
+        <span class="to-state">{{ transition.toStateCode }}</span>
+      </p>
+    </div>
+
+    <form [formGroup]="actionForm" class="action-form">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Comments</mat-label>
+        <textarea
+          matInput
+          formControlName="comments"
+          rows="5"
+          placeholder="Enter comments for this action..."
+          [required]="transition.requiresComment">
+        </textarea>
+        <mat-hint *ngIf="transition.requiresComment" class="required-hint">
+          <mat-icon>info</mat-icon>
+          Comments are required for this action
+        </mat-hint>
+        <mat-error *ngIf="actionForm.get('comments')?.hasError('required')">
+          Comments are required
+        </mat-error>
+      </mat-form-field>
+    </form>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">Cancel</button>
+  <button
+    mat-raised-button
+    [color]="getActionColor()"
+    (click)="onSubmit()"
+    [disabled]="actionForm.invalid">
+    {{ transition.transitionName }}
+  </button>
+</mat-dialog-actions>

@@ -88,23 +88,31 @@
 
 // Preview Mode
 .preview-container {
-  .preview-empty-state {
+  .preview-empty-state,
+  .preview-loading {
     text-align: center;
     padding: 40px 20px;
     color: #666;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
 
     mat-icon {
       font-size: 48px;
       width: 48px;
       height: 48px;
       color: #999;
-      margin-bottom: 16px;
     }
 
     p {
       margin: 0;
       font-size: 16px;
     }
+  }
+
+  .preview-loading mat-spinner {
+    flex-shrink: 0;
   }
 
   .preview-card {
@@ -137,6 +145,29 @@
     display: flex;
     flex-direction: column;
     gap: 20px;
+  }
+
+  .form-group-section {
+    margin-bottom: 32px;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+
+    .group-title {
+      margin: 0 0 20px 0;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #1976d2;
+      color: #1976d2;
+      font-size: 20px;
+      font-weight: 500;
+    }
+
+    .group-fields {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
   }
 
   .preview-field {
@@ -232,18 +263,104 @@
     }
   }
 
-  .fields-list {
+  .field-groups-list {
     display: flex;
     flex-direction: column;
     gap: 16px;
+    margin-bottom: 32px;
   }
 
-  .field-card {
+  .group-card {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     transition: box-shadow 0.3s;
 
     &:hover {
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .group-info {
+      .group-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 12px;
+
+        h4 {
+          margin: 0 0 4px 0;
+          color: #333;
+          font-size: 18px;
+        }
+
+        .group-code {
+          color: #666;
+          font-size: 12px;
+          font-family: monospace;
+          background-color: #f5f5f5;
+          padding: 2px 6px;
+          border-radius: 3px;
+        }
+
+        .group-badges {
+          display: flex;
+          gap: 8px;
+
+          .badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+
+            &.active {
+              background-color: #e8f5e9;
+              color: #2e7d32;
+            }
+
+            &.order-badge {
+              background-color: #f3e5f5;
+              color: #7b1fa2;
+            }
+          }
+        }
+      }
+
+      .group-details {
+        color: #666;
+        font-size: 14px;
+      }
+    }
+  }
+
+  .fields-list {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .field-group-section {
+    margin-bottom: 24px;
+
+    .group-header {
+      margin: 0 0 16px 0;
+      padding: 12px 16px;
+      background-color: #e3f2fd;
+      color: #1976d2;
+      font-size: 18px;
+      font-weight: 500;
+      border-radius: 4px;
+      border-left: 4px solid #1976d2;
+    }
+  }
+
+  .field-card {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    margin-bottom: 16px;
+    border-left: 4px solid transparent;
+
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      transform: translateY(-2px);
+      border-left-color: #1976d2;
     }
 
     mat-card-content {
@@ -345,6 +462,40 @@
     mat-card-actions {
       padding: 8px 16px;
       border-top: 1px solid #eee;
+      display: flex;
+      gap: 4px;
+      justify-content: flex-end;
+
+      button {
+        transition: all 0.2s ease;
+
+        &:hover:not([disabled]) {
+          transform: scale(1.1);
+        }
+
+        &[disabled] {
+          opacity: 0.4;
+          cursor: not-allowed;
+        }
+      }
+    }
+  }
+
+  .group-card {
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+    }
+
+    mat-card-actions {
+      button {
+        transition: all 0.2s ease;
+
+        &:hover {
+          transform: scale(1.1);
+        }
+      }
     }
   }
 }

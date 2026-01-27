@@ -33,10 +33,10 @@ export class WorkflowTransitionDialogComponent implements OnInit {
         this.duplicateCodeValidator()
       ]],
       transitionName: ['', Validators.required],
-      fromStateId: ['', Validators.required],
-      toStateId: ['', Validators.required],
-      requiresComment: [false],
-      isActive: [true],
+      fromStateId: [null, Validators.required],
+      toStateId: [null, Validators.required],
+      requiresComment: [null],
+      isActive: [null],
       description: ['']
     });
   }
@@ -66,8 +66,8 @@ export class WorkflowTransitionDialogComponent implements OnInit {
         transitionName: this.data.transition.transitionName,
         fromStateId: this.data.transition.fromStateId,
         toStateId: this.data.transition.toStateId,
-        requiresComment: this.data.transition.requiresComment || false,
-        isActive: this.data.transition.isActive !== false,
+        requiresComment: this.data.transition.requiresComment ?? null,
+        isActive: this.data.transition.isActive ?? null,
         description: this.data.transition.description || ''
       });
       this.transitionForm.get('transitionCode')?.disable();
@@ -91,8 +91,8 @@ export class WorkflowTransitionDialogComponent implements OnInit {
       transitionName: formValue.transitionName,
       fromStateId: formValue.fromStateId,
       toStateId: formValue.toStateId,
-      requiresComment: formValue.requiresComment,
-      isActive: formValue.isActive,
+      requiresComment: formValue.requiresComment ?? undefined,
+      isActive: formValue.isActive ?? undefined,
       description: formValue.description
     };
 

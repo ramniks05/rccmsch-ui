@@ -46,8 +46,8 @@ export class WorkflowPermissionDialogComponent implements OnInit {
       this.permissionForm.patchValue({
         roleCode: this.data.permission.roleCode,
         unitLevel: this.data.permission.unitLevel || null,
-        canInitiate: this.data.permission.canInitiate,
-        canApprove: this.data.permission.canApprove,
+        canInitiate: this.data.permission.canInitiate ?? false,
+        canApprove: this.data.permission.canApprove ?? false,
         hierarchyRule: this.data.permission.hierarchyRule || '',
         isActive: this.data.permission.isActive !== false
       });

@@ -13,6 +13,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatRadioModule } from '@angular/material/radio';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
@@ -59,6 +60,7 @@ import { JsonParsePipe } from '../core/pipes/json-parse.pipe';
     MatFormFieldModule,
     MatInputModule,
     MatCheckboxModule,
+    MatRadioModule,
     MatDividerModule,
     MatDatepickerModule,
     MatNativeDateModule,
@@ -79,6 +81,7 @@ import { JsonParsePipe } from '../core/pipes/json-parse.pipe';
     MatFormFieldModule,
     MatInputModule,
     MatCheckboxModule,
+    MatRadioModule,
     MatDividerModule,
     MatDatepickerModule,
     MatNativeDateModule,

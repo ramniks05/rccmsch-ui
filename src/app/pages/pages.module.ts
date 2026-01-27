@@ -19,15 +19,21 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 // Page Components
 import { HomeComponent } from './home/home.component';
 import { LoginComponent } from './login/login.component';
+import { LoginPageComponent } from './login-page/login-page.component';
 
 /**
  * Routes for Pages Module
- * Handles /home route (shows HomeComponent)
+ * Handles /home route (shows HomeComponent) and /login route (shows LoginPageComponent)
  */
 const routes: Routes = [
   {
     path: '',
     component: HomeComponent,
+    data: { breadcrumb: 'Home' }
+  },
+  {
+    path: 'login',
+    component: LoginPageComponent,
     data: { breadcrumb: 'Login' }
   }
 ];
@@ -39,7 +45,8 @@ const routes: Routes = [
 @NgModule({
   declarations: [
     HomeComponent,
-    LoginComponent
+    LoginComponent,
+    LoginPageComponent
   ],
   imports: [
     CommonModule,
