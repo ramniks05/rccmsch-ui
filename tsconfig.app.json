@@ -5,7 +5,9 @@
     "types": []
   },
   "files": [
-    "src/main.ts"
+    "src/main.ts",
+    "src/app/admin/workflows/workflow-condition-editor/workflow-condition-editor.component.ts",
+    "src/app/citizen/available-actions/available-actions.component.ts"
   ],
   "include": [
     "src/**/*.d.ts"
