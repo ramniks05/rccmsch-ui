@@ -362,4 +362,43 @@ export class CitizenCaseService {
   getActiveCaseTypes(): Observable<ApiResponse<CaseType[]>> {
     return this.getActiveCaseNatures();
   }
+
+  // ==================== Notice/Document APIs (Applicant) ====================
+
+  /**
+   * GET /api/citizen/cases/{caseId}/documents/{moduleType}
+   * View notice sent to applicant
+   * Authentication: Required (JWT token + X-User-Id header)
+   */
+  getNoticeForApplicant(caseId: number, moduleType: string = 'NOTICE'): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.apiUrl}/citizen/cases/${caseId}/documents/${moduleType}`,
+      { headers: this.getHeaders() }
+    ).pipe(
+      catchError((error) => {
+        // 404 means notice not sent yet
+        if (error.status === 404) {
+          return throwError(() => ({ ...error, notFound: true }));
+        }
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * POST /api/citizen/cases/{caseId}/documents/{moduleType}/accept
+   * Accept/Acknowledge receipt of notice
+   * Authentication: Required (JWT token + X-User-Id header)
+   */
+  acceptNotice(caseId: number, moduleType: string = 'NOTICE', comments?: string): Observable<ApiResponse<string>> {
+    let url = `${this.apiUrl}/citizen/cases/${caseId}/documents/${moduleType}/accept`;
+    if (comments) {
+      url += `?comments=${encodeURIComponent(comments)}`;
+    }
+    return this.http.post<ApiResponse<string>>(
+      url,
+      {},
+      { headers: this.getHeaders() }
+    );
+  }
 }

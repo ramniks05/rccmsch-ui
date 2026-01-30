@@ -260,8 +260,8 @@ export class WorkflowConfigService {
    * Get configured conditions for a transition (admin configuration UI).
    * GET /api/admin/workflow/transitions/{transitionId}/conditions
    */
-  getTransitionConditions(transitionId: number): Observable<ApiResponse<WorkflowCondition[]>> {
-    return this.http.get<ApiResponse<WorkflowCondition[]>>(
+  getTransitionConditions(transitionId: number): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
       `${this.apiUrl}/transitions/${transitionId}/conditions`,
       { headers: this.getHeaders() }
     );

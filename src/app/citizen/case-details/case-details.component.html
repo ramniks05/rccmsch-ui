@@ -68,6 +68,84 @@
       <!-- Available Actions (workflow transitions + checklist) -->
       <app-available-actions *ngIf="caseId" [caseId]="caseId"></app-available-actions>
 
+      <!-- Notice Section -->
+      <mat-card *ngIf="!isLoadingNotice && notice" class="notice-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>gavel</mat-icon>
+            Notice from Court
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <!-- Notice Content -->
+          <div class="notice-content" [innerHTML]="notice.contentHtml"></div>
+          
+          <!-- Acknowledge Button -->
+          <div class="notice-actions" *ngIf="canAcknowledgeNotice()">
+            <mat-divider class="my-3"></mat-divider>
+            <div class="acknowledge-section">
+              <p class="text-muted mb-2">
+                <mat-icon>info</mat-icon>
+                Please acknowledge that you have received and reviewed this notice.
+              </p>
+              <mat-form-field appearance="outline" class="full-width mb-3">
+                <mat-label>Comments (Optional)</mat-label>
+                <input matInput [(ngModel)]="acknowledgeComments" placeholder="Notice received and acknowledged">
+              </mat-form-field>
+              <button mat-raised-button color="primary" 
+                      (click)="acknowledgeNotice()" 
+                      [disabled]="isAcceptingNotice">
+                <mat-icon>{{ isAcceptingNotice ? 'hourglass_empty' : 'check_circle' }}</mat-icon>
+                {{ isAcceptingNotice ? 'Acknowledging...' : 'Acknowledge Receipt' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Already Acknowledged -->
+          <div class="already-acknowledged" *ngIf="!canAcknowledgeNotice()">
+            <mat-divider class="my-3"></mat-divider>
+            <div class="alert alert-success">
+              <mat-icon>check_circle</mat-icon>
+              <strong>Notice Acknowledged</strong>
+              <p>You have already acknowledged receipt of this notice.</p>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Notice Loading -->
+      <mat-card *ngIf="isLoadingNotice" class="notice-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>gavel</mat-icon>
+            Notice from Court
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="loading-container">
+            <mat-spinner diameter="40"></mat-spinner>
+            <p>Loading notice...</p>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Notice Not Available -->
+      <mat-card *ngIf="!isLoadingNotice && noticeNotAvailable && !notice" class="notice-card info-card-light">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>gavel</mat-icon>
+            Notice from Court
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="no-notice">
+            <mat-icon>info</mat-icon>
+            <p>No notice has been sent to you yet for this case.</p>
+            <small class="text-muted">You will be notified when a notice is available.</small>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
       <!-- Return for Correction Notice -->
       <mat-card *ngIf="canResubmit() && returnComment" class="warning-card">
         <mat-card-header>

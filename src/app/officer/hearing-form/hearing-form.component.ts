@@ -25,53 +25,39 @@ export class HearingFormComponent implements OnInit {
 
   ngOnInit(): void {
     if (this.caseId) {
-      this.loadFormSchema();
-      this.loadSubmittedData();
+      this.loadFormWithData();
     }
   }
 
   /**
-   * Load form schema for the case
+   * Load form schema and existing data (combined API call)
    */
-  loadFormSchema(): void {
+  loadFormWithData(): void {
     this.loading = true;
-    this.officerCaseService.getModuleFormSchema(this.caseId, 'HEARING').subscribe({
+    this.officerCaseService.getModuleFormWithData(this.caseId, 'HEARING').subscribe({
       next: (response) => {
-        this.formSchema = response.data || [];
-        this.initializeFormData();
         this.loading = false;
-      },
-      error: (error) => {
-        console.error('Error loading form schema:', error);
-        alert('Failed to load hearing form schema');
-        this.loading = false;
-      }
-    });
-  }
+        
+        if (response.success && response.data) {
+          // Set schema fields
+          if (response.data.schema?.fields) {
+            this.formSchema = response.data.schema.fields;
+          }
 
-  /**
-   * Load previously submitted form data
-   */
-  loadSubmittedData(): void {
-    this.officerCaseService.getSubmittedModuleFormData(this.caseId, 'HEARING').subscribe({
-      next: (response) => {
-        if (response.data) {
-          this.submittedData = response.data;
-          if (this.submittedData.formData) {
-            const parsedData = typeof this.submittedData.formData === 'string' 
-              ? JSON.parse(this.submittedData.formData) 
-              : this.submittedData.formData;
-            this.formData = { ...parsedData };
+          // Set existing form data if available
+          if (response.data.hasExistingData && response.data.formData) {
+            this.formData = { ...response.data.formData };
+            this.viewMode = true; // Show in view mode if data exists
+            this.submittedData = { formData: response.data.formData }; // Mark as submitted
+          } else {
+            this.initializeFormData(); // Initialize with defaults
           }
-          if (this.submittedData.remarks) {
-            this.remarks = this.submittedData.remarks;
-          }
-          this.viewMode = true; // Show in view mode if already submitted
         }
       },
-      error: (error) => {
-        console.error('Error loading submitted data:', error);
-        // Not an error if no data exists yet
+      error: (error: any) => {
+        this.loading = false;
+        console.error('Error loading hearing form:', error);
+        alert(error.error?.message || 'Failed to load hearing form');
       }
     });
   }
@@ -138,9 +124,16 @@ export class HearingFormComponent implements OnInit {
    */
   cancelEdit(): void {
     if (this.submittedData) {
-      this.loadSubmittedData();
+      this.loadFormWithData(); // Reload data
       this.viewMode = true;
     }
+  }
+
+  /**
+   * Refresh form data
+   */
+  refresh(): void {
+    this.loadFormWithData();
   }
 
   /**

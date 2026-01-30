@@ -58,6 +58,26 @@ export interface WorkflowTransitionDTO {
   toStateCode: string;
   requiresComment: boolean;
   description?: string;
+  checklist?: {
+    transitionCode: string;
+    transitionName: string;
+    canExecute: boolean;
+    conditions: Array<{
+      type: string;
+      moduleType?: string;
+      label: string;
+      required: boolean;
+      passed: boolean;
+      message: string;
+    }>;
+  };
+  formSchema?: {
+    caseNatureId: number;
+    caseNatureCode: string;
+    moduleType: string;
+    fields: any[];
+    totalFields: number;
+  };
 }
 
 // Execute Transition DTO
@@ -203,6 +223,30 @@ export class OfficerCaseService {
     ).pipe(
       catchError(error => {
         console.error(`Error fetching module form schema for case ${caseId}:`, error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Get module form schema and existing data (combined)
+   * GET /api/cases/{caseId}/module-forms/{moduleType}/data
+   */
+  getModuleFormWithData(caseId: number, moduleType: string): Observable<ApiResponse<{
+    schema: any;
+    formData: any;
+    hasExistingData: boolean;
+  }>> {
+    return this.http.get<ApiResponse<{
+      schema: any;
+      formData: any;
+      hasExistingData: boolean;
+    }>>(
+      `${this.apiUrl}/${caseId}/module-forms/${moduleType}/data`,
+      { headers: this.getAuthHeaders() }
+    ).pipe(
+      catchError(error => {
+        console.error(`Error fetching module form data for case ${caseId}:`, error);
         return throwError(() => error);
       })
     );

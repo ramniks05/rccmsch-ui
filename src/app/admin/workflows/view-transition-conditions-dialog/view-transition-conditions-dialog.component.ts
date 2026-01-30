@@ -2,13 +2,29 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { WorkflowConfigService } from '../../services/workflow-config.service';
-import type { WorkflowCondition } from '../../../core/models/workflow-condition.types';
 import type { WorkflowTransition } from '../../services/workflow-config.service';
+import { WORKFLOW_FLAGS } from '../../../core/models/workflow-condition.types';
 
 export interface ViewTransitionConditionsData {
   transition: WorkflowTransition;
   fromStateName?: string;
   toStateName?: string;
+}
+
+interface PermissionCondition {
+  permissionId: number;
+  roleCode: string;
+  unitLevel?: string;
+  hierarchyRule?: string;
+  canInitiate: boolean;
+  isActive: boolean;
+  conditions?: {
+    workflowDataFieldsRequired?: string[];
+    moduleFormFieldsRequired?: Array<{
+      moduleType: string;
+      fieldName: string;
+    }>;
+  };
 }
 
 @Component({
@@ -17,7 +33,8 @@ export interface ViewTransitionConditionsData {
   styleUrls: ['./view-transition-conditions-dialog.component.scss']
 })
 export class ViewTransitionConditionsDialogComponent implements OnInit {
-  conditions: WorkflowCondition[] = [];
+  transitionData: any = null;
+  permissions: PermissionCondition[] = [];
   isLoading = true;
 
   constructor(
@@ -36,8 +53,9 @@ export class ViewTransitionConditionsDialogComponent implements OnInit {
     this.workflowService.getTransitionConditions(id).subscribe({
       next: (res) => {
         this.isLoading = false;
-        if (res.success) {
-          this.conditions = res.data ?? [];
+        if (res.success && res.data) {
+          this.transitionData = res.data;
+          this.permissions = res.data.permissions || [];
         } else {
           this.snackBar.open(res.message ?? 'Failed to load conditions', 'Close', { duration: 5000 });
         }
@@ -54,13 +72,41 @@ export class ViewTransitionConditionsDialogComponent implements OnInit {
     this.dialogRef.close();
   }
 
-  formatCondition(c: WorkflowCondition): string {
-    if (c.conditionType === 'WORKFLOW_FLAG' && c.flagName) {
-      return c.displayLabel || c.flagName;
-    }
-    if (c.conditionType === 'FORM_FIELD' && c.moduleType && c.fieldName) {
-      return c.displayLabel || `${c.moduleType} → ${c.fieldName}`;
-    }
-    return c.displayLabel || c.conditionType;
+  hasConditions(permission: PermissionCondition): boolean {
+    return !!(
+      permission.conditions?.workflowDataFieldsRequired?.length ||
+      permission.conditions?.moduleFormFieldsRequired?.length
+    );
+  }
+
+  getWorkflowFlagLabel(flag: string): string {
+    const allFlags = [...WORKFLOW_FLAGS.formSubmitted, ...WORKFLOW_FLAGS.documentReady];
+    const found = allFlags.find(f => f.value === flag);
+    return found ? found.label : flag;
+  }
+
+  getModuleFieldLabel(moduleType: string, fieldName: string): string {
+    return `${moduleType} → ${fieldName}`;
+  }
+
+  /**
+   * Get only permissions that have conditions configured
+   */
+  getPermissionsWithConditions(): PermissionCondition[] {
+    return this.permissions.filter(p => this.hasConditions(p));
+  }
+
+  /**
+   * Get total count of all conditions across all permissions
+   */
+  getTotalConditionsCount(): number {
+    let total = 0;
+    this.permissions.forEach(p => {
+      if (p.conditions) {
+        total += (p.conditions.workflowDataFieldsRequired?.length || 0);
+        total += (p.conditions.moduleFormFieldsRequired?.length || 0);
+      }
+    });
+    return total;
   }
 }

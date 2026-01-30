@@ -352,6 +352,28 @@
   color: rgba(0, 0, 0, 0.6);
 }
 
+// Tab styles
+.case-tabs {
+  margin-top: 20px;
+
+  ::ng-deep .mat-mdc-tab-labels {
+    border-bottom: 2px solid #e0e0e0;
+  }
+
+  ::ng-deep .mat-mdc-tab-label {
+    min-width: 120px;
+    font-weight: 500;
+  }
+
+  ::ng-deep .mat-mdc-tab-body-wrapper {
+    padding-top: 0;
+  }
+}
+
+.tab-content {
+  padding: 20px 0;
+}
+
 @media (max-width: 768px) {
   .case-detail-container {
     padding: 16px;

@@ -20,6 +20,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatDividerModule } from '@angular/material/divider';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 // Components
@@ -126,6 +127,7 @@ const routes: Routes = [
     MatNativeDateModule,
     MatRadioModule,
     MatCheckboxModule,
+    MatDividerModule,
     SharedModule,
   ],
 })

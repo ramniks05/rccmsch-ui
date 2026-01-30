@@ -1,36 +1,68 @@
 <h2 mat-dialog-title>
   <mat-icon>rule</mat-icon>
-  Configure Conditions: {{ data.transition.transitionCode }}
+  Transition Conditions
 </h2>
 
 <mat-dialog-content>
-  <p class="transition-info" *ngIf="data.transition">
-    <strong>{{ data.transition.transitionName }}</strong>
-    <span *ngIf="data.fromStateName && data.toStateName">
-      — From: {{ data.fromStateName }} → To: {{ data.toStateName }}
-    </span>
-  </p>
+  <!-- Transition Info -->
+  <div class="transition-header" *ngIf="data.transition">
+    <div class="transition-info">
+      <h3>{{ data.transition.transitionName }}</h3>
+      <p class="text-muted">
+        <strong>Code:</strong> {{ data.transition.transitionCode }}
+      </p>
+      <p class="text-muted" *ngIf="data.fromStateName && data.toStateName">
+        <mat-icon class="small-icon">arrow_forward</mat-icon>
+        From: <strong>{{ data.fromStateName }}</strong> → To: <strong>{{ data.toStateName }}</strong>
+      </p>
+    </div>
+  </div>
 
+  <!-- Loading State -->
   <div *ngIf="isLoading" class="loading-container">
     <mat-spinner diameter="40"></mat-spinner>
     <p>Loading conditions...</p>
   </div>
 
-  <div *ngIf="!isLoading && conditions.length === 0" class="no-data">
+  <!-- No Conditions -->
+  <div *ngIf="!isLoading && getPermissionsWithConditions().length === 0" class="no-data">
     <mat-icon>inbox</mat-icon>
-    <p>No conditions configured. Edit a permission for this transition to add conditions.</p>
+    <p>No conditions configured for this transition.</p>
+    <small class="text-muted">Edit permissions to add conditions (workflow flags or form field requirements).</small>
   </div>
 
-  <div *ngIf="!isLoading && conditions.length > 0" class="conditions-list">
-    <h4>Configured conditions</h4>
-    <ul>
-      <li *ngFor="let c of conditions" class="condition-item" [class.inactive]="c.isActive === false">
-        <mat-icon *ngIf="c.isActive !== false" color="primary">check_circle</mat-icon>
-        <mat-icon *ngIf="c.isActive === false" color="warn">cancel</mat-icon>
-        <span class="label">{{ formatCondition(c) }}</span>
-        <span class="meta">({{ c.roleCode }})</span>
-      </li>
-    </ul>
+  <!-- Simple Conditions List -->
+  <div *ngIf="!isLoading && getPermissionsWithConditions().length > 0" class="simple-conditions-list">
+    <!-- Compact List -->
+    <div *ngFor="let permission of getPermissionsWithConditions()" class="role-conditions">
+      <h4 class="role-header">
+        <mat-icon>{{ permission.isActive ? 'check_circle' : 'cancel' }}</mat-icon>
+        {{ permission.roleCode }}
+        <span class="unit-badge">{{ permission.unitLevel || 'Any Level' }}</span>
+      </h4>
+
+      <!-- Workflow Flags -->
+      <div *ngIf="permission.conditions?.workflowDataFieldsRequired?.length" class="simple-condition-group">
+        <h5><mat-icon>flag</mat-icon> Workflow Flags:</h5>
+        <ul>
+          <li *ngFor="let flag of permission.conditions?.workflowDataFieldsRequired">
+            <mat-icon class="check-icon">check</mat-icon>
+            {{ getWorkflowFlagLabel(flag) }}
+          </li>
+        </ul>
+      </div>
+
+      <!-- Module Form Fields -->
+      <div *ngIf="permission.conditions?.moduleFormFieldsRequired?.length" class="simple-condition-group">
+        <h5><mat-icon>assignment</mat-icon> Required Form Fields:</h5>
+        <ul>
+          <li *ngFor="let field of permission.conditions?.moduleFormFieldsRequired">
+            <mat-icon class="check-icon">check</mat-icon>
+            {{ field.moduleType }} → {{ field.fieldName }}
+          </li>
+        </ul>
+      </div>
+    </div>
   </div>
 </mat-dialog-content>
 

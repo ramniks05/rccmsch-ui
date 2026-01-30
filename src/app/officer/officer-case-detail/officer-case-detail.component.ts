@@ -23,6 +23,14 @@ export class OfficerCaseDetailComponent implements OnInit {
   executing = false;
 
   parsedCaseData: Record<string, any> = {};
+  
+  // Track which module types are required
+  requiredModules = {
+    hearing: false,
+    notice: false,
+    ordersheet: false,
+    judgement: false
+  };
 
   constructor(
     private route: ActivatedRoute,
@@ -97,6 +105,7 @@ export class OfficerCaseDetailComponent implements OnInit {
         this.loadingTransitions = false;
         if (response.success && response.data) {
           this.transitions = response.data;
+          this.determineRequiredModules();
         }
       },
       error: (err) => {
@@ -104,6 +113,58 @@ export class OfficerCaseDetailComponent implements OnInit {
         console.error('Error loading transitions:', err);
       }
     });
+  }
+
+  /**
+   * Determine which module types are required based on available transitions
+   */
+  determineRequiredModules(): void {
+    // Reset all to false
+    this.requiredModules = {
+      hearing: false,
+      notice: false,
+      ordersheet: false,
+      judgement: false
+    };
+
+    // Check each transition
+    this.transitions.forEach((transition: WorkflowTransitionDTO) => {
+      // Check if there's a formSchema (form available for this transition)
+      if (transition.formSchema) {
+        const moduleType = transition.formSchema.moduleType.toUpperCase();
+        
+        if (moduleType === 'HEARING') {
+          this.requiredModules.hearing = true;
+        } else if (moduleType === 'NOTICE') {
+          this.requiredModules.notice = true;
+        } else if (moduleType === 'ORDERSHEET') {
+          this.requiredModules.ordersheet = true;
+        } else if (moduleType === 'JUDGEMENT') {
+          this.requiredModules.judgement = true;
+        }
+      }
+
+      // Also check checklist conditions for module requirements
+      if (transition.checklist?.conditions) {
+        transition.checklist.conditions.forEach(condition => {
+          if (condition.type === 'FORM_FIELD' && condition.moduleType) {
+            const moduleType = condition.moduleType.toUpperCase();
+            
+            if (moduleType === 'HEARING') {
+              this.requiredModules.hearing = true;
+            } else if (moduleType === 'NOTICE') {
+              this.requiredModules.notice = true;
+            } else if (moduleType === 'ORDERSHEET') {
+              this.requiredModules.ordersheet = true;
+            } else if (moduleType === 'JUDGEMENT') {
+              this.requiredModules.judgement = true;
+            }
+          }
+        });
+      }
+    });
+
+    console.log('Required modules:', this.requiredModules);
   }
 
   /**

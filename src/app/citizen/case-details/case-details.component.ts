@@ -15,6 +15,13 @@ export class CaseDetailsComponent implements OnInit {
   isLoading = false;
   isLoadingHistory = false;
   returnComment = '';
+  
+  // Notice related properties
+  notice: any = null;
+  isLoadingNotice = false;
+  isAcceptingNotice = false;
+  noticeNotAvailable = false;
+  acknowledgeComments = 'Notice received and acknowledged';
 
   constructor(
     private route: ActivatedRoute,
@@ -29,6 +36,7 @@ export class CaseDetailsComponent implements OnInit {
       if (this.caseId) {
         this.loadCaseDetails();
         this.loadCaseHistory();
+        this.loadNotice();
       }
     });
   }
@@ -107,5 +115,79 @@ export class CaseDetailsComponent implements OnInit {
     } catch (e) {
       return null;
     }
+  }
+
+  /**
+   * Load notice sent to applicant
+   */
+  loadNotice(): void {
+    this.isLoadingNotice = true;
+    this.noticeNotAvailable = false;
+    
+    this.caseService.getNoticeForApplicant(this.caseId, 'NOTICE').subscribe({
+      next: (response) => {
+        this.isLoadingNotice = false;
+        if (response.success && response.data) {
+          this.notice = response.data;
+        }
+      },
+      error: (error: any) => {
+        this.isLoadingNotice = false;
+        // 404 is expected if notice hasn't been sent yet
+        if (error.status === 404 || error.notFound) {
+          this.noticeNotAvailable = true;
+        } else {
+          console.error('Error loading notice:', error);
+        }
+      }
+    });
+  }
+
+  /**
+   * Accept/Acknowledge notice receipt
+   */
+  acknowledgeNotice(): void {
+    if (!confirm('Acknowledge that you have received and reviewed this notice?')) {
+      return;
+    }
+
+    this.isAcceptingNotice = true;
+    
+    this.caseService.acceptNotice(this.caseId, 'NOTICE', this.acknowledgeComments).subscribe({
+      next: (response) => {
+        this.isAcceptingNotice = false;
+        if (response.success) {
+          this.snackBar.open('Notice acknowledged successfully. This has been recorded in case history.', 'Close', { 
+            duration: 5000,
+            panelClass: ['success-snackbar']
+          });
+          // Reload history to show the acknowledgment
+          this.loadCaseHistory();
+          // Reload notice to update status
+          this.loadNotice();
+        } else {
+          this.snackBar.open(response.message || 'Failed to acknowledge notice', 'Close', { duration: 5000 });
+        }
+      },
+      error: (error) => {
+        this.isAcceptingNotice = false;
+        const errorMessage = error?.error?.message || error?.message || 'Failed to acknowledge notice';
+        this.snackBar.open(errorMessage, 'Close', { duration: 5000 });
+      }
+    });
+  }
+
+  /**
+   * Check if notice can be acknowledged (not yet acknowledged)
+   */
+  canAcknowledgeNotice(): boolean {
+    // Check if there's already an acknowledgment in history
+    const hasAcknowledgment = this.history.some(h => 
+      h.performedByRole === 'CITIZEN' && 
+      h.comments && 
+      (h.comments.toLowerCase().includes('acknowledged') || 
+       h.comments.toLowerCase().includes('received'))
+    );
+    return !hasAcknowledgment;
   }
 }

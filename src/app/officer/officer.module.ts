@@ -16,6 +16,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatTabsModule } from '@angular/material/tabs';
 
 import { OfficerGuard } from '../core/guards/officer.guard';
 import { OfficerResetPasswordComponent } from './officer-reset-password/officer-reset-password.component';
@@ -84,7 +85,8 @@ const routes: Routes = [
     MatSelectModule,
     MatSnackBarModule,
     MatDialogModule,
-    MatChipsModule
+    MatChipsModule,
+    MatTabsModule
   ]
 })
 export class OfficerModule { }
