@@ -29,6 +29,7 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
   loadingCaseTypes = false;
   loadingCourts = false;
   loadingSchema = false;
+  today = new Date();
   private schemaSubscription: Subscription | null = null; // Track current schema subscription
   units: any[] = [];
   selectedUnitId: number | null = null;
@@ -96,15 +97,15 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
     try {
       const userData = this.authService.getUserData();
       if (userData?.registrationData) {
-        const registrationData = typeof userData.registrationData === 'string' 
-          ? JSON.parse(userData.registrationData) 
+        const registrationData = typeof userData.registrationData === 'string'
+          ? JSON.parse(userData.registrationData)
           : userData.registrationData;
-        
-        this.citizenUnitId = registrationData.circle || 
-                            registrationData.subdivision || 
-                            registrationData.district || 
+
+        this.citizenUnitId = registrationData.circle ||
+                            registrationData.subdivision ||
+                            registrationData.district ||
                             null;
-        
+
         if (this.citizenUnitId) {
           console.log('Citizen unitId from registration:', this.citizenUnitId);
         }
@@ -172,7 +173,7 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
     this.loadingSchema = true;
     console.log('Starting to load form schema for case type:', caseTypeId);
     console.log('Current loadingSchema state:', this.loadingSchema);
-    
+
     // Safety timeout: Force stop loading after 15 seconds (before HTTP timeout)
     const safetyTimeout = setTimeout(() => {
       if (this.loadingSchema === true) {
@@ -189,18 +190,18 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
         });
       }
     }, 15000);
-    
+
     this.schemaSubscription = this.caseService.getFormSchema(caseTypeId).pipe(
-      finalize(() => { 
+      finalize(() => {
         clearTimeout(safetyTimeout); // Clear safety timeout
         console.log('✅ Form schema observable finalized (success or error)');
         console.log('LoadingSchema BEFORE setting to false:', this.loadingSchema, 'type:', typeof this.loadingSchema);
-        
+
         // Force set to false immediately (don't wait for setTimeout)
         this.loadingSchema = false;
         this.schemaSubscription = null;
         console.log('LoadingSchema set to false (immediate):', this.loadingSchema);
-        
+
         // Then trigger change detection in next tick
         setTimeout(() => {
           this.ngZone.run(() => {
@@ -223,7 +224,7 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
         try {
           // API format: { success, message, data: { caseTypeId, caseTypeName, caseTypeCode, fields, groups, totalFields }, timestamp }
           let data: any = null;
-          
+
           if (res && typeof res === 'object') {
             // Check if response has success and data properties
             if ((res as any).success && (res as any).data != null) {
@@ -244,7 +245,7 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
             console.warn('Response is not an object:', res);
             data = res;
           }
-          
+
           console.log('Final data to process:', data);
 
           if (!data || typeof data !== 'object') {
@@ -254,7 +255,7 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
             this.snackBar.open('Failed to load form schema: Invalid response format', 'Close', { duration: 5000 });
             return;
           }
-          
+
           console.log('Data structure check:');
           console.log('- Has groups?', Array.isArray(data.groups), 'Length:', data.groups?.length);
           console.log('- Has fields?', Array.isArray(data.fields), 'Length:', data.fields?.length);
@@ -285,7 +286,7 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
                   displayOrder: group.displayOrder,
                   fieldsCount: group.fields?.length || 0
                 });
-                
+
                 const fields = (group.fields || [])
                   .filter((f: any) => {
                     const isActive = f.isActive !== false;
@@ -296,7 +297,7 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
                   })
                   .map(normalizeSchemaField)
                   .sort(byDisplayOrder);
-                
+
                 return {
                   groupCode: group.groupCode || 'default',
                   groupLabel: group.groupLabel || group.groupCode || 'General',
@@ -370,15 +371,15 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
 
           // Validate fields before building form
           this.validateFields();
-          
+
           // Load dataSource options first (async), then build form
           this.loadDataSourceOptionsForFields();
           // Build form immediately (dataSource options will update dropdowns when loaded)
           this.buildForm();
-          
+
           console.log('Form built with controls:', Object.keys(this.form.controls));
           console.log('Grouped fields ready for display:', this.groupedFields.length);
-          
+
           // Stop loading immediately after form is built
           this.stopLoading();
         } catch (e) {
@@ -395,10 +396,10 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
           message: err?.message,
           url: err?.url
         });
-        
+
         // Ensure loading is stopped
         this.stopLoading();
-        
+
         let errorMessage = 'Failed to load form schema';
         if (err?.error?.message) {
           errorMessage = err.error.message;
@@ -411,7 +412,7 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
         } else if (err?.name === 'TimeoutError') {
           errorMessage = 'Request timed out. Please check your connection and try again.';
         }
-        
+
         this.snackBar.open(errorMessage, 'Close', { duration: 5000 });
       },
     });
@@ -436,7 +437,7 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
     if (!field.dataSource) return;
 
     const params: Record<string, string | number> = {};
-    
+
     // Build params from dataSourceParams
     if (field.dataSourceParams) {
       Object.assign(params, field.dataSourceParams);
@@ -475,10 +476,10 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
               };
             }
           });
-          
+
           // Store in field for template access
           field.fieldOptions = JSON.stringify(options);
-          
+
           // Cache for future use
           const cacheKey = `${field.dataSource}_${JSON.stringify(params)}`;
           this.dataSourceOptions.set(cacheKey, options);
@@ -497,7 +498,7 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
    */
   onFieldValueChange(fieldName: string, value: any): void {
     // Find fields that depend on this field
-    const dependentFields = this.fields.filter(f => 
+    const dependentFields = this.fields.filter(f =>
       f.dependsOnField === fieldName
     );
 
@@ -562,16 +563,16 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
         this.loadingCaseTypes = false;
         if (response.success && response.data && Array.isArray(response.data) && response.data.length > 0) {
           this.caseTypes = response.data.filter((ct: any) => ct.isActive !== false);
-          
+
           // Extract case nature info from the first case type (avoids separate API call)
           if (this.caseTypes.length > 0 && !this.caseNatureName) {
             const firstCaseType = this.caseTypes[0];
-            this.caseNatureName = firstCaseType.caseNatureName || 
-                                  firstCaseType.caseNatureCode || 
+            this.caseNatureName = firstCaseType.caseNatureName ||
+                                  firstCaseType.caseNatureCode ||
                                   'Case Nature';
             this.caseNatureCode = firstCaseType.caseNatureCode || '';
           }
-          
+
           if (this.caseTypes.length === 0) {
             this.snackBar.open('No active filing types available for this case nature', 'Close', { duration: 3000 });
           }
@@ -602,7 +603,7 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
    */
   onCaseTypeChange(caseTypeId: number | null): void {
     this.caseTypeId = caseTypeId;
-    
+
     // Clear previous form and fields
     this.fields = [];
     this.preGroupedFields = [];
@@ -613,20 +614,20 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
     this.selectedCaseType = null;
     this.courtLevel = '';
     this.courtTypes = [];
-    
+
     if (caseTypeId) {
       // Find and store the selected case type object
       this.selectedCaseType = this.caseTypes.find(ct => ct.id === caseTypeId);
-      
+
       if (this.selectedCaseType) {
-        this.caseTypeName = this.selectedCaseType.typeName || 
-                           this.selectedCaseType.typeCode || 
+        this.caseTypeName = this.selectedCaseType.typeName ||
+                           this.selectedCaseType.typeCode ||
                            'Case Form';
-        
+
         // Extract court level and court types from selected case type
         this.courtLevel = this.selectedCaseType.courtLevel || '';
         this.courtTypes = this.selectedCaseType.courtTypes || [];
-        
+
         // Validate that selected case type matches the case nature
         if (this.selectedCaseType.caseNatureId !== this.caseNatureId) {
           console.warn('Case type does not match case nature!', {
@@ -638,10 +639,10 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
           this.selectedCaseType = null;
           return;
         }
-        
+
         // Load form schema only (includes pre-grouped fields; no separate field-groups API)
         this.loadSchema(caseTypeId);
-        
+
         // If unit is already selected, load courts
         if (this.selectedUnitId) {
           this.loadCourts();
@@ -679,7 +680,7 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
         this.loadingCourts = false;
         if (response.success && response.data && response.data.courts && Array.isArray(response.data.courts)) {
           this.courts = response.data.courts.filter((c: any) => c.isActive !== false);
-          
+
           if (this.courts.length === 0) {
             this.snackBar.open('No courts available for selected case type and unit', 'Close', { duration: 3000 });
           }
@@ -724,18 +725,18 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
    */
   private validateFields(): void {
     const issues: string[] = [];
-    
+
     this.fields.forEach(field => {
       // Check field type
       if (!field.fieldType) {
         issues.push(`Field ${field.fieldName}: Missing fieldType`);
       }
-      
+
       // Check fieldOptions for SELECT/RADIO
       if ((field.fieldType === 'SELECT' || field.fieldType === 'RADIO') && !field.fieldOptions && !field.dataSource) {
         issues.push(`Field ${field.fieldName} (${field.fieldType}): Missing fieldOptions and dataSource`);
       }
-      
+
       // Check validationRules format
       if (field.validationRules) {
         try {
@@ -748,12 +749,12 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
           issues.push(`Field ${field.fieldName}: Invalid validationRules JSON - ${(e as Error).message}`);
         }
       }
-      
+
       // Check fieldOptions format for SELECT/RADIO
       if (field.fieldOptions && (field.fieldType === 'SELECT' || field.fieldType === 'RADIO')) {
         try {
-          const parsed = typeof field.fieldOptions === 'string' 
-            ? JSON.parse(field.fieldOptions) 
+          const parsed = typeof field.fieldOptions === 'string'
+            ? JSON.parse(field.fieldOptions)
             : field.fieldOptions;
           if (!Array.isArray(parsed)) {
             issues.push(`Field ${field.fieldName}: fieldOptions is not an array`);
@@ -776,7 +777,7 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
         }
       }
     });
-    
+
     if (issues.length > 0) {
       console.warn('⚠️ Field validation issues found:', issues);
       console.warn('Total issues:', issues.length, 'out of', this.fields.length, 'fields');
@@ -826,7 +827,7 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
           // Already an object/array
           parsed = field.fieldOptions;
         }
-        
+
         if (Array.isArray(parsed)) {
           // Validate options structure
           const validOptions = parsed.filter((opt: any) => {
@@ -868,7 +869,7 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
   isFieldVisible(field: any): boolean {
     if (field.isHidden === true) return false;
     if (!field.dependsOnField) return true;
-    
+
     const parentField = this.fields.find(f => f.fieldName === field.dependsOnField);
     if (!parentField || !this.form) return true;
 
@@ -889,7 +890,7 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
 
     this.fields.forEach(field => {
       const groupCode = field.fieldGroup || 'default';
-      
+
       // Find group metadata from master field groups
       const masterGroup = this.fieldGroups.find(g => g.groupCode === groupCode);
       const groupLabel = masterGroup?.groupLabel || field.groupLabel || groupCode || 'General';
@@ -946,7 +947,7 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
       if (field.validationRules) {
         try {
           let rules: any = {};
-          
+
           if (typeof field.validationRules === 'string') {
             // Try parsing as JSON first (if it starts with {)
             if (field.validationRules.trim().startsWith('{')) {
@@ -988,7 +989,7 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
 
       // Set initial value
       let initialValue = field.defaultValue ?? null;
-      
+
       // Handle different field types (use normalized fieldType)
       const ft = (field.fieldType || '').toUpperCase();
       if (ft === 'NUMBER' && initialValue != null) {
@@ -1000,8 +1001,8 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
         // For radio/select, ensure value matches one of the options
         if (initialValue != null && field.fieldOptions) {
           try {
-            const options = typeof field.fieldOptions === 'string' 
-              ? JSON.parse(field.fieldOptions) 
+            const options = typeof field.fieldOptions === 'string'
+              ? JSON.parse(field.fieldOptions)
               : field.fieldOptions;
             if (Array.isArray(options) && !options.some((opt: any) => opt.value === initialValue)) {
               initialValue = null; // Invalid option value
@@ -1016,7 +1017,7 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
     });
 
     this.form = this.fb.group(group);
-    
+
     console.log('Form controls created:', Object.keys(group).length, 'controls:', Object.keys(group));
 
     // Subscribe to field value changes for conditional fields
@@ -1031,7 +1032,7 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
           if (parentValue) {
             this.onFieldValueChange(parentField.fieldName, parentValue);
           }
-          
+
           // Listen to future changes
           this.form.get(parentField.fieldName)?.valueChanges.subscribe(value => {
             this.onFieldValueChange(parentField.fieldName, value);
@@ -1054,7 +1055,7 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
       if (key && value) {
         const trimmedKey = key.trim();
         const trimmedValue = value.trim();
-        
+
         if (trimmedKey === 'min' || trimmedKey === 'max') {
           result[trimmedKey] = parseFloat(trimmedValue);
         } else if (trimmedKey === 'minLength' || trimmedKey === 'maxLength') {
@@ -1134,7 +1135,7 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
     // Get applicant ID from authenticated user
     const userData = this.authService.getUserData();
     const applicantId = userData?.userId || userData?.id;
-    
+
     if (!applicantId) {
       this.isSubmitting = false;
       this.snackBar.open('User not authenticated. Please login again.', 'Close', { duration: 5000 });
@@ -1175,7 +1176,7 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
       error: (error) => {
         this.isSubmitting = false;
         let errorMessage = 'Failed to submit case';
-        
+
         if (error?.error?.message) {
           errorMessage = error.error.message;
         } else if (error?.message) {

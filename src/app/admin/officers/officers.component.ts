@@ -21,10 +21,24 @@ import { throwError } from 'rxjs';
 export class OfficersComponent implements OnInit, AfterViewInit {
   displayedColumns: string[] = ['id', 'fullName', 'mobileNo', 'email', 'isActive', 'isMobileVerified', 'isPasswordResetRequired', 'actions'];
   dataSource = new MatTableDataSource<any>([]);
-  
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
-  @ViewChild(MatSort) sort!: MatSort;
+  private _paginator!: MatPaginator;
+  private _sort!: MatSort;
 
+  @ViewChild(MatPaginator)
+  set paginator(p: MatPaginator) {
+    if (p) {
+      this._paginator = p;
+      this.dataSource.paginator = p;
+    }
+  }
+
+  @ViewChild(MatSort)
+  set sort(s: MatSort) {
+    if (s) {
+      this._sort = s;
+      this.dataSource.sort = s;
+    }
+  }
   isLoading = false;
   errorMessage = '';
 
@@ -49,7 +63,7 @@ export class OfficersComponent implements OnInit, AfterViewInit {
   loadOfficers(): void {
     this.isLoading = true;
     this.errorMessage = '';
-    
+
     this.adminService.getAllOfficers()
       .pipe(
         catchError(error => {

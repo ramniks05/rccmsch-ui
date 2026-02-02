@@ -21,10 +21,24 @@ import { throwError } from 'rxjs';
 export class CourtsComponent implements OnInit, AfterViewInit {
   displayedColumns: string[] = ['id', 'courtCode', 'courtName', 'courtLevel', 'courtType', 'unitName', 'isActive', 'actions'];
   dataSource = new MatTableDataSource<any>([]);
-  
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
-  @ViewChild(MatSort) sort!: MatSort;
+  private _paginator!: MatPaginator;
+  private _sort!: MatSort;
 
+  @ViewChild(MatPaginator)
+  set paginator(p: MatPaginator) {
+    if (p) {
+      this._paginator = p;
+      this.dataSource.paginator = p;
+    }
+  }
+
+  @ViewChild(MatSort)
+  set sort(s: MatSort) {
+    if (s) {
+      this._sort = s;
+      this.dataSource.sort = s;
+    }
+  }
   isLoading = false;
   errorMessage = '';
   adminUnits: any[] = [];
@@ -71,7 +85,7 @@ export class CourtsComponent implements OnInit, AfterViewInit {
   loadCourts(): void {
     this.isLoading = true;
     this.errorMessage = '';
-    
+
     this.adminService.getAllCourts()
       .pipe(
         catchError(error => {

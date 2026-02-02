@@ -132,6 +132,7 @@
               matInput
               *ngIf="field.fieldType === 'DATE'"
               [matDatepicker]="picker"
+              [min]="today"
               [formControlName]="field.fieldName"
               (dateChange)="onFieldValueChange(field.fieldName, form.get(field.fieldName)?.value)"
             />
@@ -236,8 +237,8 @@
               form.get(field.fieldName)?.invalid
             "
           >
-            <label 
-              [attr.for]="getFileInputId(field)" 
+            <label
+              [attr.for]="getFileInputId(field)"
               class="mat-file-label"
             >
               {{ field.fieldLabel }}
@@ -330,9 +331,9 @@
     </div>
 
     <div class="actions">
-      <button 
-        mat-raised-button 
-        color="primary" 
+      <button
+        mat-raised-button
+        color="primary"
         type="submit"
         [disabled]="isSubmitting || !caseTypeId || !selectedUnitId || !courtId || form.invalid"
       >
