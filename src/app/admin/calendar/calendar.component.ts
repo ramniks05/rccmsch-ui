@@ -1,11 +1,15 @@
 import { Component, OnInit } from '@angular/core';
+import { AdminService } from '../admin.service';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 interface CalendarEvent {
-  id: string;
+  id?: number;
   date: Date;
   title: string;
-  type: 'event' | 'holiday';
+  eventType: string;
   description?: string;
+  financialYear?: string;
+  isActive?: boolean;
 }
 
 @Component({
@@ -14,11 +18,11 @@ interface CalendarEvent {
   styleUrls: ['./calendar.component.scss'],
 })
 export class CalendarComponent implements OnInit {
-  currentDate: Date = new Date();
-  currentMonth: number = this.currentDate.getMonth();
-  currentYear: number = this.currentDate.getFullYear();
+  currentDate = new Date();
+  currentMonth = this.currentDate.getMonth();
+  currentYear = this.currentDate.getFullYear();
 
-  monthNames: string[] = [
+  monthNames = [
     'January',
     'February',
     'March',
@@ -33,24 +37,35 @@ export class CalendarComponent implements OnInit {
     'December',
   ];
 
-  weekDays: string[] = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   calendarDays: any[] = [];
   events: CalendarEvent[] = [];
+
+  // Modal
+  showModal = false;
+  isEditMode = false;
   selectedDate: Date | null = null;
+  selectedEvent: CalendarEvent | null = null;
 
-  // Modal properties
-  showModal: boolean = false;
-  eventTitle: string = '';
-  eventDescription: string = '';
-  eventType: 'event' | 'holiday' = 'event';
+  eventTitle = '';
+  eventDescription = '';
+  eventType: any;
 
-  constructor() {}
+  eventTypeList: any[] = [];
+
+  constructor(
+    private adminService: AdminService,
+    private snackBar: MatSnackBar,
+  ) {}
 
   ngOnInit(): void {
     this.generateCalendar();
-    this.loadSampleEvents();
+    this.getEventTypes();
+    this.getEventHolidayList();
   }
+
+  // ================= CALENDAR =================
 
   generateCalendar(): void {
     this.calendarDays = [];
@@ -64,7 +79,6 @@ export class CalendarComponent implements OnInit {
     const prevLastDayDate = prevLastDay.getDate();
     const nextDays = 7 - lastDay.getDay() - 1;
 
-    // Previous month days
     for (let x = firstDayIndex; x > 0; x--) {
       this.calendarDays.push({
         day: prevLastDayDate - x + 1,
@@ -77,18 +91,16 @@ export class CalendarComponent implements OnInit {
       });
     }
 
-    // Current month days
     for (let i = 1; i <= lastDayDate; i++) {
       const date = new Date(this.currentYear, this.currentMonth, i);
       this.calendarDays.push({
         day: i,
         isCurrentMonth: true,
         isToday: this.isToday(date),
-        date: date,
+        date,
       });
     }
 
-    // Next month days
     for (let j = 1; j <= nextDays; j++) {
       this.calendarDays.push({
         day: j,
@@ -99,15 +111,15 @@ export class CalendarComponent implements OnInit {
   }
 
   isToday(date: Date): boolean {
-    const today = new Date();
+    const t = new Date();
     return (
-      date.getDate() === today.getDate() &&
-      date.getMonth() === today.getMonth() &&
-      date.getFullYear() === today.getFullYear()
+      date.getDate() === t.getDate() &&
+      date.getMonth() === t.getMonth() &&
+      date.getFullYear() === t.getFullYear()
     );
   }
 
-  previousMonth(): void {
+  previousMonth() {
     this.currentMonth--;
     if (this.currentMonth < 0) {
       this.currentMonth = 11;
@@ -116,7 +128,7 @@ export class CalendarComponent implements OnInit {
     this.generateCalendar();
   }
 
-  nextMonth(): void {
+  nextMonth() {
     this.currentMonth++;
     if (this.currentMonth > 11) {
       this.currentMonth = 0;
@@ -125,45 +137,125 @@ export class CalendarComponent implements OnInit {
     this.generateCalendar();
   }
 
-  onDateClick(day: any): void {
-    if (day.isCurrentMonth) {
-      this.selectedDate = day.date;
-      this.showModal = true;
+  // ================= DATE CLICK =================
+
+  onDateClick(day: any) {
+    if (!day.isCurrentMonth) return;
+
+    this.selectedDate = day.date;
+    const events = this.getEventsForDate(day.date);
+
+    if (events.length) {
+      this.isEditMode = true;
+      this.selectedEvent = events[0];
+      this.eventTitle = events[0].title;
+      this.eventDescription = events[0].description || '';
+      this.eventType = events[0].eventType;
+    } else {
+      this.isEditMode = false;
+      this.selectedEvent = null;
+      this.eventTitle = '';
+      this.eventDescription = '';
+      this.eventType = 'EVENT';
     }
+
+    this.showModal = true;
   }
 
-  closeModal(): void {
+  closeModal() {
     this.showModal = false;
+    this.isEditMode = false;
+    this.selectedEvent = null;
+    this.selectedDate = null;
     this.eventTitle = '';
     this.eventDescription = '';
-    this.eventType = 'event';
-    this.selectedDate = null;
+    this.eventType = 'EVENT';
   }
 
-  saveEvent(): void {
-    if (this.selectedDate && this.eventTitle.trim()) {
-      const newEvent: CalendarEvent = {
-        id: Date.now().toString(),
-        date: new Date(this.selectedDate),
-        title: this.eventTitle,
-        type: this.eventType,
-        description: this.eventDescription,
-      };
-      console.log(newEvent);
+  // ================= SAVE =================
 
-      this.events.push(newEvent);
-      console.log(this.events);
+  saveEvent() {
+    if (!this.selectedDate || !this.eventTitle.trim()) return;
 
-      this.closeModal();
+    const payload = {
+      title: this.eventTitle,
+      eventType: this.eventType,
+      financialYear: '2026-2027',
+      date: this.formatDateForApi(this.selectedDate),
+      description: this.eventDescription,
+    };
+
+    if (this.isEditMode && this.selectedEvent?.id) {
+      // UPDATE
+      this.adminService
+        .updateEventHoliday(this.selectedEvent.id, payload)
+        .subscribe({
+          next: () => {
+            Object.assign(this.selectedEvent!, {
+              title: this.eventTitle,
+              eventType: this.eventType,
+              description: this.eventDescription,
+              date: new Date(this.selectedDate!),
+            });
+
+            this.closeModal();
+            this.snackBar.open(
+              'Calendar event/holiday updated successfully',
+              'Close',
+              { duration: 3000 },
+            );
+            this.getEventHolidayList();
+          },
+          error: (err) => {
+            console.error('Update event failed', err);
+            this.snackBar.open(
+              'Failed to update calendar event. Please try again.',
+              'Close',
+              { duration: 4000 },
+            );
+          },
+        });
+    } else {
+      // CREATE
+      this.adminService.createEventHoliday(payload).subscribe({
+        next: (res: any) => {
+          this.events.push({
+            id: res?.data?.eventId,
+            title: this.eventTitle,
+            eventType: this.eventType,
+            description: this.eventDescription,
+            date: new Date(this.selectedDate!),
+            isActive: true,
+          });
+
+          this.closeModal();
+          this.snackBar.open(
+            'Calendar event/holiday created successfully',
+            'Close',
+            { duration: 3000 },
+          );
+          this.getEventHolidayList();
+        },
+        error: (err) => {
+          console.error('Create event failed', err);
+          this.snackBar.open(
+            'Failed to create calendar event. Please try again.',
+            'Close',
+            { duration: 4000 },
+          );
+        },
+      });
     }
   }
+
+  // ================= EVENTS =================
 
   getEventsForDate(date: Date): CalendarEvent[] {
     return this.events.filter(
-      (event) =>
-        event.date.getDate() === date.getDate() &&
-        event.date.getMonth() === date.getMonth() &&
-        event.date.getFullYear() === date.getFullYear(),
+      (e) =>
+        e.date.getDate() === date.getDate() &&
+        e.date.getMonth() === date.getMonth() &&
+        e.date.getFullYear() === date.getFullYear(),
     );
   }
 
@@ -176,63 +268,108 @@ export class CalendarComponent implements OnInit {
     today.setHours(0, 0, 0, 0);
 
     return this.events
-      .filter((event) => event.date >= today)
-      .sort((a, b) => a.date.getTime() - b.date.getTime())
-      .slice(0, 10);
+      .filter((e) => e.isActive !== false && e.date >= today)
+      .sort((a, b) => a.date.getTime() - b.date.getTime());
   }
 
-  deleteEvent(eventId: string): void {
-    this.events = this.events.filter((event) => event.id !== eventId);
+  // ================= DELETE (DEACTIVATE) =================
+
+  deleteEvent(event: CalendarEvent): void {
+    if (!event.id) return;
+
+    const confirmDelete = confirm(
+      `Are you sure you want to remove "${event.title}"?`,
+    );
+
+    if (!confirmDelete) return;
+
+    this.adminService
+      .deactivateEventHoliday(event.id, { isActive: false })
+      .subscribe({
+        next: () => {
+          // mark inactive
+          event.isActive = false;
+
+          // remove from UI
+          this.events = this.events.filter((e) => e.isActive !== false);
+
+          this.snackBar.open(
+            'Event/Holiday de-activated successfully',
+            'Close',
+            { duration: 3000 },
+          );
+        },
+        error: (err) => {
+          console.error('Deactivate failed', err);
+          this.snackBar.open(
+            'Failed to de-activate event. Please try again.',
+            'Close',
+            { duration: 4000 },
+          );
+        },
+      });
   }
+
+  // ================= API =================
+
+  getEventTypes() {
+    this.adminService.getEventTypes().subscribe({
+      next: (res: any) => {
+        this.eventTypeList = res.data || [];
+      },
+      error: (err) => {
+        console.error('Failed to load event types', err);
+        this.eventTypeList = [];
+        this.snackBar.open('Failed to load event types', 'Close', {
+          duration: 4000,
+        });
+      },
+    });
+  }
+
+  getEventHolidayList() {
+    this.adminService.getEventHolidayList().subscribe({
+      next: (res: any) => {
+        this.events = res.data
+          .filter((e: any) => e.isActive !== false)
+          .map((e: any) => ({
+            id: e.eventId,
+            title: e.title,
+            eventType: e.eventType,
+            description: e.description,
+            date: this.parseApiDate(e.date),
+            isActive: e.isActive,
+          }));
+      },
+      error: (err) => {
+        console.error('Failed to load calendar events', err);
+        this.events = [];
+        this.snackBar.open('Failed to load calendar events', 'Close', {
+          duration: 4000,
+        });
+      },
+    });
+  }
+
+  // ================= UTILS =================
 
   formatDate(date: Date): string {
-    const options: Intl.DateTimeFormatOptions = {
+    return date.toLocaleDateString('en-US', {
       weekday: 'short',
       year: 'numeric',
       month: 'short',
       day: 'numeric',
-    };
-    return date.toLocaleDateString('en-US', options);
+    });
   }
 
-  loadSampleEvents(): void {
-    // Add some sample events
-    const today = new Date();
+  formatDateForApi(date: Date): string {
+    return `${String(date.getDate()).padStart(2, '0')}-${String(
+      date.getMonth() + 1,
+    ).padStart(2, '0')}-${date.getFullYear()}`;
+  }
 
-    this.events = [
-      {
-        id: '1',
-        date: new Date(
-          today.getFullYear(),
-          today.getMonth(),
-          today.getDate() + 2,
-        ),
-        title: 'Team Meeting',
-        type: 'event',
-        description: 'Quarterly review meeting',
-      },
-      {
-        id: '2',
-        date: new Date(
-          today.getFullYear(),
-          today.getMonth(),
-          today.getDate() + 5,
-        ),
-        title: 'Christmas Holiday',
-        type: 'holiday',
-        description: 'Public Holiday',
-      },
-      {
-        id: '3',
-        date: new Date(
-          today.getFullYear(),
-          today.getMonth(),
-          today.getDate() + 10,
-        ),
-        title: 'Project Deadline',
-        type: 'event',
-        description: 'Submit final deliverables',
-      },
-    ];
+  parseApiDate(dateStr: string): Date {
+    const [d, m, y] = dateStr.split('-').map(Number);
+    return new Date(y, m - 1, d);
   }
 }

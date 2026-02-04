@@ -8,7 +8,9 @@
             <button class="btn btn-light btn-sm" (click)="previousMonth()">
               <i class="bi bi-chevron-left"></i> Previous
             </button>
-            <h4 class="mb-0">{{ monthNames[currentMonth] }} {{ currentYear }}</h4>
+            <h4 class="mb-0">
+              {{ monthNames[currentMonth] }} {{ currentYear }}
+            </h4>
             <button class="btn btn-light btn-sm" (click)="nextMonth()">
               Next <i class="bi bi-chevron-right"></i>
             </button>
@@ -17,9 +19,11 @@
 
         <div class="card-body p-0">
           <div class="calendar-grid">
-            <!-- Week Days Header -->
+            <!-- Week Days -->
             <div class="week-days">
-              <div class="week-day" *ngFor="let day of weekDays">{{ day }}</div>
+              <div class="week-day" *ngFor="let day of weekDays">
+                {{ day }}
+              </div>
             </div>
 
             <!-- Calendar Days -->
@@ -30,16 +34,21 @@
                 [class.other-month]="!day.isCurrentMonth"
                 [class.today]="day.isToday"
                 [class.has-events]="hasEvents(day.date)"
-                (click)="onDateClick(day)">
+                (click)="onDateClick(day)"
+              >
                 <div class="day-number">{{ day.day }}</div>
-                <div class="event-indicators" *ngIf="hasEvents(day.date) && day.isCurrentMonth">
+
+                <div
+                  class="event-indicators"
+                  *ngIf="hasEvents(day.date) && day.isCurrentMonth"
+                >
                   <span
                     class="event-dot"
                     *ngFor="let event of getEventsForDate(day.date)"
-                    [class.event-dot-holiday]="event.type === 'holiday'"
-                    [class.event-dot-event]="event.type === 'event'"
-                    [title]="event.title">
-                  </span>
+                    [class.event-dot-holiday]="event.eventType === 'HOLIDAY'"
+                    [class.event-dot-event]="event.eventType === 'EVENT'"
+                    [title]="event.title"
+                  ></span>
                 </div>
               </div>
             </div>
@@ -48,7 +57,7 @@
       </div>
     </div>
 
-    <!-- Upcoming Events & Holidays Sidebar -->
+    <!-- Upcoming Events -->
     <div class="col-lg-4 col-md-5">
       <div class="card shadow-sm">
         <div class="card-header bg-success text-white">
@@ -56,43 +65,51 @@
             <i class="bi bi-calendar-event"></i> Upcoming Events & Holidays
           </h5>
         </div>
+
         <div class="card-body p-0">
           <div class="upcoming-list">
             <div
               class="upcoming-item"
               *ngFor="let event of getUpcomingEvents()"
-              [class.holiday-item]="event.type === 'holiday'"
-              [class.event-item]="event.type === 'event'">
-              <div class="d-flex justify-content-between align-items-start">
-                <div class="flex-grow-1">
-                  <div class="d-flex align-items-center mb-1">
-                    <span
-                      class="badge me-2"
-                      [class.bg-danger]="event.type === 'holiday'"
-                      [class.bg-info]="event.type === 'event'">
-                      {{ event.type === 'holiday' ? 'Holiday' : 'Event' }}
-                    </span>
-                    <strong>{{ event.title }}</strong>
+              [class.holiday-item]="event.eventType === 'HOLIDAY'"
+              [class.event-item]="event.eventType === 'EVENT'"
+            >
+              <div class="d-flex justify-content-between">
+                <div>
+                  <span
+                    class="badge me-2"
+                    [class.bg-danger]="event.eventType === 'HOLIDAY'"
+                    [class.bg-info]="event.eventType === 'EVENT'"
+                  >
+                    {{ event.eventType === 'HOLIDAY' ? 'HOLIDAY' : 'EVENT' }}
+                  </span>
+                  <strong>{{ event.title }}</strong>
+
+                  <div class="text-muted small mt-1">
+                    <i class="bi bi-calendar3"></i>
+                    {{ formatDate(event.date) }}
                   </div>
-                  <small class="text-muted d-block">
-                    <i class="bi bi-calendar3"></i> {{ formatDate(event.date) }}
-                  </small>
-                  <p class="mb-0 mt-1 small" *ngIf="event.description">
+
+                  <p class="small mb-0" *ngIf="event.description">
                     {{ event.description }}
                   </p>
                 </div>
+
                 <button
-                  class="btn btn-sm btn-outline-danger ms-2"
-                  (click)="deleteEvent(event.id)"
-                  title="Delete event">
+                  class="btn btn-sm btn-outline-danger"
+                  (click)="deleteEvent(event)"
+                >
                   <i class="bi bi-trash"></i>
                 </button>
               </div>
             </div>
 
-            <div class="text-center p-4 text-muted" *ngIf="getUpcomingEvents().length === 0">
-              <i class="bi bi-calendar-x" style="font-size: 3rem;"></i>
-              <p class="mt-2 mb-0">No upcoming events or holidays</p>
+            <div
+              *ngIf="getUpcomingEvents().length === 0"
+              class="text-center p-4 text-muted"
+            >
+              <i class="bi bi-calendar-x fs-1"></i>
+              <p>No upcoming events or holidays</p>
             </div>
           </div>
         </div>
@@ -101,18 +118,15 @@
       <!-- Legend -->
       <div class="card shadow-sm mt-3">
         <div class="card-body">
-          <h6 class="card-title">Legend</h6>
+          <h6>Legend</h6>
           <div class="d-flex align-items-center mb-2">
-            <span class="event-dot event-dot-event me-2"></span>
-            <small>Event</small>
+            <span class="event-dot event-dot-event me-2"></span> Event
           </div>
           <div class="d-flex align-items-center mb-2">
-            <span class="event-dot event-dot-holiday me-2"></span>
-            <small>Holiday</small>
+            <span class="event-dot event-dot-holiday me-2"></span> Holiday
           </div>
           <div class="d-flex align-items-center">
-            <div class="today-indicator me-2"></div>
-            <small>Today</small>
+            <div class="today-indicator me-2"></div> Today
           </div>
         </div>
       </div>
@@ -120,61 +134,80 @@
   </div>
 </div>
 
-<!-- Modal for Adding Events -->
-<div class="modal" [class.show]="showModal" [style.display]="showModal ? 'block' : 'none'" tabindex="-1">
+<!-- ================= MODAL ================= -->
+
+<div
+  class="modal"
+  [class.show]="showModal"
+  [style.display]="showModal ? 'block' : 'none'"
+>
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Add Event/Holiday</h5>
-        <button type="button" class="btn-close" (click)="closeModal()"></button>
+        <h5 class="modal-title">
+          {{ isEditMode ? 'Edit Event / Holiday' : 'Add Event / Holiday' }}
+        </h5>
+        <button class="btn-close" (click)="closeModal()"></button>
       </div>
+
       <div class="modal-body">
         <div class="mb-3">
           <label class="form-label">Selected Date</label>
           <input
-            type="text"
             class="form-control"
             [value]="selectedDate ? formatDate(selectedDate) : ''"
-            readonly>
+            readonly
+          />
         </div>
 
         <div class="mb-3">
           <label class="form-label">Type</label>
           <select class="form-select" [(ngModel)]="eventType">
-            <option value="event">Event</option>
-            <option value="holiday">Holiday</option>
+            <option *ngFor="let item of eventTypeList" [value]="item.value">
+              {{ item.label }}
+            </option>
           </select>
         </div>
 
         <div class="mb-3">
-          <label class="form-label">Title <span class="text-danger">*</span></label>
+          <label class="form-label">
+            Title <span class="text-danger">*</span>
+          </label>
           <input
-            type="text"
             class="form-control"
             [(ngModel)]="eventTitle"
-            placeholder="Enter event title">
+            placeholder="Enter title"
+          />
         </div>
 
         <div class="mb-3">
-          <label class="form-label">Description (Optional)</label>
+          <label class="form-label">Description</label>
           <textarea
             class="form-control"
             rows="3"
             [(ngModel)]="eventDescription"
-            placeholder="Enter event description"></textarea>
+          ></textarea>
         </div>
       </div>
+
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="closeModal()">Cancel</button>
+        <button class="btn btn-secondary" (click)="closeModal()">
+          Cancel
+        </button>
         <button
-          type="button"
           class="btn btn-primary"
           (click)="saveEvent()"
-          [disabled]="!eventTitle.trim()">
-          Save Event
+          [disabled]="!eventTitle.trim()"
+        >
+          {{ isEditMode ? 'Update' : 'Save' }}
         </button>
       </div>
     </div>
   </div>
 </div>
-<div class="modal-backdrop fade" [class.show]="showModal" *ngIf="showModal"></div>
+
+<div
+  class="modal-backdrop fade"
+  [class.show]="showModal"
+  *ngIf="showModal"
+></div>

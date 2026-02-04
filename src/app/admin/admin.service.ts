@@ -9,7 +9,7 @@ import { environment } from '../../environments/environment';
  * Handles all admin-related API calls
  */
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AdminService {
   private readonly baseUrl: string;
@@ -25,7 +25,7 @@ export class AdminService {
     const token = localStorage.getItem('adminToken');
     return new HttpHeaders({
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
+      Authorization: `Bearer ${token}`,
     });
   }
 
@@ -36,9 +36,13 @@ export class AdminService {
    */
   adminLogin(username: string, password: string): Observable<any> {
     const headers = new HttpHeaders({
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
     });
-    return this.http.post(`${this.baseUrl}/admin/auth/login`, { username, password }, { headers });
+    return this.http.post(
+      `${this.baseUrl}/admin/auth/login`,
+      { username, password },
+      { headers },
+    );
   }
 
   /**
@@ -46,21 +50,31 @@ export class AdminService {
    */
   officerLogin(userid: string, password: string): Observable<any> {
     const headers = new HttpHeaders({
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
     });
-    return this.http.post(`${this.baseUrl}/admin/auth/officer-login`, { userid, password }, { headers });
+    return this.http.post(
+      `${this.baseUrl}/admin/auth/officer-login`,
+      { userid, password },
+      { headers },
+    );
   }
 
   /**
    * Reset Password
    */
-  resetPassword(userid: string, newPassword: string, confirmPassword: string): Observable<any> {
+  resetPassword(
+    userid: string,
+    newPassword: string,
+    confirmPassword: string,
+  ): Observable<any> {
     const headers = new HttpHeaders({
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
     });
-    return this.http.post(`${this.baseUrl}/admin/auth/reset-password`, 
-      { userid, newPassword, confirmPassword }, 
-      { headers });
+    return this.http.post(
+      `${this.baseUrl}/admin/auth/reset-password`,
+      { userid, newPassword, confirmPassword },
+      { headers },
+    );
   }
 
   /**
@@ -68,11 +82,13 @@ export class AdminService {
    */
   verifyMobile(userid: string, otp: string): Observable<any> {
     const headers = new HttpHeaders({
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
     });
-    return this.http.post(`${this.baseUrl}/admin/auth/verify-mobile`, 
-      { userid, otp }, 
-      { headers });
+    return this.http.post(
+      `${this.baseUrl}/admin/auth/verify-mobile`,
+      { userid, otp },
+      { headers },
+    );
   }
 
   // ==================== Officer Management ====================
@@ -80,9 +96,13 @@ export class AdminService {
   /**
    * Create Officer
    */
-  createOfficer(officer: { fullName: string; mobileNo: string; email: string }): Observable<any> {
+  createOfficer(officer: {
+    fullName: string;
+    mobileNo: string;
+    email: string;
+  }): Observable<any> {
     return this.http.post(`${this.baseUrl}/admin/officers`, officer, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
   }
 
@@ -91,7 +111,7 @@ export class AdminService {
    */
   getAllOfficers(): Observable<any> {
     return this.http.get(`${this.baseUrl}/admin/officers`, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
   }
 
@@ -100,7 +120,7 @@ export class AdminService {
    */
   getOfficerById(id: number): Observable<any> {
     return this.http.get(`${this.baseUrl}/admin/officers/${id}`, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
   }
 
@@ -110,9 +130,13 @@ export class AdminService {
    * Assign Officer to Post
    * Now uses courtId instead of unitId
    */
-  assignOfficerToPost(posting: { courtId: number; roleCode: string; officerId: number }): Observable<any> {
+  assignOfficerToPost(posting: {
+    courtId: number;
+    roleCode: string;
+    officerId: number;
+  }): Observable<any> {
     return this.http.post(`${this.baseUrl}/admin/postings`, posting, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
   }
 
@@ -120,9 +144,13 @@ export class AdminService {
    * Transfer Officer
    * Now uses courtId instead of unitId
    */
-  transferOfficer(posting: { courtId: number; roleCode: string; officerId: number }): Observable<any> {
+  transferOfficer(posting: {
+    courtId: number;
+    roleCode: string;
+    officerId: number;
+  }): Observable<any> {
     return this.http.put(`${this.baseUrl}/admin/postings/transfer`, posting, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
   }
 
@@ -131,7 +159,7 @@ export class AdminService {
    */
   getPostingByUserid(userid: string): Observable<any> {
     return this.http.get(`${this.baseUrl}/admin/postings/userid/${userid}`, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
   }
 
@@ -139,9 +167,12 @@ export class AdminService {
    * Get Postings by Officer
    */
   getPostingsByOfficer(officerId: number): Observable<any> {
-    return this.http.get(`${this.baseUrl}/admin/postings/officer/${officerId}`, {
-      headers: this.getAuthHeaders()
-    });
+    return this.http.get(
+      `${this.baseUrl}/admin/postings/officer/${officerId}`,
+      {
+        headers: this.getAuthHeaders(),
+      },
+    );
   }
 
   /**
@@ -149,7 +180,7 @@ export class AdminService {
    */
   getPostingsByCourt(courtId: number): Observable<any> {
     return this.http.get(`${this.baseUrl}/admin/postings/court/${courtId}`, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
   }
 
@@ -158,9 +189,12 @@ export class AdminService {
    * Returns active postings for a unit (through courts)
    */
   getActivePostingsByUnit(unitId: number): Observable<any> {
-    return this.http.get(`${this.baseUrl}/admin/postings/unit/${unitId}/active`, {
-      headers: this.getAuthHeaders()
-    });
+    return this.http.get(
+      `${this.baseUrl}/admin/postings/unit/${unitId}/active`,
+      {
+        headers: this.getAuthHeaders(),
+      },
+    );
   }
 
   /**
@@ -168,7 +202,7 @@ export class AdminService {
    */
   getAllActivePostings(): Observable<any> {
     return this.http.get(`${this.baseUrl}/admin/postings/active`, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
   }
 
@@ -179,7 +213,7 @@ export class AdminService {
    */
   getAllRoles(): Observable<any> {
     return this.http.get(`${this.baseUrl}/admin/roles`, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
   }
 
@@ -187,9 +221,13 @@ export class AdminService {
    * Close Posting
    */
   closePosting(postingId: number): Observable<any> {
-    return this.http.put(`${this.baseUrl}/admin/postings/${postingId}/close`, {}, {
-      headers: this.getAuthHeaders()
-    });
+    return this.http.put(
+      `${this.baseUrl}/admin/postings/${postingId}/close`,
+      {},
+      {
+        headers: this.getAuthHeaders(),
+      },
+    );
   }
 
   // ==================== Administrative Units Management ====================
@@ -200,7 +238,7 @@ export class AdminService {
    */
   createAdminUnit(unit: any): Observable<any> {
     return this.http.post(`${this.baseUrl}/admin-units`, unit, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
   }
 
@@ -209,7 +247,7 @@ export class AdminService {
    */
   getAllAdminUnits(): Observable<any> {
     return this.http.get(`${this.baseUrl}/admin-units`, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
   }
 
@@ -219,7 +257,7 @@ export class AdminService {
    */
   getActiveAdminUnits(): Observable<any> {
     return this.http.get(`${this.baseUrl}/admin-units/active`, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
   }
 
@@ -228,7 +266,7 @@ export class AdminService {
    */
   getAdminUnitsByLevel(level: string): Observable<any> {
     return this.http.get(`${this.baseUrl}/admin-units/level/${level}`, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
   }
 
@@ -238,7 +276,7 @@ export class AdminService {
    */
   getAdminUnitsByParent(parentId: number): Observable<any> {
     return this.http.get(`${this.baseUrl}/admin-units/parent/${parentId}`, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
   }
 
@@ -248,7 +286,7 @@ export class AdminService {
    */
   getRootUnits(): Observable<any> {
     return this.http.get(`${this.baseUrl}/admin-units/root`, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
   }
 
@@ -257,7 +295,7 @@ export class AdminService {
    */
   getAdminUnitById(id: number): Observable<any> {
     return this.http.get(`${this.baseUrl}/admin-units/${id}`, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
   }
 
@@ -266,7 +304,7 @@ export class AdminService {
    */
   getAdminUnitByCode(code: string): Observable<any> {
     return this.http.get(`${this.baseUrl}/admin-units/code/${code}`, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
   }
 
@@ -275,7 +313,7 @@ export class AdminService {
    */
   updateAdminUnit(id: number, unit: any): Observable<any> {
     return this.http.put(`${this.baseUrl}/admin-units/${id}`, unit, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
   }
 
@@ -284,7 +322,7 @@ export class AdminService {
    */
   deleteAdminUnit(id: number): Observable<any> {
     return this.http.delete(`${this.baseUrl}/admin-units/${id}`, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
   }
 
@@ -296,7 +334,7 @@ export class AdminService {
    */
   createCaseType(caseType: any): Observable<any> {
     return this.http.post(`${this.baseUrl}/admin/case-types`, caseType, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
   }
 
@@ -305,7 +343,7 @@ export class AdminService {
    */
   getAllCaseTypes(): Observable<any> {
     return this.http.get(`${this.baseUrl}/admin/case-types`, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
   }
 
@@ -314,7 +352,9 @@ export class AdminService {
    * Returns case types (filing types) for a given case nature.
    */
   getCaseTypesByCaseNature(caseNatureId: number): Observable<any> {
-    return this.http.get(`${this.baseUrl}/public/case-types/case-nature/${caseNatureId}`);
+    return this.http.get(
+      `${this.baseUrl}/public/case-types/case-nature/${caseNatureId}`,
+    );
   }
 
   /**
@@ -322,7 +362,7 @@ export class AdminService {
    */
   getCaseTypeById(id: number): Observable<any> {
     return this.http.get(`${this.baseUrl}/admin/case-types/${id}`, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
   }
 
@@ -331,7 +371,7 @@ export class AdminService {
    */
   updateCaseType(id: number, caseType: any): Observable<any> {
     return this.http.put(`${this.baseUrl}/admin/case-types/${id}`, caseType, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
   }
 
@@ -340,7 +380,7 @@ export class AdminService {
    */
   deleteCaseType(id: number): Observable<any> {
     return this.http.delete(`${this.baseUrl}/admin/case-types/${id}`, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
   }
 
@@ -351,7 +391,9 @@ export class AdminService {
    * No authentication required - Public endpoint
    */
   getFormSchema(caseTypeId: number): Observable<any> {
-    return this.http.get(`${this.baseUrl}/admin/form-schemas/case-types/${caseTypeId}`);
+    return this.http.get(
+      `${this.baseUrl}/admin/form-schemas/case-types/${caseTypeId}`,
+    );
   }
 
   /**
@@ -359,30 +401,42 @@ export class AdminService {
    * Body: { caseTypeId, formData }
    */
   validateFormData(caseTypeId: number, formData: any): Observable<any> {
-    return this.http.post(`${this.baseUrl}/admin/form-schemas/validate`, {
-      caseTypeId,
-      formData
-    }, {
-      headers: this.getAuthHeaders()
-    });
+    return this.http.post(
+      `${this.baseUrl}/admin/form-schemas/validate`,
+      {
+        caseTypeId,
+        formData,
+      },
+      {
+        headers: this.getAuthHeaders(),
+      },
+    );
   }
 
   /**
    * POST /api/admin/form-schemas/case-types/{caseTypeId} — Save/Create Form Schema
    */
   saveFormSchema(caseTypeId: number, schema: any): Observable<any> {
-    return this.http.post(`${this.baseUrl}/admin/form-schemas/case-types/${caseTypeId}`, schema, {
-      headers: this.getAuthHeaders()
-    });
+    return this.http.post(
+      `${this.baseUrl}/admin/form-schemas/case-types/${caseTypeId}`,
+      schema,
+      {
+        headers: this.getAuthHeaders(),
+      },
+    );
   }
 
   /**
    * PUT /api/admin/form-schemas/case-types/{caseTypeId} — Update Form Schema
    */
   updateFormSchema(caseTypeId: number, schema: any): Observable<any> {
-    return this.http.put(`${this.baseUrl}/admin/form-schemas/case-types/${caseTypeId}`, schema, {
-      headers: this.getAuthHeaders()
-    });
+    return this.http.put(
+      `${this.baseUrl}/admin/form-schemas/case-types/${caseTypeId}`,
+      schema,
+      {
+        headers: this.getAuthHeaders(),
+      },
+    );
   }
 
   // ==================== Form Field Management ====================
@@ -391,18 +445,24 @@ export class AdminService {
    * GET /api/admin/form-schemas/case-types/{caseTypeId}/fields — Get All Fields (Including Inactive) for a Case Type
    */
   getAllFormFields(caseTypeId: number): Observable<any> {
-    return this.http.get(`${this.baseUrl}/admin/form-schemas/case-types/${caseTypeId}/fields`, {
-      headers: this.getAuthHeaders()
-    });
+    return this.http.get(
+      `${this.baseUrl}/admin/form-schemas/case-types/${caseTypeId}/fields`,
+      {
+        headers: this.getAuthHeaders(),
+      },
+    );
   }
 
   /**
    * Get Single Field by ID
    */
   getFormField(fieldId: number): Observable<any> {
-    return this.http.get(`${this.baseUrl}/admin/form-schemas/fields/${fieldId}`, {
-      headers: this.getAuthHeaders()
-    });
+    return this.http.get(
+      `${this.baseUrl}/admin/form-schemas/fields/${fieldId}`,
+      {
+        headers: this.getAuthHeaders(),
+      },
+    );
   }
 
   /**
@@ -410,7 +470,7 @@ export class AdminService {
    */
   createFormField(field: any): Observable<any> {
     return this.http.post(`${this.baseUrl}/admin/form-schemas/fields`, field, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
   }
 
@@ -418,29 +478,43 @@ export class AdminService {
    * Update a single form field
    */
   updateFormField(fieldId: number, field: any): Observable<any> {
-    return this.http.put(`${this.baseUrl}/admin/form-schemas/fields/${fieldId}`, field, {
-      headers: this.getAuthHeaders()
-    });
+    return this.http.put(
+      `${this.baseUrl}/admin/form-schemas/fields/${fieldId}`,
+      field,
+      {
+        headers: this.getAuthHeaders(),
+      },
+    );
   }
 
   /**
    * Delete a single form field
    */
   deleteFormField(fieldId: number): Observable<any> {
-    return this.http.delete(`${this.baseUrl}/admin/form-schemas/fields/${fieldId}`, {
-      headers: this.getAuthHeaders()
-    });
+    return this.http.delete(
+      `${this.baseUrl}/admin/form-schemas/fields/${fieldId}`,
+      {
+        headers: this.getAuthHeaders(),
+      },
+    );
   }
 
   /**
    * PUT /api/admin/form-schemas/case-types/{caseTypeId}/fields/reorder — Reorder fields for a Case Type
    */
-  reorderFields(caseTypeId: number, fieldOrders: Array<{fieldId: number, displayOrder: number}>): Observable<any> {
-    return this.http.put(`${this.baseUrl}/admin/form-schemas/case-types/${caseTypeId}/fields/reorder`, {
-      fieldOrders
-    }, {
-      headers: this.getAuthHeaders()
-    });
+  reorderFields(
+    caseTypeId: number,
+    fieldOrders: Array<{ fieldId: number; displayOrder: number }>,
+  ): Observable<any> {
+    return this.http.put(
+      `${this.baseUrl}/admin/form-schemas/case-types/${caseTypeId}/fields/reorder`,
+      {
+        fieldOrders,
+      },
+      {
+        headers: this.getAuthHeaders(),
+      },
+    );
   }
 
   // ==================== Field Group Management ====================
@@ -449,9 +523,12 @@ export class AdminService {
    * GET /api/admin/form-schemas/case-types/{caseTypeId}/field-groups — Get Active Field Groups for Case Type
    */
   getFieldGroups(caseTypeId: number): Observable<any> {
-    return this.http.get(`${this.baseUrl}/admin/form-schemas/case-types/${caseTypeId}/field-groups`, {
-      headers: this.getAuthHeaders()
-    });
+    return this.http.get(
+      `${this.baseUrl}/admin/form-schemas/case-types/${caseTypeId}/field-groups`,
+      {
+        headers: this.getAuthHeaders(),
+      },
+    );
   }
 
   /**
@@ -459,9 +536,13 @@ export class AdminService {
    * Body: { caseTypeId, groupCode, groupLabel, description, displayOrder, isActive }
    */
   createFieldGroup(group: any): Observable<any> {
-    return this.http.post(`${this.baseUrl}/admin/form-schemas/field-groups`, group, {
-      headers: this.getAuthHeaders()
-    });
+    return this.http.post(
+      `${this.baseUrl}/admin/form-schemas/field-groups`,
+      group,
+      {
+        headers: this.getAuthHeaders(),
+      },
+    );
   }
 
   /**
@@ -469,18 +550,25 @@ export class AdminService {
    * Body: { caseTypeId, groupCode, groupLabel, description, displayOrder, isActive }
    */
   updateFieldGroup(id: number, group: any): Observable<any> {
-    return this.http.put(`${this.baseUrl}/admin/form-schemas/field-groups/${id}`, group, {
-      headers: this.getAuthHeaders()
-    });
+    return this.http.put(
+      `${this.baseUrl}/admin/form-schemas/field-groups/${id}`,
+      group,
+      {
+        headers: this.getAuthHeaders(),
+      },
+    );
   }
 
   /**
    * DELETE /api/admin/form-schemas/field-groups/{id} — Delete Field Group
    */
   deleteFieldGroup(id: number): Observable<any> {
-    return this.http.delete(`${this.baseUrl}/admin/form-schemas/field-groups/${id}`, {
-      headers: this.getAuthHeaders()
-    });
+    return this.http.delete(
+      `${this.baseUrl}/admin/form-schemas/field-groups/${id}`,
+      {
+        headers: this.getAuthHeaders(),
+      },
+    );
   }
 
   // ==================== Acts Management ====================
@@ -491,7 +579,7 @@ export class AdminService {
    */
   getAllActs(): Observable<any> {
     return this.http.get(`${this.baseUrl}/admin/acts`, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
   }
 
@@ -500,7 +588,7 @@ export class AdminService {
    */
   getActById(id: number): Observable<any> {
     return this.http.get(`${this.baseUrl}/admin/acts/${id}`, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
   }
 
@@ -511,7 +599,7 @@ export class AdminService {
    */
   createAct(act: any): Observable<any> {
     return this.http.post(`${this.baseUrl}/admin/acts`, act, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
   }
 
@@ -520,7 +608,7 @@ export class AdminService {
    */
   updateAct(id: number, act: any): Observable<any> {
     return this.http.put(`${this.baseUrl}/admin/acts/${id}`, act, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
   }
 
@@ -529,7 +617,7 @@ export class AdminService {
    */
   deleteAct(id: number): Observable<any> {
     return this.http.delete(`${this.baseUrl}/admin/acts/${id}`, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
   }
 
@@ -554,7 +642,7 @@ export class AdminService {
    */
   getCaseNatureById(id: number): Observable<any> {
     return this.http.get(`${this.baseUrl}/admin/case-natures/${id}`, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
   }
 
@@ -567,7 +655,7 @@ export class AdminService {
    */
   createCaseNature(caseNature: any): Observable<any> {
     return this.http.post(`${this.baseUrl}/admin/case-natures`, caseNature, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
   }
 
@@ -575,9 +663,13 @@ export class AdminService {
    * PUT /api/admin/case-natures/{id} — Case Natures API
    */
   updateCaseNature(id: number, caseNature: any): Observable<any> {
-    return this.http.put(`${this.baseUrl}/admin/case-natures/${id}`, caseNature, {
-      headers: this.getAuthHeaders()
-    });
+    return this.http.put(
+      `${this.baseUrl}/admin/case-natures/${id}`,
+      caseNature,
+      {
+        headers: this.getAuthHeaders(),
+      },
+    );
   }
 
   /**
@@ -585,7 +677,7 @@ export class AdminService {
    */
   deleteCaseNature(id: number): Observable<any> {
     return this.http.delete(`${this.baseUrl}/admin/case-natures/${id}`, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
   }
 
@@ -597,7 +689,7 @@ export class AdminService {
    */
   getAllCourts(): Observable<any> {
     return this.http.get(`${this.baseUrl}/admin/courts`, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
   }
 
@@ -607,7 +699,7 @@ export class AdminService {
    */
   getCourtsByLevel(level: string): Observable<any> {
     return this.http.get(`${this.baseUrl}/admin/courts/level/${level}`, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
   }
 
@@ -616,7 +708,7 @@ export class AdminService {
    */
   getCourtById(id: number): Observable<any> {
     return this.http.get(`${this.baseUrl}/admin/courts/${id}`, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
   }
 
@@ -627,7 +719,7 @@ export class AdminService {
    */
   createCourt(court: any): Observable<any> {
     return this.http.post(`${this.baseUrl}/admin/courts`, court, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
   }
 
@@ -636,7 +728,7 @@ export class AdminService {
    */
   updateCourt(id: number, court: any): Observable<any> {
     return this.http.put(`${this.baseUrl}/admin/courts/${id}`, court, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
   }
 
@@ -645,7 +737,7 @@ export class AdminService {
    */
   deleteCourt(id: number): Observable<any> {
     return this.http.delete(`${this.baseUrl}/admin/courts/${id}`, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
   }
 
@@ -655,7 +747,9 @@ export class AdminService {
    * Returns courts available for a specific case type and user's unit
    */
   getAvailableCourts(caseTypeId: number, unitId: number): Observable<any> {
-    return this.http.get(`${this.baseUrl}/public/courts/available?caseTypeId=${caseTypeId}&unitId=${unitId}`);
+    return this.http.get(
+      `${this.baseUrl}/public/courts/available?caseTypeId=${caseTypeId}&unitId=${unitId}`,
+    );
   }
 
   // ==================== Workflow Management ====================
@@ -666,7 +760,7 @@ export class AdminService {
    */
   getActiveWorkflows(): Observable<any> {
     return this.http.get(`${this.baseUrl}/admin/workflow/definitions/active`, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
   }
 
@@ -679,7 +773,7 @@ export class AdminService {
    */
   createCase(caseData: any): Observable<any> {
     return this.http.post(`${this.baseUrl}/cases`, caseData, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
   }
 
@@ -705,5 +799,48 @@ export class AdminService {
     localStorage.removeItem('adminRefreshToken');
     localStorage.removeItem('adminUserData');
   }
-}
 
+  getEventTypes(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/calender/fetch/event-types`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  createEventHoliday(payload: any): Observable<any> {
+    return this.http.post(
+      `${this.baseUrl}/calender/create/calender-event`,
+      payload,
+      {
+        headers: this.getAuthHeaders(),
+      },
+    );
+  }
+
+  getEventHolidayList(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/calender/fetch/calender-event-list`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  updateEventHoliday(eventId: number | string, body: any) {
+    return this.http.post(
+      `${this.baseUrl}/calender/update/calender-event/${eventId}`,
+      body,
+      {
+        headers: this.getAuthHeaders(),
+      },
+    );
+  }
+
+  deactivateEventHoliday(
+    eventId: number | string,
+    body: { isActive: boolean },
+  ) {
+    return this.http.put(
+      `${this.baseUrl}/calender/deactivate/calender-event/${eventId}`,
+      body, {
+        headers: this.getAuthHeaders(),
+      }
+    );
+  }
+}
