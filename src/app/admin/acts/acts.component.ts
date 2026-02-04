@@ -21,9 +21,24 @@ import { throwError } from 'rxjs';
 export class ActsComponent implements OnInit, AfterViewInit {
   displayedColumns: string[] = ['id', 'actCode', 'actName', 'actYear', 'isActive', 'actions'];
   dataSource = new MatTableDataSource<any>([]);
-  
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
-  @ViewChild(MatSort) sort!: MatSort;
+  private _paginator!: MatPaginator;
+  private _sort!: MatSort;
+
+  @ViewChild(MatPaginator)
+  set paginator(p: MatPaginator) {
+    if (p) {
+      this._paginator = p;
+      this.dataSource.paginator = p;
+    }
+  }
+
+  @ViewChild(MatSort)
+  set sort(s: MatSort) {
+    if (s) {
+      this._sort = s;
+      this.dataSource.sort = s;
+    }
+  }
 
   isLoading = false;
   errorMessage = '';
@@ -49,7 +64,7 @@ export class ActsComponent implements OnInit, AfterViewInit {
   loadActs(): void {
     this.isLoading = true;
     this.errorMessage = '';
-    
+
     this.adminService.getAllActs()
       .pipe(
         catchError(error => {
@@ -302,7 +317,7 @@ export class ActDialogComponent {
     if (this.actForm.valid) {
       this.isLoading = true;
       const formValue = this.actForm.value;
-      
+
       // Validate and parse sections JSON if provided
       let sections = formValue.sections;
       if (sections && sections.trim()) {

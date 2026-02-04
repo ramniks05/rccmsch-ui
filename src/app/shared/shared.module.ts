@@ -78,12 +78,9 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
     MatChipsModule,
     MatBadgeModule,
     MatButtonToggleModule,
-    MatTooltipModule,
-    MatSortModule,
-    NgChartsModule,
-    MatTabsModule,
-    MatProgressSpinnerModule,
-    MatSnackBarModule,
+    MatTooltipModule,     // ← ADDED
+    MatSortModule,        // ← ADDED
+    // NgChartsModule     // ← OPTIONAL: Add if you want to share chart.js across modules
   ],
   exports: [
     CommonModule,
@@ -119,20 +116,15 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
     MatDialogModule,
     MatPaginatorModule,
     MatTableModule,
+    MaskEmailPipe,
+    BreadcrumbsComponent,
+    JsonParsePipe,
     MatProgressBarModule,
     MatChipsModule,
     MatBadgeModule,
     MatButtonToggleModule,
     MatTooltipModule,
     MatSortModule,
-    MatTabsModule,
-    MatProgressSpinnerModule,
-    MatSnackBarModule,
-    MatProgressSpinnerModule,
-    MatTabsModule,
-
-    // Charts
-    NgChartsModule,
-  ],
+  ]
 })
-export class SharedModule {}
+export class SharedModule { }

@@ -32,8 +32,6 @@ import { RegistrationFormGroupDialogComponent } from './registration-forms/regis
 import { ModuleFormsComponent } from './module-forms/module-forms.component';
 import { DocumentTemplatesComponent } from './document-templates/document-templates.component';
 import { CalendarComponent } from './calendar/calendar.component';
-import { DashboardComponent } from './dashboard/dashboard.component';
-import { SharedModule } from '../shared/shared.module';
 
 /**
  * Routes for Admin Module
@@ -196,8 +194,7 @@ const routes: Routes = [
     RegistrationFormGroupDialogComponent,
     ModuleFormsComponent,
     DocumentTemplatesComponent,
-    CalendarComponent,
-    DashboardComponent
+    CalendarComponent
   ],
   imports: [
     SharedModule,

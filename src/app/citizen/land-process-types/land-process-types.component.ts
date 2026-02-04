@@ -13,6 +13,7 @@ export class LandProcessTypesComponent {
     MUTATION_GIFT_SALE: {
       icon: 'assignment',
       route: '/citizen/services/case-form',
+      // route: '/citizen/services/stepper-case-form',
     },
     MUTATION_DEATH: {
       icon: 'person_off',
@@ -62,8 +63,7 @@ export class LandProcessTypesComponent {
       console.error('Invalid case data', caseData);
       return;
     }
-
-    this.router.navigate([caseData.route, caseData.id, caseData.icon]);
+    this.router.navigate([caseData.route, caseData.id, caseData.icon, caseData.title]);
   }
 
   /** Load case natures (legal matters) via Case Natures API. */

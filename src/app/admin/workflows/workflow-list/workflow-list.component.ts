@@ -19,11 +19,25 @@ import { WorkflowDialogComponent } from '../workflow-dialog/workflow-dialog.comp
 })
 export class WorkflowListComponent implements OnInit, AfterViewInit {
   displayedColumns: string[] = ['workflowCode', 'workflowName', 'description', 'isActive', 'version', 'actions'];
-  dataSource = new MatTableDataSource<WorkflowDefinition>([]);
-  
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
-  @ViewChild(MatSort) sort!: MatSort;
+  dataSource = new MatTableDataSource<any>([]);
+  private _paginator!: MatPaginator;
+  private _sort!: MatSort;
 
+  @ViewChild(MatPaginator)
+  set paginator(p: MatPaginator) {
+    if (p) {
+      this._paginator = p;
+      this.dataSource.paginator = p;
+    }
+  }
+
+  @ViewChild(MatSort)
+  set sort(s: MatSort) {
+    if (s) {
+      this._sort = s;
+      this.dataSource.sort = s;
+    }
+  }
   isLoading = false;
   errorMessage = '';
 
@@ -49,7 +63,7 @@ export class WorkflowListComponent implements OnInit, AfterViewInit {
   loadWorkflows(): void {
     this.isLoading = true;
     this.errorMessage = '';
-    
+
     this.workflowService.getAllWorkflows().subscribe({
       next: (response) => {
         this.isLoading = false;

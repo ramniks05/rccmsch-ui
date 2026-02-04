@@ -7,6 +7,8 @@ import { HomeComponent } from './home/home.component';
 import { LoginComponent } from './login/login.component';
 import { SharedModule } from '../shared/shared.module';
 import { LoginPageComponent } from './login-page/login-page.component';
+import { DashboardComponent } from './dashboard/dashboard.component';
+import { NgChartsModule } from 'ng2-charts';
 
 /**
  * Routes for Pages Module
@@ -32,6 +34,11 @@ const routes: Routes = [
     path: 'index',
     component: IndexComponent,
     data: { breadcrumb: 'Index' }
+  },
+  {
+    path: 'dashboard',
+    component: DashboardComponent,
+    data: { breadcrumb: 'Dashboard' }
   }
 ];
 
@@ -44,11 +51,24 @@ const routes: Routes = [
     HomeComponent,
     LoginComponent,
     IndexComponent,
-    LoginPageComponent
+    LoginPageComponent,
+    DashboardComponent
   ],
   imports: [
     RouterModule.forChild(routes),
-    SharedModule
+    MatCardModule,
+    MatButtonModule,
+    MatTabsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatIconModule,
+    MatSelectModule,
+    MatDatepickerModule,
+    MatNativeDateModule,
+    MatRadioModule,
+    MatProgressSpinnerModule,
+    SharedModule,
+    NgChartsModule
   ],
   providers: [
     { provide: MAT_DATE_LOCALE, useValue: 'en-IN' }

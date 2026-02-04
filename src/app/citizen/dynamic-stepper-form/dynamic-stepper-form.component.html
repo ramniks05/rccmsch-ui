@@ -1,0 +1,176 @@
+<div class="container py-2">
+  <!-- PAGE TITLE -->
+  <h2 class="page-title">
+    <mat-icon>{{ icon }}</mat-icon>
+    {{ caseTypeName }}
+  </h2>
+
+  <form *ngIf="form" [formGroup]="form">
+    <mat-horizontal-stepper linear>
+
+      <ng-container *ngFor="let category of categories; let i = index">
+        <mat-step>
+
+          <ng-template matStepLabel>
+            {{ category.categoryName }}
+          </ng-template>
+
+          <!-- STEP CONTENT -->
+          <div class="step-content">
+            <div class="row">
+
+              <ng-container *ngFor="let field of category.fields">
+
+                <!-- ================= TEXT / NUMBER / DATE / TEXTAREA ================= -->
+                <mat-form-field
+                  *ngIf="
+                    field.fieldType !== 'FILE'
+                  "
+                  appearance="outline"
+                  class="col-lg-4 col-md-6 col-sm-12 mb-3"
+                >
+                  <mat-label class="form-label-blue">
+                    {{ field.fieldLabel }}
+                    <!-- <span class="required" *ngIf="field.isRequired">*</span> -->
+                  </mat-label>
+
+                  <!-- TEXT -->
+                  <input
+                    matInput
+                    *ngIf="field.fieldType === 'TEXT'"
+                    [formControlName]="field.fieldName"
+                  />
+
+                  <!-- NUMBER -->
+                  <input
+                    matInput
+                    type="number"
+                    *ngIf="field.fieldType === 'NUMBER'"
+                    [formControlName]="field.fieldName"
+                  />
+
+                  <!-- DATE -->
+                  <input
+                    matInput
+                    *ngIf="field.fieldType === 'DATE'"
+                    [formControlName]="field.fieldName"
+                    [matDatepicker]="dp"
+                  />
+                  <mat-datepicker-toggle
+                    *ngIf="field.fieldType === 'DATE'"
+                    matSuffix
+                    [for]="dp"
+                  ></mat-datepicker-toggle>
+                  <mat-datepicker #dp></mat-datepicker>
+
+                  <!-- TEXTAREA -->
+                  <textarea
+                    matInput
+                    *ngIf="field.fieldType === 'TEXTAREA'"
+                    rows="4"
+                    [formControlName]="field.fieldName"
+                  ></textarea>
+
+                  <mat-hint *ngIf="field.helpText">
+                    {{ field.helpText }}
+                  </mat-hint>
+
+                  <mat-error *ngIf="form.get(field.fieldName)?.hasError('required')">
+                    {{ field.fieldLabel }} is required
+                  </mat-error>
+                </mat-form-field>
+
+                <!-- ================= FILE (1 of 3 columns) ================= -->
+                <div
+                  *ngIf="field.fieldType === 'FILE'"
+                  class="col-lg-4 col-md-6 col-sm-12 mb-3"
+                >
+                  <div
+                    class="mat-file-field"
+                    [class.mat-file-error]="
+                      form.get(field.fieldName)?.touched &&
+                      form.get(field.fieldName)?.invalid
+                    "
+                  >
+                    <label class="mat-file-label form-label-blue">
+                      {{ field.fieldLabel }}
+                      <span class="required" *ngIf="field.isRequired">*</span>
+                    </label>
+
+                    <div class="mat-file-control">
+                      <button
+                        mat-stroked-button
+                        color="primary"
+                        type="button"
+                        (click)="fileInput.click()"
+                      >
+                        Choose File
+                      </button>
+
+                      <span class="file-name">
+                        {{
+                          form.get(field.fieldName)?.value?.name
+                          || 'No file chosen'
+                        }}
+                      </span>
+
+                      <input
+                        #fileInput
+                        type="file"
+                        hidden
+                        (change)="onFileChange($event, field.fieldName)"
+                      />
+                    </div>
+
+                    <div class="mat-file-hint" *ngIf="field.helpText">
+                      {{ field.helpText }}
+                    </div>
+
+                    <div
+                      class="mat-file-error-text"
+                      *ngIf="
+                        form.get(field.fieldName)?.touched &&
+                        form.get(field.fieldName)?.hasError('required')
+                      "
+                    >
+                      {{ field.fieldLabel }} is required
+                    </div>
+                  </div>
+                </div>
+
+              </ng-container>
+            </div>
+
+            <!-- STEP ACTIONS -->
+            <div class="step-actions d-flex justify-content-between mt-4">
+              <button mat-button matStepperPrevious *ngIf="i > 0">
+                Back
+              </button>
+
+              <button
+                mat-button
+                matStepperNext
+                *ngIf="i < categories.length - 1"
+              >
+                Next
+              </button>
+
+              <button
+                mat-raised-button
+                color="primary"
+                *ngIf="i === categories.length - 1"
+                class="ms-auto"
+                (click)="submit()"
+                [disabled]="form.invalid"
+              >
+                Submit Application
+              </button>
+            </div>
+
+          </div>
+        </mat-step>
+      </ng-container>
+
+    </mat-horizontal-stepper>
+  </form>
+</div>

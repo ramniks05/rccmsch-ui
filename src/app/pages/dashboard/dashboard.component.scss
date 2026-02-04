@@ -1,0 +1,557 @@
+// ========== VARIABLES ==========
+$primary-color: #667eea;
+$success-color: #11998e;
+$warning-color: #f5576c;
+$info-color: #4facfe;
+$sidebar-bg: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
+$card-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+$card-hover-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+$transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+// ========== LAYOUT ==========
+.dashboard-layout {
+  display: flex;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%);
+  font-family: "Roboto", "Segoe UI", sans-serif;
+}
+
+// ========== SIDEBAR ==========
+.sidebar {
+  width: 260px;
+  background: $sidebar-bg;
+  color: #fff;
+  padding: 0;
+  box-shadow: 4px 0 12px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+
+  .sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 24px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+    .logo-icon {
+      font-size: 32px;
+      width: 32px;
+      height: 32px;
+      color: #4facfe;
+    }
+
+    .sidebar-title {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+  }
+
+  nav {
+    padding: 20px 12px;
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: $transition;
+      margin-bottom: 8px;
+      color: rgba(255, 255, 255, 0.8);
+      text-decoration: none;
+
+      mat-icon {
+        font-size: 22px;
+        width: 22px;
+        height: 22px;
+      }
+
+      span {
+        font-size: 15px;
+        font-weight: 500;
+      }
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+        transform: translateX(5px);
+      }
+
+      &.active {
+        background: linear-gradient(135deg, $primary-color 0%, #764ba2 100%);
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+
+        &:hover {
+          transform: translateX(0);
+        }
+      }
+    }
+  }
+}
+
+// ========== MAIN CONTENT ==========
+.content {
+  flex: 1;
+  padding: 32px 40px;
+  overflow-y: auto;
+  max-width: 1600px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+// ========== HEADER ==========
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+
+  .page-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 28px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0 0 8px 0;
+
+    mat-icon {
+      font-size: 32px;
+      width: 32px;
+      height: 32px;
+      color: $primary-color;
+    }
+  }
+
+  .page-subtitle {
+    margin: 0;
+    color: #7f8c8d;
+    font-size: 14px;
+
+    strong {
+      color: $primary-color;
+      font-weight: 600;
+    }
+  }
+}
+
+// ========== KPI CARDS ==========
+.kpi-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.kpi-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 24px !important;
+  border-radius: 16px !important;
+  box-shadow: $card-shadow !important;
+  transition: $transition;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, $primary-color 0%, $info-color 100%);
+  }
+
+  &:hover {
+    box-shadow: $card-hover-shadow !important;
+    transform: translateY(-4px);
+  }
+
+  .kpi-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    mat-icon {
+      font-size: 32px;
+      width: 32px;
+      height: 32px;
+      color: #fff;
+    }
+  }
+
+  .kpi-content {
+    flex: 1;
+
+    .kpi-value {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 4px;
+
+      .animated-number {
+        font-size: 32px;
+        font-weight: 700;
+        color: #2c3e50;
+      }
+
+      .kpi-trend {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 13px;
+        font-weight: 600;
+        padding: 4px 8px;
+        border-radius: 6px;
+
+        mat-icon {
+          font-size: 16px;
+          width: 16px;
+          height: 16px;
+        }
+
+        &.positive {
+          color: #11998e;
+          background: rgba(17, 153, 142, 0.1);
+        }
+
+        &.negative {
+          color: #f5576c;
+          background: rgba(245, 87, 108, 0.1);
+        }
+      }
+    }
+
+    .kpi-label {
+      margin: 0 0 12px 0;
+      color: #7f8c8d;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .kpi-progress {
+      ::ng-deep .mat-mdc-progress-bar {
+        height: 6px;
+        border-radius: 3px;
+      }
+    }
+  }
+}
+
+// ========== CHARTS GRID ==========
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.chart-card {
+  border-radius: 16px !important;
+  box-shadow: $card-shadow !important;
+  padding: 24px !important;
+  transition: $transition;
+
+  &:hover {
+    box-shadow: $card-hover-shadow !important;
+  }
+
+  &.wide {
+    grid-column: 1 / -1;
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+
+    h3 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: #2c3e50;
+
+      mat-icon {
+        color: $primary-color;
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+    }
+
+    mat-button-toggle-group {
+      ::ng-deep .mat-button-toggle {
+        height: 32px;
+        line-height: 32px;
+      }
+    }
+  }
+
+  .chart-container {
+    height: 300px;
+    position: relative;
+
+    &.donut-container {
+      height: 320px;
+    }
+  }
+
+  .chart-footer {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+
+    .insight {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #7f8c8d;
+      font-style: italic;
+
+      .insight-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        color: #f39c12;
+      }
+    }
+  }
+}
+
+// ========== TABLE CARD ==========
+.table-card {
+  border-radius: 16px !important;
+  box-shadow: $card-shadow !important;
+  padding: 24px !important;
+  margin-bottom: 32px;
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+
+    h3 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: #2c3e50;
+
+      mat-icon {
+        color: $primary-color;
+      }
+    }
+
+    .search-field {
+      width: 280px;
+
+      ::ng-deep .mat-mdc-form-field-wrapper {
+        padding-bottom: 0;
+      }
+
+      ::ng-deep .mat-mdc-text-field-wrapper {
+        height: 44px;
+      }
+    }
+  }
+
+  .table-container {
+    overflow-x: auto;
+  }
+
+  .officer-table {
+    width: 100%;
+
+    ::ng-deep .mat-mdc-header-cell {
+      font-weight: 600;
+      color: #2c3e50;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    ::ng-deep .mat-mdc-cell {
+      font-size: 14px;
+      color: #34495e;
+    }
+
+    .officer-cell {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      .officer-icon {
+        color: $primary-color;
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      background: rgba(102, 126, 234, 0.1);
+      color: $primary-color;
+
+      &.high {
+        background: rgba(245, 87, 108, 0.1);
+        color: $warning-color;
+      }
+    }
+
+    ::ng-deep mat-chip {
+      font-size: 12px;
+      font-weight: 600;
+      height: 28px;
+      line-height: 28px;
+
+      &.warn-chip {
+        background: rgba(245, 87, 108, 0.1) !important;
+        color: $warning-color !important;
+      }
+
+      &.success-chip {
+        background: rgba(17, 153, 142, 0.1) !important;
+        color: $success-color !important;
+      }
+    }
+
+    .table-row {
+      transition: $transition;
+
+      &:hover {
+        background: rgba(102, 126, 234, 0.04);
+      }
+    }
+  }
+}
+
+// ========== QUICK STATS FOOTER ==========
+.quick-stats {
+  display: flex;
+  gap: 32px;
+  padding: 24px 32px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: $card-shadow;
+
+  .stat-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    mat-icon {
+      font-size: 28px;
+      width: 28px;
+      height: 28px;
+      color: $primary-color;
+    }
+
+    div {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+
+      strong {
+        font-size: 13px;
+        color: #7f8c8d;
+        font-weight: 600;
+      }
+
+      span {
+        font-size: 16px;
+        color: #2c3e50;
+        font-weight: 700;
+      }
+    }
+  }
+}
+
+// ========== RESPONSIVE ==========
+@media (max-width: 1200px) {
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    display: none;
+  }
+
+  .content {
+    padding: 20px;
+  }
+
+  .kpi-section {
+    grid-template-columns: 1fr;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .quick-stats {
+    flex-direction: column;
+    gap: 16px;
+  }
+}
+
+// ========== ANIMATIONS ==========
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}

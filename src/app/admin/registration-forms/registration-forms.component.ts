@@ -22,12 +22,27 @@ export class RegistrationFormsComponent implements OnInit, AfterViewInit {
   selectedTab = 0; // 0 = Citizen, 1 = Lawyer, 2 = Field Groups
   registrationType: 'CITIZEN' | 'LAWYER' = 'CITIZEN';
   selectedGroupType: 'CITIZEN' | 'LAWYER' = 'CITIZEN';
-  
+
   displayedColumns: string[] = ['displayOrder', 'fieldLabel', 'fieldName', 'fieldType', 'isRequired', 'fieldGroup', 'isActive', 'actions'];
-  dataSource = new MatTableDataSource<RegistrationFormField>([]);
-  
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
-  @ViewChild(MatSort) sort!: MatSort;
+  dataSource = new MatTableDataSource<any>([]);
+  private _paginator!: MatPaginator;
+  private _sort!: MatSort;
+
+  @ViewChild(MatPaginator)
+  set paginator(p: MatPaginator) {
+    if (p) {
+      this._paginator = p;
+      this.dataSource.paginator = p;
+    }
+  }
+
+  @ViewChild(MatSort)
+  set sort(s: MatSort) {
+    if (s) {
+      this._sort = s;
+      this.dataSource.sort = s;
+    }
+  }
 
   isLoading = false;
   errorMessage = '';
@@ -72,7 +87,7 @@ export class RegistrationFormsComponent implements OnInit, AfterViewInit {
   loadFields(): void {
     this.isLoading = true;
     this.errorMessage = '';
-    
+
     this.registrationFormService.getRegistrationFormFields(this.registrationType)
       .pipe(
         catchError(error => {
@@ -88,7 +103,7 @@ export class RegistrationFormsComponent implements OnInit, AfterViewInit {
           if (apiResponse.success) {
             const fields = apiResponse.data || [];
             // Sort by displayOrder
-            this.dataSource.data = fields.sort((a: RegistrationFormField, b: RegistrationFormField) => 
+            this.dataSource.data = fields.sort((a: RegistrationFormField, b: RegistrationFormField) =>
               a.displayOrder - b.displayOrder
             );
           }
@@ -106,7 +121,7 @@ export class RegistrationFormsComponent implements OnInit, AfterViewInit {
     const dialogRef = this.dialog.open(RegistrationFormFieldDialogComponent, {
       width: '800px',
       maxWidth: '90vw',
-      data: { 
+      data: {
         mode: 'create',
         registrationType: this.registrationType
       }
@@ -126,7 +141,7 @@ export class RegistrationFormsComponent implements OnInit, AfterViewInit {
     const dialogRef = this.dialog.open(RegistrationFormFieldDialogComponent, {
       width: '800px',
       maxWidth: '90vw',
-      data: { 
+      data: {
         mode: 'edit',
         field: { ...field },
         registrationType: this.registrationType
@@ -151,7 +166,7 @@ export class RegistrationFormsComponent implements OnInit, AfterViewInit {
 
     if (confirm(`Are you sure you want to delete the field "${field.fieldLabel}"?`)) {
       this.isLoading = true;
-      
+
       this.registrationFormService.deleteRegistrationFormField(field.id)
         .pipe(
           catchError(error => {

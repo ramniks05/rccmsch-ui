@@ -10,6 +10,7 @@ import { MyProfileComponent } from './my-profile/my-profile.component';
 import { MyCasesComponent } from './my-cases/my-cases.component';
 import { CaseDetailsComponent } from './case-details/case-details.component';
 import { CaseResubmitComponent } from './case-resubmit/case-resubmit.component';
+import { DynamicStepperFormComponent } from './dynamic-stepper-form/dynamic-stepper-form.component';
 import { AvailableActionsComponent } from './available-actions/available-actions.component';
 
 /**
@@ -43,10 +44,15 @@ const routes: Routes = [
         data: { breadcrumb: 'Home' },
       },
       {
-        path: 'case-form/:caseTypeId/:icon',
+        path: 'case-form/:caseTypeId/:icon/:title',
         component: DynamicCaseFormComponent,
         data: { breadcrumb: 'Case Form' },
       },
+      {
+        path: 'stepper-case-form/:caseTypeId/:icon/:title',
+        component: DynamicStepperFormComponent,
+        data: { breadcrumb: 'Case Form' }
+      }
     ],
   },
   {
@@ -80,6 +86,7 @@ const routes: Routes = [
     MyCasesComponent,
     CaseDetailsComponent,
     CaseResubmitComponent,
+    DynamicStepperFormComponent,
     AvailableActionsComponent,
   ],
   imports: [

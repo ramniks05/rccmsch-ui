@@ -1,0 +1,211 @@
+/* ================= ROOT ================= */
+:host {
+  display: block;
+  background: #f2f4f8;
+  padding: 32px;
+}
+
+/* ================= PAGE TITLE ================= */
+.page-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #0d3d6b;
+  font-weight: 600;
+  margin-bottom: 24px;
+}
+
+mat-icon {
+  font-size: 26px;
+  color: #2f5be7;
+}
+
+/* ================= FORM CONTAINER ================= */
+form {
+  background: #ffffff;
+  padding: 28px;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+}
+
+.full-width {
+  width: 100%;
+}
+
+/* ================= GRID SPACING ================= */
+.col-lg-4,
+.col-md-6,
+.col-sm-12 {
+  margin-bottom: 20px;
+}
+
+/* ================= REQUIRED MARK ================= */
+.required {
+  color: #d32f2f;
+  margin-left: 4px;
+}
+
+/* ================= STEPPER CONTENT ================= */
+.step-content {
+  padding-top: 16px;
+}
+
+/* ================= STEP ACTIONS ================= */
+.step-actions {
+  margin-top: 24px;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 768px) {
+  :host {
+    padding: 20px;
+  }
+
+  form {
+    padding: 20px;
+  }
+}
+
+/* ======================================================
+   ANGULAR MATERIAL – LABEL, BORDER, ERROR, HINT
+   ====================================================== */
+
+/* Remove extra padding under hints & errors */
+:host ::ng-deep .mat-mdc-form-field-hint-wrapper,
+:host ::ng-deep .mat-mdc-form-field-error-wrapper {
+  padding: 0 !important;
+  margin-top: 2px;
+}
+
+/* Default label color */
+:host ::ng-deep .mdc-floating-label {
+  color: #1a5490 !important;
+  font-weight: 500;
+}
+
+/* Focused label */
+:host ::ng-deep
+.mat-mdc-form-field.mat-focused
+.mdc-floating-label {
+  color: #1a5490 !important;
+}
+
+/* Required asterisk */
+:host ::ng-deep
+.mdc-floating-label
+.mat-mdc-form-field-required-marker {
+  color: #d32f2f;
+}
+
+/* Default outline border */
+:host ::ng-deep .mdc-notched-outline__leading,
+:host ::ng-deep .mdc-notched-outline__notch,
+:host ::ng-deep .mdc-notched-outline__trailing {
+  border-color: #d0d7e2 !important;
+}
+
+/* Focused outline */
+:host ::ng-deep
+.mat-mdc-form-field.mat-focused
+.mdc-notched-outline__leading,
+:host ::ng-deep
+.mat-mdc-form-field.mat-focused
+.mdc-notched-outline__notch,
+:host ::ng-deep
+.mat-mdc-form-field.mat-focused
+.mdc-notched-outline__trailing {
+  border-color: #1a5490 !important;
+  border-width: 2px;
+}
+
+/* Error outline */
+:host ::ng-deep
+.mat-mdc-form-field.mat-form-field-invalid
+.mdc-notched-outline__leading,
+:host ::ng-deep
+.mat-mdc-form-field.mat-form-field-invalid
+.mdc-notched-outline__notch,
+:host ::ng-deep
+.mat-mdc-form-field.mat-form-field-invalid
+.mdc-notched-outline__trailing {
+  border-color: #d32f2f !important;
+}
+
+/* Error label */
+:host ::ng-deep
+.mat-mdc-form-field.mat-form-field-invalid
+.mdc-floating-label {
+  color: #d32f2f !important;
+}
+
+/* ======================================================
+   CUSTOM FILE FIELD (MATCHES MAT-FORM-FIELD)
+   ====================================================== */
+
+.mat-file-field {
+  position: relative;
+  padding: 18px 12px 10px;
+  border: 1px solid #d0d7e2;
+  border-radius: 8px;
+  background: #fff;
+  transition: border-color 0.2s ease;
+}
+
+/* Floating file label */
+.mat-file-label {
+  position: absolute;
+  top: -8px;
+  left: 10px;
+  background: #fff;
+  padding: 0 6px;
+  font-size: 12px;
+  font-weight: 400;
+  color: #1a5490;
+}
+
+/* File control row */
+.mat-file-control {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Filename */
+.file-name {
+  font-size: 13px;
+  color: #555;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+
+/* Hint text */
+.mat-file-hint {
+  font-size: 12px;
+  margin-top: 4px;
+  color: #6c757d;
+}
+
+/* Error text */
+.mat-file-error-text {
+  font-size: 12px;
+  margin-top: 4px;
+  color: #d32f2f;
+}
+
+/* Error state */
+.mat-file-error {
+  border-color: #d32f2f;
+}
+
+/* Hover */
+.mat-file-field:hover {
+  border-color: #1a5490;
+}
+
+/* Default label color */
+:host ::ng-deep .mdc-floating-label {
+  color: #1a5490 !important;
+  font-weight: 500;
+}

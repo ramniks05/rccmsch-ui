@@ -21,10 +21,25 @@ import { throwError } from 'rxjs';
 })
 export class CaseNaturesComponent implements OnInit, AfterViewInit {
   displayedColumns: string[] = ['id', 'code', 'name', 'actName', 'isActive', 'actions'];
-  dataSource = new MatTableDataSource<any>([]);
+   dataSource = new MatTableDataSource<any>([]);
+  private _paginator!: MatPaginator;
+  private _sort!: MatSort;
 
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
-  @ViewChild(MatSort) sort!: MatSort;
+  @ViewChild(MatPaginator)
+  set paginator(p: MatPaginator) {
+    if (p) {
+      this._paginator = p;
+      this.dataSource.paginator = p;
+    }
+  }
+
+  @ViewChild(MatSort)
+  set sort(s: MatSort) {
+    if (s) {
+      this._sort = s;
+      this.dataSource.sort = s;
+    }
+  }
 
   isLoading = false;
   errorMessage = '';
@@ -223,7 +238,7 @@ export class CaseNatureDialogComponent {
   ) {
     // Use provided acts or load them if not available
     this.acts = data.acts || [];
-    
+
     // Initialize form
     this.f = this.fb.group({
       code: ['', Validators.required],
@@ -232,17 +247,17 @@ export class CaseNatureDialogComponent {
       description: [''],
       isActive: [true]
     });
-    
+
     // If acts are not provided or empty, load them
     if (!this.acts || this.acts.length === 0) {
       this.loadActs();
     }
-    
+
     // Set form values for edit mode
     if (data.mode === 'edit' && data.caseNature) {
       const n = data.caseNature;
       this.actIdToSet = n.actId ?? null;
-      
+
       this.f.patchValue({
         code: n.code || '',
         name: n.name || '',

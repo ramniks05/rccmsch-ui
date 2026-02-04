@@ -1,0 +1,314 @@
+<div class="dashboard-layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <mat-icon class="logo-icon">account_balance</mat-icon>
+      <div class="sidebar-title">RCCMS</div>
+    </div>
+    <nav>
+      <a class="nav-item active" [@slideIn]>
+        <mat-icon>dashboard</mat-icon>
+        <span>Dashboard</span>
+      </a>
+      <a class="nav-item" [@slideIn]>
+        <mat-icon>search</mat-icon>
+        <span>Case Search</span>
+      </a>
+      <a class="nav-item" [@slideIn]>
+        <mat-icon>gavel</mat-icon>
+        <span>Courts</span>
+      </a>
+      <a class="nav-item" [@slideIn]>
+        <mat-icon>people</mat-icon>
+        <span>Officers</span>
+      </a>
+      <a class="nav-item" [@slideIn]>
+        <mat-icon>analytics</mat-icon>
+        <span>Reports</span>
+      </a>
+    </nav>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="content">
+    <!-- HEADER -->
+    <header class="page-header">
+      <div>
+        <h1 class="page-title" [@fadeIn]>
+          <mat-icon>analytics</mat-icon>
+          RCCMS Analytics Dashboard
+        </h1>
+        <p class="page-subtitle">
+          Logged in as <strong>{{ role }}</strong> •
+          {{ currentDate | date: "medium" }}
+        </p>
+      </div>
+      <button mat-icon-button [matMenuTriggerFor]="userMenu">
+        <mat-icon>account_circle</mat-icon>
+      </button>
+      <mat-menu #userMenu="matMenu">
+        <button mat-menu-item><mat-icon>settings</mat-icon>Settings</button>
+        <button mat-menu-item><mat-icon>exit_to_app</mat-icon>Logout</button>
+      </mat-menu>
+    </header>
+
+    <!-- KPI CARDS WITH ANIMATIONS -->
+    <section class="kpi-section" [@staggerIn]>
+      <mat-card
+        class="kpi-card"
+        *ngFor="let kpi of kpiMetrics; let i = index"
+        [@cardPop]
+        [style.animation-delay]="i * 100 + 'ms'"
+      >
+        <div class="kpi-icon" [style.background]="kpi.color">
+          <mat-icon>{{ kpi.icon }}</mat-icon>
+        </div>
+        <div class="kpi-content">
+          <div class="kpi-value">
+            <span class="animated-number">{{ kpi.value | number }}</span>
+            <span
+              class="kpi-trend"
+              [class.positive]="kpi.trend > 0"
+              [class.negative]="kpi.trend < 0"
+            >
+              <mat-icon>{{
+                kpi.trend > 0 ? "trending_up" : "trending_down"
+              }}</mat-icon>
+              {{ kpi.trend > 0 ? "+" : "" }}{{ kpi.trend }}%
+            </span>
+          </div>
+          <p class="kpi-label">{{ kpi.label }}</p>
+          <div class="kpi-progress">
+            <mat-progress-bar
+              mode="determinate"
+              [value]="kpi.progress"
+              [color]="kpi.trend > 0 ? 'primary' : 'warn'"
+            >
+            </mat-progress-bar>
+          </div>
+        </div>
+      </mat-card>
+    </section>
+
+    <!-- MAIN CHARTS GRID -->
+    <section class="charts-grid">
+      <!-- DISTRICT WISE LOAD -->
+      <mat-card class="chart-card" [@fadeIn]>
+        <div class="card-header">
+          <h3><mat-icon>location_city</mat-icon> District-wise Case Load</h3>
+          <button mat-icon-button [matMenuTriggerFor]="districtMenu">
+            <mat-icon>more_vert</mat-icon>
+          </button>
+          <mat-menu #districtMenu="matMenu">
+            <button mat-menu-item>Export Data</button>
+            <button mat-menu-item>View Details</button>
+          </mat-menu>
+        </div>
+        <div class="chart-container">
+          <canvas
+            baseChart
+            [data]="districtChart"
+            [options]="barChartOptions"
+            [type]="'bar'"
+          >
+          </canvas>
+        </div>
+        <div class="chart-footer">
+          <span class="insight">
+            <mat-icon class="insight-icon">lightbulb</mat-icon>
+            Imphal West has the highest case load ({{
+              districts[0].cases
+            }}
+            cases)
+          </span>
+        </div>
+      </mat-card>
+
+      <!-- COURT PERFORMANCE -->
+      <mat-card class="chart-card" [@fadeIn]>
+        <div class="card-header">
+          <h3><mat-icon>speed</mat-icon> Court Disposal Performance</h3>
+          <button mat-icon-button [matMenuTriggerFor]="courtMenu">
+            <mat-icon>more_vert</mat-icon>
+          </button>
+          <mat-menu #courtMenu="matMenu">
+            <button mat-menu-item>Export Data</button>
+            <button mat-menu-item>View Details</button>
+          </mat-menu>
+        </div>
+        <div class="chart-container">
+          <canvas
+            baseChart
+            [data]="courtChart"
+            [options]="barChartOptions"
+            [type]="'bar'"
+          >
+          </canvas>
+        </div>
+        <div class="chart-footer">
+          <span class="insight">
+            <mat-icon class="insight-icon">lightbulb</mat-icon>
+            Revenue Court-I leads with {{ courts[0].disposed }} disposed cases
+          </span>
+        </div>
+      </mat-card>
+
+      <!-- CASE AGING DONUT -->
+      <mat-card class="chart-card" [@fadeIn]>
+        <div class="card-header">
+          <h3><mat-icon>schedule</mat-icon> Case Aging Analysis</h3>
+          <button mat-icon-button [matMenuTriggerFor]="agingMenu">
+            <mat-icon>more_vert</mat-icon>
+          </button>
+          <mat-menu #agingMenu="matMenu">
+            <button mat-menu-item>Export Data</button>
+            <button mat-menu-item>View Details</button>
+          </mat-menu>
+        </div>
+        <div class="chart-container donut-container">
+          <canvas
+            baseChart
+            [data]="agingChart"
+            [options]="doughnutOptions"
+            [type]="'doughnut'"
+          >
+          </canvas>
+        </div>
+        <div class="chart-footer">
+          <span class="insight">
+            <mat-icon class="insight-icon">lightbulb</mat-icon>
+            {{ agingPercentage }}% of cases are under 6 months old
+          </span>
+        </div>
+      </mat-card>
+
+      <!-- MONTHLY TREND LINE CHART -->
+      <mat-card class="chart-card wide" [@fadeIn]>
+        <div class="card-header">
+          <h3><mat-icon>trending_up</mat-icon> Monthly Case Trend</h3>
+          <mat-button-toggle-group
+            [(value)]="trendPeriod"
+            (change)="updateTrendChart()"
+          >
+            <mat-button-toggle value="3m">3M</mat-button-toggle>
+            <mat-button-toggle value="6m">6M</mat-button-toggle>
+            <mat-button-toggle value="1y">1Y</mat-button-toggle>
+          </mat-button-toggle-group>
+        </div>
+        <div class="chart-container">
+          <canvas
+            baseChart
+            [data]="trendChart"
+            [options]="lineChartOptions"
+            [type]="'line'"
+          >
+          </canvas>
+        </div>
+      </mat-card>
+    </section>
+
+    <!-- OFFICER TABLE WITH SEARCH -->
+    <mat-card class="table-card" [@fadeIn]>
+      <div class="card-header">
+        <h3><mat-icon>assignment_ind</mat-icon> Officer-wise Pending Cases</h3>
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-icon matPrefix>search</mat-icon>
+          <input
+            matInput
+            placeholder="Search officers..."
+            [(ngModel)]="searchTerm"
+          />
+        </mat-form-field>
+      </div>
+
+      <div class="table-container">
+        <table mat-table [dataSource]="filteredOfficers" class="officer-table">
+          <!-- Officer Column -->
+          <ng-container matColumnDef="officer">
+            <th mat-header-cell *matHeaderCellDef>Officer</th>
+            <td mat-cell *matCellDef="let officer">
+              <div class="officer-cell">
+                <mat-icon class="officer-icon">person</mat-icon>
+                {{ officer.name }}
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Pending Column -->
+          <ng-container matColumnDef="pending">
+            <th mat-header-cell *matHeaderCellDef>Pending Cases</th>
+            <td mat-cell *matCellDef="let officer">
+              <span class="badge" [class.high]="officer.pending > 250">
+                {{ officer.pending }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Status Column -->
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let officer">
+              <mat-chip
+                [class.warn-chip]="officer.pending > 250"
+                [class.success-chip]="officer.pending <= 150"
+              >
+                {{
+                  officer.pending > 250
+                    ? "High Load"
+                    : officer.pending > 150
+                      ? "Moderate"
+                      : "Normal"
+                }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let officer">
+              <button mat-icon-button color="primary">
+                <mat-icon>visibility</mat-icon>
+              </button>
+              <button mat-icon-button>
+                <mat-icon>mail</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr
+            mat-row
+            *matRowDef="let row; columns: displayedColumns"
+            class="table-row"
+          ></tr>
+        </table>
+      </div>
+    </mat-card>
+
+    <!-- QUICK STATS FOOTER -->
+    <section class="quick-stats">
+      <div class="stat-item">
+        <mat-icon>update</mat-icon>
+        <div>
+          <strong>Last Updated</strong>
+          <span>{{ currentDate | date: "short" }}</span>
+        </div>
+      </div>
+      <div class="stat-item">
+        <mat-icon>check_circle</mat-icon>
+        <div>
+          <strong>Disposal Rate</strong>
+          <span>{{ disposalRate }}%</span>
+        </div>
+      </div>
+      <div class="stat-item">
+        <mat-icon>trending_up</mat-icon>
+        <div>
+          <strong>Avg. Resolution Time</strong>
+          <span>{{ avgResolutionDays }} days</span>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>

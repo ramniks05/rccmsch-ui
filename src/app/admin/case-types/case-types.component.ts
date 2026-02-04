@@ -23,10 +23,24 @@ import { throwError } from 'rxjs';
 export class CaseTypesComponent implements OnInit, AfterViewInit {
   displayedColumns: string[] = ['id', 'typeCode', 'typeName', 'caseNatureName', 'courtLevel', 'isAppeal', 'isActive', 'actions'];
   dataSource = new MatTableDataSource<any>([]);
+  private _paginator!: MatPaginator;
+  private _sort!: MatSort;
 
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
-  @ViewChild(MatSort) sort!: MatSort;
+  @ViewChild(MatPaginator)
+  set paginator(p: MatPaginator) {
+    if (p) {
+      this._paginator = p;
+      this.dataSource.paginator = p;
+    }
+  }
 
+  @ViewChild(MatSort)
+  set sort(s: MatSort) {
+    if (s) {
+      this._sort = s;
+      this.dataSource.sort = s;
+    }
+  }
   isLoading = false;
   errorMessage = '';
   /** Case natures for dropdown when creating/editing a case type — Case Natures API */
@@ -279,7 +293,7 @@ export class CaseTypeDialogComponent {
   ) {
     // Use provided case natures or load them if not available
     this.caseNatures = data.caseNatures || [];
-    
+
     // Initialize form
     this.f = this.fb.group({
       caseNatureId: [null, Validators.required],
@@ -295,20 +309,20 @@ export class CaseTypeDialogComponent {
       workflowCode: [null], // Optional workflow code
       isActive: [true]
     });
-    
+
     // Load workflows for dropdown
     this.loadWorkflows();
-    
+
     // If case natures are not provided or empty, load them
     if (!this.caseNatures || this.caseNatures.length === 0) {
       this.loadCaseNatures();
     }
-    
+
     // Set form values for edit mode
     if (data.mode === 'edit' && data.caseType) {
       const t = data.caseType;
       this.caseNatureIdToSet = t.caseNatureId ?? t.caseNature?.id ?? null;
-      
+
       this.f.patchValue({
         caseNatureId: this.caseNatures.length > 0 ? this.caseNatureIdToSet : null, // Set caseNatureId only if case natures are loaded
         typeCode: t.typeCode || '',
@@ -381,8 +395,8 @@ export class CaseTypeDialogComponent {
   save(): void {
     if (this.f.invalid) return;
     this.saving = true;
-    const payload = { 
-      ...this.f.value, 
+    const payload = {
+      ...this.f.value,
       fromLevel: this.f.value.fromLevel || null,
       workflowCode: this.f.value.workflowCode || null // Include workflow code (optional)
     };

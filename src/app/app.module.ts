@@ -15,6 +15,13 @@ import { SharedModule } from './shared/shared.module';
     BrowserModule,
     BrowserAnimationsModule,
     AppRoutingModule,
+
+    // Angular Material
+    MatToolbarModule,
+    MatCardModule,
+    MatButtonModule,
+    MatIconModule,
+
     // Application Modules
     CoreModule,
     SharedModule

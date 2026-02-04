@@ -5,14 +5,26 @@
         <mat-icon>location_city</mat-icon>
         Administrative Units Management
       </h1>
-      <p class="page-subtitle">Manage State, District, Sub-Division, and Circle units</p>
+      <p class="page-subtitle">
+        Manage State, District, Sub-Division, and Circle units
+      </p>
     </div>
     <div class="header-actions">
-      <button mat-raised-button color="primary" (click)="openCreateDialog()" class="create-btn">
+      <button
+        mat-raised-button
+        color="primary"
+        (click)="openCreateDialog()"
+        class="create-btn"
+      >
         <mat-icon>add</mat-icon>
         Create New Unit
       </button>
-      <button mat-raised-button color="primary" routerLink="/admin/home" class="back-btn">
+      <button
+        mat-raised-button
+        color="primary"
+        routerLink="/admin/home"
+        class="back-btn"
+      >
         <mat-icon>arrow_back</mat-icon>
         Back to Dashboard
       </button>
@@ -26,166 +38,197 @@
       <span>{{ errorMessage }}</span>
     </div>
 
-    <!-- Loading Spinner -->
-    <div *ngIf="isLoading" class="loading-container">
-      <mat-spinner diameter="50"></mat-spinner>
-      <p>Loading administrative units...</p>
-    </div>
-
-    <!-- Table Container -->
-    <div *ngIf="!isLoading" class="table-container">
-      <!-- Search Filter -->
-      <div class="table-header">
-        <mat-form-field appearance="outline" class="search-field">
-          <mat-label>Search</mat-label>
-          <input matInput (keyup)="applyFilter($event)" placeholder="Search units...">
-          <mat-icon matPrefix>search</mat-icon>
-        </mat-form-field>
+    <div class="table-container">
+      <!-- Loading Spinner -->
+      <div *ngIf="isLoading" class="loading-container">
+        <mat-spinner diameter="50"></mat-spinner>
+        <p>Loading administrative units...</p>
       </div>
 
-      <!-- Data Table -->
-      <div class="table-wrapper">
-        <table mat-table [dataSource]="dataSource" matSort class="data-table">
-          <!-- Unit ID Column -->
-          <ng-container matColumnDef="unitId">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>
-              <mat-icon class="header-icon">tag</mat-icon>
-              ID
-            </th>
-            <td mat-cell *matCellDef="let unit">
-              <div class="cell-content">
-                <mat-icon class="cell-icon">fingerprint</mat-icon>
-                <span>{{ unit.unitId }}</span>
-              </div>
-            </td>
-          </ng-container>
+      <!-- Table + paginator always exist -->
+      <div *ngIf="!isLoading">
+        <!-- Search -->
+        <div class="table-header">
+          <mat-form-field appearance="outline" class="search-field">
+            <mat-label>Search</mat-label>
+            <input
+              matInput
+              (keyup)="applyFilter($event)"
+              placeholder="Search units..."
+            />
+            <mat-icon matPrefix>search</mat-icon>
+          </mat-form-field>
+        </div>
 
-          <!-- Unit Code Column -->
-          <ng-container matColumnDef="unitCode">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>
-              <mat-icon class="header-icon">code</mat-icon>
-              Code
-            </th>
-            <td mat-cell *matCellDef="let unit">
-              <div class="cell-content">
-                <mat-icon class="cell-icon">qr_code</mat-icon>
-                <span class="code-text">{{ unit.unitCode }}</span>
-              </div>
-            </td>
-          </ng-container>
+        <!-- Data Table -->
+        <div class="table-wrapper">
+          <table mat-table [dataSource]="dataSource" matSort class="data-table">
+            <!-- Unit ID Column -->
+            <ng-container matColumnDef="unitId">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                <mat-icon class="header-icon">tag</mat-icon>
+                ID
+              </th>
+              <td mat-cell *matCellDef="let unit">
+                <div class="cell-content">
+                  <mat-icon class="cell-icon">fingerprint</mat-icon>
+                  <span>{{ unit.unitId }}</span>
+                </div>
+              </td>
+            </ng-container>
 
-          <!-- Unit Name Column -->
-          <ng-container matColumnDef="unitName">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>
-              <mat-icon class="header-icon">location_city</mat-icon>
-              Name
-            </th>
-            <td mat-cell *matCellDef="let unit">
-              <div class="cell-content">
-                <mat-icon class="cell-icon">place</mat-icon>
-                <span class="name-text">{{ unit.unitName }}</span>
-              </div>
-            </td>
-          </ng-container>
+            <!-- Unit Code Column -->
+            <ng-container matColumnDef="unitCode">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                <mat-icon class="header-icon">code</mat-icon>
+                Code
+              </th>
+              <td mat-cell *matCellDef="let unit">
+                <div class="cell-content">
+                  <mat-icon class="cell-icon">qr_code</mat-icon>
+                  <span class="code-text">{{ unit.unitCode }}</span>
+                </div>
+              </td>
+            </ng-container>
 
-          <!-- Unit Level Column -->
-          <ng-container matColumnDef="unitLevel">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>
-              <mat-icon class="header-icon">layers</mat-icon>
-              Level
-            </th>
-            <td mat-cell *matCellDef="let unit">
-              <span class="badge badge-{{ unit.unitLevel.toLowerCase() }}">
-                <mat-icon class="badge-icon">{{ getLevelIcon(unit.unitLevel) }}</mat-icon>
-                {{ unit.unitLevel }}
-              </span>
-            </td>
-          </ng-container>
+            <!-- Unit Name Column -->
+            <ng-container matColumnDef="unitName">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                <mat-icon class="header-icon">location_city</mat-icon>
+                Name
+              </th>
+              <td mat-cell *matCellDef="let unit">
+                <div class="cell-content">
+                  <mat-icon class="cell-icon">place</mat-icon>
+                  <span class="name-text">{{ unit.unitName }}</span>
+                </div>
+              </td>
+            </ng-container>
 
-          <!-- LGD Code Column -->
-          <ng-container matColumnDef="lgdCode">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>
-              <mat-icon class="header-icon">pin</mat-icon>
-              LGD Code
-            </th>
-            <td mat-cell *matCellDef="let unit">
-              <div class="cell-content">
-                <mat-icon class="cell-icon">numbers</mat-icon>
-                <span>{{ unit.lgdCode }}</span>
-              </div>
-            </td>
-          </ng-container>
+            <!-- Unit Level Column -->
+            <ng-container matColumnDef="unitLevel">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                <mat-icon class="header-icon">layers</mat-icon>
+                Level
+              </th>
+              <td mat-cell *matCellDef="let unit">
+                <span class="badge badge-{{ unit.unitLevel.toLowerCase() }}">
+                  <mat-icon class="badge-icon">{{
+                    getLevelIcon(unit.unitLevel)
+                  }}</mat-icon>
+                  {{ unit.unitLevel }}
+                </span>
+              </td>
+            </ng-container>
 
-          <!-- Parent Unit Column -->
-          <ng-container matColumnDef="parentUnitName">
-            <th mat-header-cell *matHeaderCellDef>
-              <mat-icon class="header-icon">account_tree</mat-icon>
-              Parent Unit
-            </th>
-            <td mat-cell *matCellDef="let unit">
-              <div class="cell-content" *ngIf="unit.parentUnitName; else noParent">
-                <mat-icon class="cell-icon">subdirectory_arrow_right</mat-icon>
-                <span>{{ unit.parentUnitName }}</span>
-              </div>
-              <ng-template #noParent>
-                <span class="no-data-text">-</span>
-              </ng-template>
-            </td>
-          </ng-container>
+            <!-- LGD Code Column -->
+            <ng-container matColumnDef="lgdCode">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                <mat-icon class="header-icon">pin</mat-icon>
+                LGD Code
+              </th>
+              <td mat-cell *matCellDef="let unit">
+                <div class="cell-content">
+                  <mat-icon class="cell-icon">numbers</mat-icon>
+                  <span>{{ unit.lgdCode }}</span>
+                </div>
+              </td>
+            </ng-container>
 
-          <!-- Active Status Column -->
-          <ng-container matColumnDef="isActive">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>
-              <mat-icon class="header-icon">toggle_on</mat-icon>
-              Status
-            </th>
-            <td mat-cell *matCellDef="let unit">
-              <span [class.active]="unit.isActive" [class.inactive]="!unit.isActive" class="status-badge">
-                <mat-icon class="status-icon">{{ unit.isActive ? 'check_circle' : 'cancel' }}</mat-icon>
-                {{ unit.isActive ? 'Active' : 'Inactive' }}
-              </span>
-            </td>
-          </ng-container>
+            <!-- Parent Unit Column -->
+            <ng-container matColumnDef="parentUnitName">
+              <th mat-header-cell *matHeaderCellDef>
+                <mat-icon class="header-icon">account_tree</mat-icon>
+                Parent Unit
+              </th>
+              <td mat-cell *matCellDef="let unit">
+                <div
+                  class="cell-content"
+                  *ngIf="unit.parentUnitName; else noParent"
+                >
+                  <mat-icon class="cell-icon"
+                    >subdirectory_arrow_right</mat-icon
+                  >
+                  <span>{{ unit.parentUnitName }}</span>
+                </div>
+                <ng-template #noParent>
+                  <span class="no-data-text">-</span>
+                </ng-template>
+              </td>
+            </ng-container>
 
-          <!-- Actions Column -->
-          <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef>
-              <mat-icon class="header-icon">settings</mat-icon>
-              Actions
-            </th>
-            <td mat-cell *matCellDef="let unit">
-              <div class="action-buttons-cell">
-                <button mat-icon-button color="primary" (click)="openEditDialog(unit)" matTooltip="Edit Unit" class="action-btn-edit">
-                  <mat-icon>edit</mat-icon>
-                </button>
-                <button mat-icon-button color="warn" (click)="deleteUnit(unit)" matTooltip="Delete Unit" class="action-btn-delete">
-                  <mat-icon>delete</mat-icon>
-                </button>
-              </div>
-            </td>
-          </ng-container>
+            <!-- Active Status Column -->
+            <ng-container matColumnDef="isActive">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                <mat-icon class="header-icon">toggle_on</mat-icon>
+                Status
+              </th>
+              <td mat-cell *matCellDef="let unit">
+                <span
+                  [class.active]="unit.isActive"
+                  [class.inactive]="!unit.isActive"
+                  class="status-badge"
+                >
+                  <mat-icon class="status-icon">{{
+                    unit.isActive ? "check_circle" : "cancel"
+                  }}</mat-icon>
+                  {{ unit.isActive ? "Active" : "Inactive" }}
+                </span>
+              </td>
+            </ng-container>
 
-          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+            <!-- Actions Column -->
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef>
+                <mat-icon class="header-icon">settings</mat-icon>
+                Actions
+              </th>
+              <td mat-cell *matCellDef="let unit">
+                <div class="action-buttons-cell">
+                  <button
+                    mat-icon-button
+                    color="primary"
+                    (click)="openEditDialog(unit)"
+                    matTooltip="Edit Unit"
+                    class="action-btn-edit"
+                  >
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button
+                    mat-icon-button
+                    color="warn"
+                    (click)="deleteUnit(unit)"
+                    matTooltip="Delete Unit"
+                    class="action-btn-delete"
+                  >
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </td>
+            </ng-container>
 
-          <!-- No data row -->
-          <tr class="mat-row" *matNoDataRow>
-            <td class="mat-cell" [attr.colspan]="displayedColumns.length">
-              <div class="no-data">
-                <mat-icon>inbox</mat-icon>
-                <p>No administrative units found</p>
-              </div>
-            </td>
-          </tr>
-        </table>
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+
+            <!-- No data row -->
+            <tr class="mat-row" *matNoDataRow>
+              <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+                <div class="no-data">
+                  <mat-icon>inbox</mat-icon>
+                  <p>No administrative units found</p>
+                </div>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <mat-paginator
+          [pageSizeOptions]="[5, 10, 20, 50]"
+          [pageSize]="10"
+          showFirstLastButtons
+        >
+        </mat-paginator>
       </div>
-
-      <!-- Paginator -->
-      <mat-paginator
-        [pageSizeOptions]="[5, 10, 20, 50]"
-        [pageSize]="10"
-        showFirstLastButtons>
-      </mat-paginator>
     </div>
   </div>
 </div>

@@ -21,9 +21,24 @@ import { throwError } from 'rxjs';
 export class PostingsComponent implements OnInit, AfterViewInit {
   displayedColumns: string[] = ['postingUserid', 'officerName', 'roleName', 'courtName', 'unitName', 'mobileNo', 'fromDate', 'toDate', 'isCurrent', 'actions'];
   dataSource = new MatTableDataSource<any>([]);
-  
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
-  @ViewChild(MatSort) sort!: MatSort;
+  private _paginator!: MatPaginator;
+  private _sort!: MatSort;
+
+  @ViewChild(MatPaginator)
+  set paginator(p: MatPaginator) {
+    if (p) {
+      this._paginator = p;
+      this.dataSource.paginator = p;
+    }
+  }
+
+  @ViewChild(MatSort)
+  set sort(s: MatSort) {
+    if (s) {
+      this._sort = s;
+      this.dataSource.sort = s;
+    }
+  }
 
   isLoading = false;
   errorMessage = '';
@@ -55,7 +70,7 @@ export class PostingsComponent implements OnInit, AfterViewInit {
   loadPostings(): void {
     this.isLoading = true;
     this.errorMessage = '';
-    
+
     this.adminService.getAllActivePostings()
       .pipe(
         catchError(error => {
@@ -148,7 +163,7 @@ export class PostingsComponent implements OnInit, AfterViewInit {
   openCreateDialog(): void {
     const dialogRef = this.dialog.open(PostingDialogComponent, {
       width: '700px',
-      data: { 
+      data: {
         mode: 'create',
         officers: this.officers,
         courts: this.courts,
@@ -319,7 +334,7 @@ export class PostingDialogComponent {
     }
 
     const courtLevel = selectedCourt.courtLevel;
-    
+
     // Map court levels to their respective officer roles
     const levelRoleMap: any = {
       'STATE': 'STATE_ADMIN',
@@ -329,9 +344,9 @@ export class PostingDialogComponent {
     };
 
     const officerRoleCode = levelRoleMap[courtLevel];
-    
+
     // Filter roles: respective officer role + DEALING_ASSISTANT (available at all levels)
-    this.availableRoles = this.data.roles.filter((role: any) => 
+    this.availableRoles = this.data.roles.filter((role: any) =>
       role.roleCode === officerRoleCode || role.roleCode === 'DEALING_ASSISTANT'
     );
 

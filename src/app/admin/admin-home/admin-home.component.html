@@ -17,71 +17,138 @@
 
   <!-- Main Content -->
   <div class="main-content">
-    <!-- Quick Actions Card -->
-    <mat-card class="quick-actions-card">
-      <mat-card-header>
-        <mat-card-title>
-          <mat-icon>dashboard</mat-icon>
-          Quick Actions
-        </mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="action-buttons">
-          <button mat-raised-button color="primary" class="action-btn" routerLink="/admin/officers">
-            <mat-icon>people</mat-icon>
-            Manage Officers
-          </button>
-          <button mat-raised-button color="accent" class="action-btn" routerLink="/admin/postings">
-            <mat-icon>assignment_ind</mat-icon>
-            Manage Postings
-          </button>
-          <button mat-raised-button color="primary" class="action-btn" routerLink="/admin/administrative-units">
-            <mat-icon>location_city</mat-icon>
-            Administrative Units
-          </button>
-          <button mat-raised-button color="primary" class="action-btn" routerLink="/admin/case-types">
-            <mat-icon>folder_special</mat-icon>
-            Case Types
-          </button>
-          <button mat-raised-button color="primary" class="action-btn" routerLink="/admin/acts">
-            <mat-icon>gavel</mat-icon>
-            Acts
-          </button>
-          <button mat-raised-button color="primary" class="action-btn" routerLink="/admin/case-natures">
-            <mat-icon>category</mat-icon>
-            Case Natures
-          </button>
-          <button mat-raised-button color="primary" class="action-btn" routerLink="/admin/courts">
-            <mat-icon>account_balance</mat-icon>
-            Courts
-          </button>
-          <button mat-raised-button color="accent" class="action-btn" routerLink="/admin/system-settings">
-            <mat-icon>settings</mat-icon>
-            System Settings
-          </button>
-          <button mat-raised-button color="primary" class="action-btn" routerLink="/admin/workflows">
-            <mat-icon>account_tree</mat-icon>
-            Workflow Configuration
-          </button>
-          <button mat-raised-button color="accent" class="action-btn" routerLink="/admin/registration-forms">
-            <mat-icon>dynamic_form</mat-icon>
-            Registration Forms
-          </button>
-          <button mat-raised-button color="primary" class="action-btn" routerLink="/admin/module-forms">
-            <mat-icon>list_alt</mat-icon>
-            Module Forms
-          </button>
-          <button mat-raised-button color="accent" class="action-btn" routerLink="/admin/document-templates">
-            <mat-icon>description</mat-icon>
-            Document Templates
-          </button>
-          <button mat-raised-button color="primary" class="action-btn" routerLink="/admin/calendar">
-            <mat-icon>calendar_today</mat-icon>
-              Calendar
-          </button>
-        </div>
-      </mat-card-content>
-    </mat-card>
+    <div class="row">
+      <div class="col-lg-6">
+        <!-- Quick Actions Card -->
+        <mat-card class="quick-actions-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon>dashboard</mat-icon>
+              Workflow
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="action-buttons">
+              <button mat-raised-button color="accent" class="action-btn" routerLink="/admin/administrative-units">
+                <mat-icon>location_city</mat-icon>
+                Administrative Units
+              </button>
+              <button mat-raised-button color="primary" class="action-btn" routerLink="/admin/courts">
+                <mat-icon>account_balance</mat-icon>
+                Courts
+              </button>
+              <button mat-raised-button color="primary" class="action-btn" routerLink="/admin/officers">
+                <mat-icon>people</mat-icon>
+                Manage Officers
+              </button>
+              <button mat-raised-button color="accent" class="action-btn" routerLink="/admin/postings">
+                <mat-icon>assignment_ind</mat-icon>
+                Manage Postings
+              </button>
+              <button mat-raised-button color="accent" class="action-btn" routerLink="/admin/workflows">
+                <mat-icon>account_tree</mat-icon>
+                Workflow Configuration
+              </button>
+              <button mat-raised-button color="primary" class="action-btn" routerLink="/admin/calendar">
+                <mat-icon>calendar_today</mat-icon>
+                Calendar
+              </button>
+              <!-- <button mat-raised-button color="primary" class="action-btn" routerLink="/admin/case-types">
+                <mat-icon>folder_special</mat-icon>
+                Case Types
+              </button>
+              <button mat-raised-button color="primary" class="action-btn" routerLink="/admin/acts">
+                <mat-icon>gavel</mat-icon>
+                Acts
+              </button>
+              <button mat-raised-button color="primary" class="action-btn" routerLink="/admin/case-natures">
+                <mat-icon>category</mat-icon>
+                Case Natures
+              </button>
+              <button mat-raised-button color="accent" class="action-btn" routerLink="/admin/system-settings">
+                <mat-icon>settings</mat-icon>
+                System Settings
+              </button>
+              <button mat-raised-button color="accent" class="action-btn" routerLink="/admin/registration-forms">
+                <mat-icon>dynamic_form</mat-icon>
+                Registration Forms
+              </button>
+              <button mat-raised-button color="primary" class="action-btn" routerLink="/admin/module-forms">
+                <mat-icon>list_alt</mat-icon>
+                Module Forms
+              </button>
+              <button mat-raised-button color="accent" class="action-btn" routerLink="/admin/document-templates">
+                <mat-icon>description</mat-icon>
+                Document Templates
+              </button> -->
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+      <div class="col-lg-6">
+        <!-- Quick Actions Card -->
+        <mat-card class="quick-actions-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon>extension</mat-icon>
+              Masters
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="action-buttons">
+              <!-- <button mat-raised-button color="primary" class="action-btn" routerLink="/admin/officers">
+                <mat-icon>people</mat-icon>
+                Manage Officers
+              </button>
+              <button mat-raised-button color="accent" class="action-btn" routerLink="/admin/postings">
+                <mat-icon>assignment_ind</mat-icon>
+                Manage Postings
+              </button>
+              <button mat-raised-button color="primary" class="action-btn" routerLink="/admin/administrative-units">
+                <mat-icon>location_city</mat-icon>
+                Administrative Units
+              </button> -->
+              <button mat-raised-button color="primary" class="action-btn" routerLink="/admin/case-natures">
+                <mat-icon>category</mat-icon>
+                Case Natures
+              </button>
+              <button mat-raised-button color="accent" class="action-btn" routerLink="/admin/case-types">
+                <mat-icon>folder_special</mat-icon>
+                Case Types
+              </button>
+              <button mat-raised-button color="accent" class="action-btn" routerLink="/admin/acts">
+                <mat-icon>gavel</mat-icon>
+                Acts
+              </button>
+              <!-- <button mat-raised-button color="primary" class="action-btn" routerLink="/admin/courts">
+                <mat-icon>account_balance</mat-icon>
+                Courts
+              </button>
+              <button mat-raised-button color="primary" class="action-btn" routerLink="/admin/workflows">
+                <mat-icon>account_tree</mat-icon>
+                Workflow Configuration
+              </button> -->
+              <button mat-raised-button color="primary" class="action-btn" routerLink="/admin/module-forms">
+                <mat-icon>list_alt</mat-icon>
+                Module Forms
+              </button>
+              <button mat-raised-button color="primary" class="action-btn" routerLink="/admin/document-templates">
+                <mat-icon>description</mat-icon>
+                Document Templates
+              </button>
+              <button mat-raised-button color="accent" class="action-btn" routerLink="/admin/registration-forms">
+                <mat-icon>dynamic_form</mat-icon>
+                Registration Forms
+              </button>
+              <button mat-raised-button color="accent" class="action-btn" routerLink="/admin/system-settings">
+                <mat-icon>settings</mat-icon>
+                System Settings
+              </button>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
 
     <!-- Information Cards -->
     <div class="info-cards">
