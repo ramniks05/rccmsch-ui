@@ -1,35 +1,50 @@
 <div class="dashboard-layout">
   <!-- SIDEBAR -->
-  <aside class="sidebar">
+  <aside class="sidebar" [class.collapsed]="isSidebarCollapsed">
     <div class="sidebar-header">
       <mat-icon class="logo-icon">account_balance</mat-icon>
-      <div class="sidebar-title">RCCMS</div>
+
+      <div class="sidebar-title" *ngIf="!isSidebarCollapsed">
+        RCCMS
+      </div>
+
+      <!-- TOGGLE BUTTON -->
+      <button
+        mat-icon-button
+        class="toggle-btn"
+        type="button"
+        (click)="toggleSidebar()"
+      >
+        <mat-icon>
+          {{ isSidebarCollapsed ? 'chevron_right' : 'chevron_left' }}
+        </mat-icon>
+      </button>
     </div>
 
     <nav>
       <a class="nav-item" routerLink="/admin/home" routerLinkActive="active">
         <mat-icon>dashboard</mat-icon>
-        <span>Dashboard</span>
+        <span *ngIf="!isSidebarCollapsed">Dashboard</span>
       </a>
 
       <a class="nav-item" routerLink="/admin/features" routerLinkActive="active">
         <mat-icon>home</mat-icon>
-        <span>Features</span>
+        <span *ngIf="!isSidebarCollapsed">Features</span>
       </a>
 
       <a class="nav-item" routerLink="/admin/courts" routerLinkActive="active">
         <mat-icon>gavel</mat-icon>
-        <span>Courts</span>
+        <span *ngIf="!isSidebarCollapsed">Courts</span>
       </a>
 
       <a class="nav-item" routerLink="/admin/officers" routerLinkActive="active">
         <mat-icon>people</mat-icon>
-        <span>Officers</span>
+        <span *ngIf="!isSidebarCollapsed">Officers</span>
       </a>
 
       <a class="nav-item">
         <mat-icon>analytics</mat-icon>
-        <span>Reports</span>
+        <span *ngIf="!isSidebarCollapsed">Reports</span>
       </a>
     </nav>
   </aside>

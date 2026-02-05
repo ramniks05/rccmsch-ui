@@ -12,7 +12,9 @@
           />
           <div class="branding-text">
             <h2>{{ settings!.logoHeader }}</h2>
-            <h3 *ngIf="settings!.stateName">Government of {{ settings!.stateName }}</h3>
+            <h3 *ngIf="settings!.stateName">
+              Government of {{ settings!.stateName }}
+            </h3>
           </div>
         </div>
       </div>
@@ -117,12 +119,11 @@
         <a href="#"><mat-icon>call</mat-icon> Contact Us</a>
       </li>
     </ul>
-
-    <!-- NOTICE MARQUEE -->
-    <div class="notice-marquee">
-      <mat-icon>campaign</mat-icon>
-      <marquee>{{ settings!.marqueeText }}</marquee>
-    </div>
+  </div>
+  <!-- NOTICE MARQUEE -->
+  <div class="notice-marquee">
+    <mat-icon>campaign</mat-icon>
+    <marquee>{{ settings!.marqueeText }}</marquee>
   </div>
 </nav>
 

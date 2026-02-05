@@ -35,6 +35,7 @@ import { CalendarComponent } from './calendar/calendar.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { SharedModule } from '../shared/shared.module';
 import { AdminLayoutComponent } from './admin-layout/admin-layout.component';
+import { WhatsNewComponent } from './whats-new/whats-new.component';
 
 /**
  * Routes for Admin Module
@@ -200,7 +201,8 @@ const routes: Routes = [
     DocumentTemplatesComponent,
     CalendarComponent,
     DashboardComponent,
-    AdminLayoutComponent
+    AdminLayoutComponent,
+    WhatsNewComponent
   ],
   imports: [
     SharedModule,
