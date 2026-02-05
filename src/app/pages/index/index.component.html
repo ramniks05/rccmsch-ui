@@ -7,20 +7,24 @@
         <div class="branding-wrap">
           <img
             class="gov-logo"
-            [src]="data.stateConfig.logoUrl"
+            [src]="settings!.logoUrl"
             alt="State Logo"
           />
           <div class="branding-text">
-            <h2>{{ data.stateConfig.departmentName }}</h2>
-            <h3>Government of {{ data.stateConfig.stateName }}</h3>
+            <h2>{{ settings!.logoHeader }}</h2>
+            <h3 *ngIf="settings!.stateName">Government of {{ settings!.stateName }}</h3>
           </div>
         </div>
       </div>
 
       <!-- CENTER : Secondary Logo (Project / Portal) -->
       <div class="col-lg-4 col-md-4 col-sm-12 text-center portal-logo">
-        <img src="../../../assets/swatchh-bharat.png" alt="Portal Logo" />
-        <img src="../../../assets/Digital_India_logo.png" class="digital-logo" alt="Portal Logo" />
+        <img [src]="settings!.secondaryLogoUrl" alt="Portal Logo" />
+        <img
+          [src]="settings!.tertiaryLogoUrl"
+          class="digital-logo"
+          alt="Portal Logo"
+        />
       </div>
 
       <!-- RIGHT : Accessibility + Auth -->
@@ -129,7 +133,7 @@
       <aside class="sidebar">
         <ul class="menu">
           <li *ngFor="let item of menu" class="menu-item">
-            <a [href]=item.route>
+            <a [href]="item.route">
               <mat-icon>{{ item.icon }}</mat-icon>
               <span>{{ item.label }}</span>
               <mat-icon *ngIf="item.children" class="arrow">
@@ -162,7 +166,7 @@
           <img [src]="banner.url" alt="Banner" />
           <div class="banner-overlay">
             <h2>{{ banner.header }}</h2>
-            <p>{{ banner.subHeader }} </p>
+            <p>{{ banner.subHeader }}</p>
           </div>
         </div>
       </section>
@@ -206,29 +210,20 @@
             <div class="news-list">
               <div class="marquee-container">
                 <div class="marquee-inner">
-                  <div class="marquee-item">
-                    <div class="date">October 11, 2024</div>
-                    <div class="title">
-                      National Conference on Registration System in India
-                    </div>
-                    <a href="#" class="btn read-more-btn view-pdf">View PDF</a>
-                  </div>
+                  <div class="marquee-item" *ngFor="let item of whatsNewList">
+                    <div class="date">{{ item.date }}</div>
 
-                  <div class="marquee-item">
-                    <div class="date">October 11, 2024</div>
                     <div class="title">
-                      eProcurement System Government of Haryana. Directorate
-                      Urban Administration and Development
+                      {{ item.title }}
                     </div>
-                    <a href="#" class="btn read-more-btn view-pdf">View PDF</a>
-                  </div>
 
-                  <div class="marquee-item">
-                    <div class="date">October 11, 2024</div>
-                    <div class="title">
-                      Directorate Urban Administration and Development...
-                    </div>
-                    <a href="#" class="btn read-more-btn view-pdf">View PDF</a>
+                    <a
+                      class="btn read-more-btn view-pdf"
+                      [href]="item.pdfUrl"
+                      target="_blank"
+                    >
+                      View PDF
+                    </a>
                   </div>
                 </div>
 

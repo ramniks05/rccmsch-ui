@@ -36,9 +36,6 @@ export interface HomeData {
 
   vision?: string;
   mission?: string;
-
-  whatsNew?: string[];
-
   /** 🔥 ADD THESE */
   highlights?: Highlight[];
   menu?: MenuItem[];
@@ -52,6 +49,12 @@ export interface Banner {
   imageUrl: string;
   title: string;
   subtitle: string;
+}
+
+export interface WhatsNewItem {
+  date: string;
+  title: string;
+  pdfUrl: string;
 }
 
 export interface Highlight {

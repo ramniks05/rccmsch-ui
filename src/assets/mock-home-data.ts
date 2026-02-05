@@ -1,6 +1,6 @@
 // ================= mock-home-data.ts =================
 
-import { HomeData } from "./home-model";
+import { HomeData, WhatsNewItem } from './home-model';
 
 export const HOME_DATA: HomeData = {
   // ================= STATE CONFIG =================
@@ -11,7 +11,7 @@ export const HOME_DATA: HomeData = {
     secondaryColor: '#f58220',
     helpline: '1800-XXX-XXXX',
     email: 'help@manipur.gov.in',
-    logoUrl: 'assets/manipur-gov-logo-main.png'
+    logoUrl: 'assets/manipur-gov-logo-main.png',
   },
 
   // ================= BANNERS =================
@@ -19,18 +19,18 @@ export const HOME_DATA: HomeData = {
     {
       imageUrl: 'assets/home-banner.jpg',
       title: 'Digital Land Services',
-      subtitle: 'Transparent, citizen-centric revenue governance'
+      subtitle: 'Transparent, citizen-centric revenue governance',
     },
     {
       imageUrl: 'assets/manipurlegislativeassembly.jpg',
       title: 'Fast & Secure Applications',
-      subtitle: 'Track applications and services online'
+      subtitle: 'Track applications and services online',
     },
     {
       imageUrl: 'assets/sc-manipur-organe.jpeg',
       title: 'Single Unified Portal',
-      subtitle: 'All land & revenue services at one place'
-    }
+      subtitle: 'All land & revenue services at one place',
+    },
   ],
 
   // ================= HIGHLIGHTS / DASHBOARD STATS =================
@@ -42,7 +42,7 @@ export const HOME_DATA: HomeData = {
     { title: 'Pending (> 1 Year)', description: '0.21 M', icon: 'schedule' },
     { title: 'Pending (> 3 Years)', description: '0.06 M', icon: 'history' },
     { title: 'Pending (> 5 Years)', description: '0.08 M', icon: 'timelapse' },
-    { title: 'Un-Updated Cases', description: '0.47 M', icon: 'warning' }
+    { title: 'Un-Updated Cases', description: '0.47 M', icon: 'warning' },
   ],
 
   // ================= STATISTICS (existing – kept) =================
@@ -50,7 +50,7 @@ export const HOME_DATA: HomeData = {
     { label: 'Online Services', value: 1280 },
     { label: 'Applications Received', value: 248965 },
     { label: 'Applications Approved', value: 231402 },
-    { label: 'Districts Covered', value: 38 }
+    { label: 'Districts Covered', value: 38 },
   ],
 
   // ================= NOTICES =================
@@ -58,18 +58,18 @@ export const HOME_DATA: HomeData = {
     {
       title: 'Departmental Promotion Committee meeting on 12 Feb',
       date: '12 Feb 2025',
-      isNew: true
+      isNew: true,
     },
     {
       title: 'Annual Property Return submission deadline extended',
       date: '01 Feb 2025',
-      isNew: true
+      isNew: true,
     },
     {
       title: 'New HRMS module launched',
       date: '25 Jan 2025',
-      isNew: false
-    }
+      isNew: false,
+    },
   ],
 
   // ================= MENU =================
@@ -79,16 +79,16 @@ export const HOME_DATA: HomeData = {
       label: 'Services',
       icon: 'miscellaneous_services',
       route: 'home/dashboard',
-      children: ['Land Records', 'Mutation', 'Revenue Courts', 'Certificates']
+      children: ['Land Records', 'Mutation', 'Revenue Courts', 'Certificates'],
     },
     {
       label: 'Applications',
       icon: 'assignment',
       route: 'home/dashboard',
-      children: ['Apply Online', 'Track Status', 'Pending Applications']
+      children: ['Apply Online', 'Track Status', 'Pending Applications'],
     },
     { label: 'Circulars', route: 'home/dashboard', icon: 'description' },
-    { label: 'Help & Support', icon: 'support_agent', route: 'home/dashboard', }
+    { label: 'Help & Support', icon: 'support_agent', route: 'home/dashboard' },
   ],
 
   // ================= SERVICES (CARDS / ACCORDION) =================
@@ -97,7 +97,7 @@ export const HOME_DATA: HomeData = {
       title: 'Cause List',
       icon: 'event_note',
       open: false,
-      items: [{ label: 'Daily Cause List', link: '#' }]
+      items: [{ label: 'Daily Cause List', link: '#' }],
     },
     {
       title: 'Case Status',
@@ -115,8 +115,8 @@ export const HOME_DATA: HomeData = {
         { label: 'Filing Date', link: '#' },
         { label: 'Listing Date', link: '#' },
         { label: 'Act', link: '#' },
-        { label: 'New Cases (BOR)', link: '#' }
-      ]
+        { label: 'New Cases (BOR)', link: '#' },
+      ],
     },
     {
       title: 'Court Order',
@@ -124,8 +124,8 @@ export const HOME_DATA: HomeData = {
       open: false,
       items: [
         { label: 'Case No', link: '#' },
-        { label: 'Date of Order', link: '#' }
-      ]
+        { label: 'Date of Order', link: '#' },
+      ],
     },
     {
       title: 'Login (BOR)',
@@ -133,14 +133,14 @@ export const HOME_DATA: HomeData = {
       open: false,
       items: [
         { label: 'Login (BOR)', link: '#' },
-        { label: 'Mandaliya Sahayak Login', link: '#' }
-      ]
+        { label: 'Mandaliya Sahayak Login', link: '#' },
+      ],
     },
     {
       title: 'Login (NT to Commissioner)',
       icon: 'lock',
       open: false,
-      items: [{ label: 'Login', link: '#' }]
+      items: [{ label: 'Login', link: '#' }],
     },
     {
       title: 'Online Application',
@@ -151,14 +151,14 @@ export const HOME_DATA: HomeData = {
         { label: 'Section "34"', link: '#' },
         { label: 'Section "80"', link: '#' },
         { label: 'Varasat (Uncontested Succession)', link: '#' },
-        { label: 'Caveat Registration', link: '#' }
-      ]
+        { label: 'Caveat Registration', link: '#' },
+      ],
     },
     {
       title: 'Folio',
       icon: 'folder_open',
       open: false,
-      items: [{ label: 'Single Window System', link: '#' }]
+      items: [{ label: 'Single Window System', link: '#' }],
     },
     {
       title: 'Login (Lekhpal/R.K)',
@@ -166,15 +166,15 @@ export const HOME_DATA: HomeData = {
       open: false,
       items: [
         { label: 'Lekhpal / Revenue Inspector Login', link: '#' },
-        { label: 'R.R.K Login', link: '#' }
-      ]
+        { label: 'R.R.K Login', link: '#' },
+      ],
     },
     {
       title: 'Chakbandi Court',
       icon: 'gavel',
       open: false,
-      items: [{ label: 'Chakbandi Court', link: '#' }]
-    }
+      items: [{ label: 'Chakbandi Court', link: '#' }],
+    },
   ],
 
   // ================= QUICK SERVICES =================
@@ -182,7 +182,7 @@ export const HOME_DATA: HomeData = {
     { title: 'Apply for Mutation', icon: 'assignment' },
     { title: 'View Jamabandi', icon: 'description' },
     { title: 'Track Application', icon: 'track_changes' },
-    { title: 'Apply Certificate', icon: 'verified' }
+    { title: 'Apply Certificate', icon: 'verified' },
   ],
 
   // ================= CATEGORIES =================
@@ -190,20 +190,34 @@ export const HOME_DATA: HomeData = {
     { title: 'Land Records', icon: 'map' },
     { title: 'Registration', icon: 'how_to_reg' },
     { title: 'Certificates', icon: 'workspace_premium' },
-    { title: 'Grievance', icon: 'support_agent' }
+    { title: 'Grievance', icon: 'support_agent' },
   ],
 
   // ================= VISION & MISSION =================
   vision: 'To deliver transparent and efficient land governance services.',
-  mission: 'Digitize land records and simplify citizen access to revenue services.',
-
-  // ================= WHAT’S NEW =================
-  whatsNew: [
-    'New dashboard launched for officers',
-    'Process automation for mutation cases'
-  ],
+  mission:
+    'Digitize land records and simplify citizen access to revenue services.',
 
   marqueeText: [
-    '🎯 Welcome to RCCMS Manipur | 📱 Track cases online 24/7 | 🔒 Secure digital platform | 📊 Real-time case updates | 💼 All 3073 courts connected | 📞 Helpline: 1800-180-6025'
-  ]
+    '🎯 Welcome to RCCMS Manipur | 📱 Track cases online 24/7 | 🔒 Secure digital platform | 📊 Real-time case updates | 💼 All 3073 courts connected | 📞 Helpline: 1800-180-6025',
+  ],
 };
+
+export const WHATS_NEW_DATA: WhatsNewItem[] = [
+  {
+    date: 'October 11, 2024',
+    title: 'National Conference on Registration System in India',
+    pdfUrl: '/assets/pdfs/conference-registration.pdf',
+  },
+  {
+    date: 'October 11, 2024',
+    title:
+      'eProcurement System Government of Haryana. Directorate Urban Administration and Development',
+    pdfUrl: '/assets/pdfs/eprocurement-haryana.pdf',
+  },
+  {
+    date: 'October 11, 2024',
+    title: 'Directorate Urban Administration and Development...',
+    pdfUrl: '/assets/pdfs/urban-development.pdf',
+  },
+];

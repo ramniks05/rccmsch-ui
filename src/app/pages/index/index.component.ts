@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { HomeData, Service } from 'src/assets/home-model';
-import { HOME_DATA } from '../../../assets/mock-home-data';
+import { HomeData, Service, WhatsNewItem } from 'src/assets/home-model';
+import { HOME_DATA, WHATS_NEW_DATA } from '../../../assets/mock-home-data';
 import { Router } from '@angular/router';
 import {
   SystemSettings,
@@ -25,6 +25,7 @@ export class IndexComponent implements OnInit {
   marqueeText = this.data.marqueeText ?? '';
   animatedStatistics: number[] = [];
   activeBanner = 0;
+  whatsNewList: WhatsNewItem[] = [];
 
   constructor(
     private router: Router,
@@ -40,6 +41,7 @@ export class IndexComponent implements OnInit {
     this.subscription = this.settings$.subscribe((settings) => {
       this.settings = settings;
     });
+    this.whatsNewList = WHATS_NEW_DATA;
   }
 
   toggle(index: number): void {
