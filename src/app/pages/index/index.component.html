@@ -130,47 +130,60 @@
 <!-- ===== Sidebar + Content (Below Banner) ===== -->
 <section class="container-services sidebarMenu__outer next-section">
   <div class="row">
-    <div class="col-12 col-lg-3 p-0 pl-lg-3 pr-lg-0 sidebar-col">
-      <aside class="sidebar">
-        <ul class="menu">
-          <li *ngFor="let item of menu" class="menu-item">
-            <a [href]="item.route">
-              <mat-icon>{{ item.icon }}</mat-icon>
-              <span>{{ item.label }}</span>
-              <mat-icon *ngIf="item.children" class="arrow">
-                chevron_right
-              </mat-icon>
-            </a>
+    <div class="row align-items-stretch">
+      <!-- LEFT -->
+      <div class="col-12 col-lg-8 content-area d-flex">
+        <section class="top-banner w-100">
+          <div
+            class="banner-slide"
+            *ngFor="let banner of settings!.banners; let i = index"
+            [class.active]="i === activeBanner"
+          >
+            <img [src]="banner.url" alt="Banner" />
+            <div class="banner-overlay">
+              <h2>{{ banner.header }}</h2>
+              <p>{{ banner.subHeader }}</p>
+            </div>
+          </div>
+        </section>
+      </div>
 
-            <!-- HOVER DROPDOWN -->
-            <ul class="submenu" *ngIf="item.children">
-              <li *ngFor="let child of item.children">
-                <a href="javascript:void(0)">
-                  {{ child }}
-                </a>
-              </li>
-            </ul>
-          </li>
-        </ul>
-      </aside>
-    </div>
+      <!-- RIGHT -->
+      <div class="col-12 col-lg-4 d-flex">
+        <div class="card w-100 whats-new-card">
+          <h5 class="card-title whats_new">WHAT'S NEW</h5>
 
-    <!-- RIGHT : CONTENT AREA -->
-    <div class="col-12 col-lg-9 content-area">
-      <!-- TOP BANNER (same height as sidebar) -->
-      <section class="top-banner">
-        <div
-          class="banner-slide"
-          *ngFor="let banner of settings!.banners; let i = index"
-          [class.active]="i === activeBanner"
-        >
-          <img [src]="banner.url" alt="Banner" />
-          <div class="banner-overlay">
-            <h2>{{ banner.header }}</h2>
-            <p>{{ banner.subHeader }}</p>
+          <div class="card-body card_1 hsbhdb shadow-sm">
+            <div class="news-list">
+              <div class="marquee-container">
+                <div class="marquee-inner">
+                  <div class="marquee-item" *ngFor="let item of whatsNewList">
+                    <div class="date">{{ item.date }}</div>
+                    <div class="title">{{ item.title }}</div>
+                    <a
+                      class="btn read-more-btn view-pdf"
+                      [href]="item.pdfUrl"
+                      target="_blank"
+                    >
+                      View PDF
+                    </a>
+                  </div>
+                </div>
+
+                <div class="read-more-wrapper">
+                  <a
+                    class="read-more-link"
+                    href="/Home/AllNotification"
+                    target="_blank"
+                  >
+                    Read More <i class="bi bi-arrow-right"></i>
+                  </a>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </section>
+      </div>
     </div>
 
     <!-- SECTION HEADER -->
@@ -181,6 +194,31 @@
 
     <!-- CARDS GRID -->
     <div class="row">
+      <div class="col-md-6 col-lg-4 mb-4">
+        <div class="doc-section">
+          <h5 class="section-title">📄 Documents Available</h5>
+
+          <div class="doc-item">
+            <span class="pdf-icon">PDF</span>
+            <a href="#">The Manipur Revenue Code (Amendment) Act, 2021</a>
+          </div>
+
+          <div class="doc-item">
+            <span class="pdf-icon">PDF</span>
+            <a href="#">The Manipur Revenue Code (Amendment) Act, 2020</a>
+          </div>
+
+          <div class="doc-item">
+            <span class="pdf-icon">PDF</span>
+            <a href="#">The Manipur Revenue Code (Amendment) Act, 2019</a>
+          </div>
+
+          <div class="doc-item highlight">
+            <span class="pdf-icon">PDF</span>
+            <a href="#">Manipur Revenue Code Bill – 2006 (E-Book)</a>
+          </div>
+        </div>
+      </div>
       <div class="col-md-6 col-lg-8 mb-4">
         <div class="row">
           <div class="col-md-6 col-lg-4 mb-4" *ngFor="let item of highlights">
@@ -201,52 +239,19 @@
           </div>
         </div>
       </div>
-      <!-- Info Cards Column -->
-      <div class="col-md-6 col-lg-4 mb-4">
-        <div class="card">
-          <h5 class="card-title pt-20 asbb p-1 fw-bold whats_new">
-            WHAT'S NEW
-          </h5>
-          <div class="card-body card_1 hsbhdb shadow-sm">
-            <div class="news-list">
-              <div class="marquee-container">
-                <div class="marquee-inner">
-                  <div class="marquee-item" *ngFor="let item of whatsNewList">
-                    <div class="date">{{ item.date }}</div>
+    </div>
 
-                    <div class="title">
-                      {{ item.title }}
-                    </div>
-
-                    <a
-                      class="btn read-more-btn view-pdf"
-                      [href]="item.pdfUrl"
-                      target="_blank"
-                    >
-                      View PDF
-                    </a>
-                  </div>
-                </div>
-
-                <!-- Read More Button Outside Marquee -->
-                <div class="read-more-wrapper">
-                  <a
-                    class="read-more-link"
-                    target="_blank"
-                    href="/Home/AllNotification"
-                    >Read More<i class="bi bi-arrow-right"></i
-                  ></a>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+    <div class="row">
+      <div class="col-lg-6">
+        <app-cause-list></app-cause-list>
+      </div>
+      <div class="col-lg-6">
+        <app-hearing-calendar></app-hearing-calendar>
       </div>
     </div>
 
-    <div class="container-services my-4">
+    <!-- <div class="container-services my-4">
       <div class="row">
-        <!-- SECTION 1 : Documents Available -->
         <div class="col-lg-4 col-md-6 mb-4">
           <div class="doc-section">
             <h5 class="section-title">📄 Documents Available</h5>
@@ -273,7 +278,6 @@
           </div>
         </div>
 
-        <!-- SECTION 2 : Vision -->
         <div class="col-lg-4 col-md-6 mb-4">
           <div class="vm-section vision">
             <h5 class="vm-title">
@@ -289,7 +293,6 @@
           </div>
         </div>
 
-        <!-- SECTION 3 : Mission -->
         <div class="col-lg-4 col-md-12 mb-4">
           <div class="vm-section mission">
             <h5 class="vm-title">
@@ -305,9 +308,9 @@
           </div>
         </div>
       </div>
-    </div>
+    </div> -->
 
-    <div class="section-header m-0">
+    <!-- <div class="section-header m-0">
       <h2>Services</h2>
     </div>
 
@@ -317,7 +320,6 @@
           <ng-container *ngFor="let service of services; let i = index">
             <div class="col-lg-4 col-md-6 mb-4">
               <div class="service-card" [class.active]="service.open">
-                <!-- Header -->
                 <div class="service-header" (click)="toggle(i)">
                   <div class="service-left">
                     <mat-icon class="service-icon">{{ service.icon }}</mat-icon>
@@ -329,7 +331,6 @@
                   </mat-icon>
                 </div>
 
-                <!-- Body -->
                 <div class="service-body" *ngIf="service.open">
                   <ul>
                     <li *ngFor="let item of service.items">
@@ -342,6 +343,6 @@
           </ng-container>
         </div>
       </div>
-    </section>
+    </section> -->
   </div>
 </section>

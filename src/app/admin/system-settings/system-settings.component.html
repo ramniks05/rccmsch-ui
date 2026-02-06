@@ -6,9 +6,13 @@
         <mat-icon>settings</mat-icon>
         System Settings
       </h1>
-      <p class="page-subtitle">Manage Header and Footer Configuration</p>
+      <p class="page-subtitle">Manage application configuration and appearance</p>
     </div>
     <div class="header-actions">
+      <button mat-raised-button color="primary" (click)="goToAdvancedSettings()" class="create-btn">
+        <mat-icon>settings</mat-icon>
+        Advanced Settings
+      </button>
       <button
         mat-raised-button
         color="primary"
@@ -37,363 +41,414 @@
     >
       <div class="form-sections">
         <!-- Header Settings Section -->
-        <mat-card class="settings-card">
-          <mat-card-header>
-            <mat-card-title>
-              <mat-icon>title</mat-icon>
-              Header Settings
-            </mat-card-title>
-          </mat-card-header>
-          <mat-card-content>
-            <div class="form-row">
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Logo URL</mat-label>
-                <input
-                  matInput
-                  formControlName="logoUrl"
-                  placeholder="/assets/images/logo.png"
-                />
-                <mat-hint
-                  >Path to logo image (e.g., /assets/images/logo.png)</mat-hint
-                >
-              </mat-form-field>
-            </div>
+        <mat-expansion-panel
+          class="settings-panel"
+          [expanded]="panelStates.header"
+          (opened)="panelStates.header = true"
+          (closed)="panelStates.header = false"
+        >
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <mat-icon class="panel-icon">title</mat-icon>
+              <span class="panel-title-text">Header Configuration</span>
+            </mat-panel-title>
+            <mat-panel-description>
+              Configure logo, branding, and header text
+            </mat-panel-description>
+          </mat-expansion-panel-header>
 
-            <div class="form-row">
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Header Text *</mat-label>
-                <input
-                  matInput
-                  formControlName="logoHeader"
-                  required
-                  placeholder="Revenue & Settlement Department"
-                />
-                <mat-error
-                  *ngIf="settingsForm.get('logoHeader')?.hasError('required')"
-                >
-                  Header text is required
-                </mat-error>
-              </mat-form-field>
-            </div>
+          <div class="panel-content">
+            <!-- Primary Logo Section -->
+            <div class="subsection">
+              <h3 class="subsection-title">Primary Logo & Branding</h3>
 
-            <div class="form-row">
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Subheader Text *</mat-label>
-                <input
-                  matInput
-                  formControlName="logoSubheader"
-                  required
-                  placeholder="Government of Manipur"
-                />
-                <mat-error
-                  *ngIf="
-                    settingsForm.get('logoSubheader')?.hasError('required')
-                  "
-                >
-                  Subheader text is required
-                </mat-error>
-              </mat-form-field>
-            </div>
+              <div class="form-grid">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Logo URL</mat-label>
+                  <input
+                    matInput
+                    formControlName="logoUrl"
+                    placeholder="/assets/images/logo.png"
+                  />
+                  <mat-icon matPrefix>image</mat-icon>
+                  <mat-hint>Path to primary logo image</mat-hint>
+                </mat-form-field>
 
-            <div class="form-row">
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>State Name</mat-label>
-                <input
-                  matInput
-                  formControlName="stateName"
-                  placeholder="Manipur"
-                />
-              </mat-form-field>
-            </div>
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Header Text *</mat-label>
+                  <input
+                    matInput
+                    formControlName="logoHeader"
+                    required
+                    placeholder="Revenue & Settlement Department"
+                  />
+                  <mat-icon matPrefix>text_fields</mat-icon>
+                  <mat-error *ngIf="settingsForm.get('logoHeader')?.hasError('required')">
+                    Header text is required
+                  </mat-error>
+                </mat-form-field>
 
-            <div class="row">
-              <div class="col-lg-6">
-                <div class="form-row">
-                  <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Secondary Logo Url</mat-label>
-                    <input
-                      matInput
-                      formControlName="secondaryLogoUrl"
-                      placeholder="Text"
-                    />
-                  </mat-form-field>
-                </div>
-              </div>
-              <div class="col-lg-3">
-                <div class="form-row">
-                  <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Secondary Logo Header</mat-label>
-                    <input
-                      matInput
-                      formControlName="secondaryLogoHeader"
-                      placeholder="Text"
-                    />
-                  </mat-form-field>
-                </div>
-              </div>
-              <div class="col-lg-3">
-                <div class="form-row">
-                  <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Secondary Logo Subheader</mat-label>
-                    <input
-                      matInput
-                      formControlName="secondaryLogoSubheader"
-                      placeholder="Text"
-                    />
-                  </mat-form-field>
-                </div>
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Subheader Text *</mat-label>
+                  <input
+                    matInput
+                    formControlName="logoSubheader"
+                    required
+                    placeholder="Government of Manipur"
+                  />
+                  <mat-icon matPrefix>subtitles</mat-icon>
+                  <mat-error *ngIf="settingsForm.get('logoSubheader')?.hasError('required')">
+                    Subheader text is required
+                  </mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>State Name</mat-label>
+                  <input
+                    matInput
+                    formControlName="stateName"
+                    placeholder="Manipur"
+                  />
+                  <mat-icon matPrefix>location_on</mat-icon>
+                </mat-form-field>
               </div>
             </div>
 
-            <div class="row">
-              <div class="col-lg-6">
-                <div class="form-row">
-                  <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Tertiary Logo Url</mat-label>
-                    <input
-                      matInput
-                      formControlName="tertiaryLogoUrl"
-                      placeholder="Text"
-                    />
-                  </mat-form-field>
-                </div>
-              </div>
-              <div class="col-lg-3">
-                <div class="form-row">
-                  <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Tertiary Logo Header</mat-label>
-                    <input
-                      matInput
-                      formControlName="tertiaryLogoHeader"
-                      placeholder="Text"
-                    />
-                  </mat-form-field>
-                </div>
-              </div>
-              <div class="col-lg-3">
-                <div class="form-row">
-                  <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Tertiary Logo Subheader</mat-label>
-                    <input
-                      matInput
-                      formControlName="tertiaryLogoSubheader"
-                      placeholder="Text"
-                    />
-                  </mat-form-field>
-                </div>
+            <mat-divider></mat-divider>
+
+            <!-- Secondary Logo Section -->
+            <div class="subsection">
+              <h3 class="subsection-title">Secondary Logo (Optional)</h3>
+
+              <div class="form-grid logo-grid">
+                <mat-form-field appearance="outline" class="col-span-2">
+                  <mat-label>Secondary Logo URL</mat-label>
+                  <input
+                    matInput
+                    formControlName="secondaryLogoUrl"
+                    placeholder="/assets/images/secondary-logo.png"
+                  />
+                  <mat-icon matPrefix>add_photo_alternate</mat-icon>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Header</mat-label>
+                  <input
+                    matInput
+                    formControlName="secondaryLogoHeader"
+                    placeholder="Header text"
+                  />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Subheader</mat-label>
+                  <input
+                    matInput
+                    formControlName="secondaryLogoSubheader"
+                    placeholder="Subheader text"
+                  />
+                </mat-form-field>
               </div>
             </div>
 
-            <div class="form-row">
+            <mat-divider></mat-divider>
+
+            <!-- Tertiary Logo Section -->
+            <div class="subsection">
+              <h3 class="subsection-title">Tertiary Logo (Optional)</h3>
+
+              <div class="form-grid logo-grid">
+                <mat-form-field appearance="outline" class="col-span-2">
+                  <mat-label>Tertiary Logo URL</mat-label>
+                  <input
+                    matInput
+                    formControlName="tertiaryLogoUrl"
+                    placeholder="/assets/images/tertiary-logo.png"
+                  />
+                  <mat-icon matPrefix>add_photo_alternate</mat-icon>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Header</mat-label>
+                  <input
+                    matInput
+                    formControlName="tertiaryLogoHeader"
+                    placeholder="Header text"
+                  />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Subheader</mat-label>
+                  <input
+                    matInput
+                    formControlName="tertiaryLogoSubheader"
+                    placeholder="Subheader text"
+                  />
+                </mat-form-field>
+              </div>
+            </div>
+
+            <mat-divider></mat-divider>
+
+            <!-- Marquee Section -->
+            <div class="subsection">
+              <h3 class="subsection-title">Announcement Banner</h3>
+
               <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Marquee Text</mat-label>
                 <input
                   matInput
                   formControlName="marqueeText"
-                  placeholder="Text"
+                  placeholder="Enter scrolling announcement text"
                 />
+                <mat-icon matPrefix>campaign</mat-icon>
+                <mat-hint>This text will scroll across the header</mat-hint>
               </mat-form-field>
             </div>
-          </mat-card-content>
-        </mat-card>
+          </div>
+        </mat-expansion-panel>
 
         <!-- Website Settings Section -->
-        <mat-card class="settings-card">
-          <mat-card-header>
-            <mat-card-title>
-              <mat-icon>public</mat-icon>
-              Website Settings
-            </mat-card-title>
-          </mat-card-header>
+        <mat-expansion-panel
+          class="settings-panel"
+          [expanded]="panelStates.website"
+          (opened)="panelStates.website = true"
+          (closed)="panelStates.website = false"
+        >
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <mat-icon class="panel-icon">public</mat-icon>
+              <span class="panel-title-text">Website Settings</span>
+            </mat-panel-title>
+            <mat-panel-description>
+              Configure homepage banners and carousel
+            </mat-panel-description>
+          </mat-expansion-panel-header>
 
-          <mat-card-content formArrayName="banners">
-            <p class="section-hint">Configure homepage banners</p>
+          <div class="panel-content" formArrayName="banners">
+            <div class="subsection">
+              <div class="subsection-header">
+                <h3 class="subsection-title">Homepage Banners</h3>
+                <button
+                  mat-raised-button
+                  color="primary"
+                  type="button"
+                  (click)="addBanner()"
+                  class="add-banner-btn"
+                >
+                  <mat-icon>add</mat-icon>
+                  Add Banner
+                </button>
+              </div>
 
-            <!-- Banner Inputs -->
-            <div
-              class="form-row banner-row"
-              *ngFor="let banner of banners.controls; let i = index"
-              [formGroupName]="i"
-            >
-              <!-- Banner Image URL -->
-              <mat-form-field appearance="outline" class="forty-width mr-4">
-                <mat-label>Banner Image URL {{ i + 1 }}</mat-label>
-                <input
-                  matInput
-                  formControlName="url"
-                  placeholder="/assets/images/banner{{ i + 1 }}.png"
-                />
-              </mat-form-field>
+              <div class="banners-list" *ngIf="banners.length > 0">
+                <mat-card
+                  class="banner-card"
+                  *ngFor="let banner of banners.controls; let i = index"
+                  [formGroupName]="i"
+                >
+                  <div class="banner-header">
+                    <span class="banner-number">Banner {{ i + 1 }}</span>
+                    <button
+                      mat-icon-button
+                      color="warn"
+                      type="button"
+                      (click)="removeBanner(i)"
+                      aria-label="Remove banner"
+                      matTooltip="Remove this banner"
+                    >
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
 
-              <!-- Banner Header -->
-              <mat-form-field appearance="outline" class="twenty-width mr-4">
-                <mat-label>Banner Header</mat-label>
-                <input
-                  matInput
-                  formControlName="header"
-                  placeholder="Banner heading text"
-                />
-              </mat-form-field>
+                  <div class="banner-content">
+                    <mat-form-field appearance="outline" class="full-width">
+                      <mat-label>Banner Image URL</mat-label>
+                      <input
+                        matInput
+                        formControlName="url"
+                        placeholder="/assets/images/banner{{ i + 1 }}.png"
+                      />
+                      <mat-icon matPrefix>wallpaper</mat-icon>
+                      <mat-error *ngIf="banner.get('url')?.hasError('required')">
+                        Image URL is required
+                      </mat-error>
+                    </mat-form-field>
 
-              <!-- Banner Sub Header -->
-              <mat-form-field appearance="outline" class="twenty-width">
-                <mat-label>Banner Sub Header</mat-label>
-                <input
-                  matInput
-                  formControlName="subHeader"
-                  placeholder="Banner sub heading text"
-                />
-              </mat-form-field>
+                    <div class="banner-text-row">
+                      <mat-form-field appearance="outline" class="flex-1">
+                        <mat-label>Banner Header</mat-label>
+                        <input
+                          matInput
+                          formControlName="header"
+                          placeholder="Main heading"
+                        />
+                        <mat-icon matPrefix>title</mat-icon>
+                        <mat-error *ngIf="banner.get('header')?.hasError('required')">
+                          Header is required
+                        </mat-error>
+                      </mat-form-field>
 
-              <!-- Remove -->
-              <button
-                mat-icon-button
-                color="warn"
-                type="button"
-                (click)="removeBanner(i)"
-                aria-label="Remove banner"
-              >
-                <mat-icon>delete</mat-icon>
-              </button>
+                      <mat-form-field appearance="outline" class="flex-1">
+                        <mat-label>Banner Subheader</mat-label>
+                        <input
+                          matInput
+                          formControlName="subHeader"
+                          placeholder="Subtitle (optional)"
+                        />
+                        <mat-icon matPrefix>subtitles</mat-icon>
+                      </mat-form-field>
+                    </div>
+                  </div>
+                </mat-card>
+              </div>
+
+              <div class="empty-state" *ngIf="banners.length === 0">
+                <mat-icon>image_not_supported</mat-icon>
+                <p>No banners configured</p>
+                <button
+                  mat-stroked-button
+                  color="primary"
+                  type="button"
+                  (click)="addBanner()"
+                >
+                  <mat-icon>add</mat-icon>
+                  Add Your First Banner
+                </button>
+              </div>
             </div>
-
-            <!-- Add Banner Button -->
-            <button
-              mat-stroked-button
-              color="primary"
-              type="button"
-              (click)="addBanner()"
-            >
-              <mat-icon>add</mat-icon>
-              Add Banner
-            </button>
-          </mat-card-content>
-        </mat-card>
+          </div>
+        </mat-expansion-panel>
 
         <!-- Footer Settings Section -->
-        <mat-card class="settings-card">
-          <mat-card-header>
-            <mat-card-title>
-              <mat-icon>description</mat-icon>
-              Footer Settings
-            </mat-card-title>
-          </mat-card-header>
-          <mat-card-content>
-            <div class="form-row">
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Footer Text</mat-label>
-                <input
-                  matInput
-                  formControlName="footerText"
-                  placeholder="Revenue & Settlement Department, Government of Manipur"
-                />
-              </mat-form-field>
+        <mat-expansion-panel
+          class="settings-panel"
+          [expanded]="panelStates.footer"
+          (opened)="panelStates.footer = true"
+          (closed)="panelStates.footer = false"
+        >
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <mat-icon class="panel-icon">description</mat-icon>
+              <span class="panel-title-text">Footer Configuration</span>
+            </mat-panel-title>
+            <mat-panel-description>
+              Configure footer text and contact information
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+
+          <div class="panel-content">
+            <div class="subsection">
+              <h3 class="subsection-title">Footer Branding</h3>
+
+              <div class="form-grid">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Footer Text</mat-label>
+                  <input
+                    matInput
+                    formControlName="footerText"
+                    placeholder="Revenue & Settlement Department, Government of Manipur"
+                  />
+                  <mat-icon matPrefix>text_fields</mat-icon>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Copyright Text</mat-label>
+                  <input
+                    matInput
+                    formControlName="footerCopyright"
+                    placeholder="© 2024 Government of Manipur. All rights reserved."
+                  />
+                  <mat-icon matPrefix>copyright</mat-icon>
+                </mat-form-field>
+              </div>
             </div>
 
-            <div class="form-row">
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Copyright Text</mat-label>
-                <input
-                  matInput
-                  formControlName="footerCopyright"
-                  placeholder="© 2024 Government of Manipur. All rights reserved."
-                />
-              </mat-form-field>
-            </div>
+            <mat-divider></mat-divider>
 
-            <div class="form-row">
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Address</mat-label>
-                <textarea
-                  matInput
-                  formControlName="footerAddress"
-                  rows="2"
-                  placeholder="Imphal, Manipur, India"
-                ></textarea>
-              </mat-form-field>
-            </div>
+            <div class="subsection">
+              <h3 class="subsection-title">Contact Information</h3>
 
-            <div class="form-row">
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Email</mat-label>
-                <input
-                  matInput
-                  type="email"
-                  formControlName="footerEmail"
-                  placeholder="info@manipur.gov.in"
-                />
-                <mat-error
-                  *ngIf="settingsForm.get('footerEmail')?.hasError('email')"
-                >
-                  Please enter a valid email address
-                </mat-error>
-              </mat-form-field>
-            </div>
+              <div class="form-grid">
+                <mat-form-field appearance="outline" class="col-span-2">
+                  <mat-label>Address</mat-label>
+                  <textarea
+                    matInput
+                    formControlName="footerAddress"
+                    rows="3"
+                    placeholder="Complete postal address"
+                  ></textarea>
+                  <mat-icon matPrefix>location_on</mat-icon>
+                </mat-form-field>
 
-            <div class="form-row">
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Phone</mat-label>
-                <input
-                  matInput
-                  formControlName="footerPhone"
-                  placeholder="+91-XXX-XXXXXXX"
-                />
-              </mat-form-field>
-            </div>
+                <mat-form-field appearance="outline">
+                  <mat-label>Email Address</mat-label>
+                  <input
+                    matInput
+                    type="email"
+                    formControlName="footerEmail"
+                    placeholder="contact@example.gov.in"
+                  />
+                  <mat-icon matPrefix>email</mat-icon>
+                  <mat-error *ngIf="settingsForm.get('footerEmail')?.hasError('email')">
+                    Please enter a valid email address
+                  </mat-error>
+                </mat-form-field>
 
-            <div class="form-row">
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Website URL</mat-label>
-                <input
-                  matInput
-                  formControlName="footerWebsite"
-                  placeholder="https://manipur.gov.in"
-                />
-              </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Phone Number</mat-label>
+                  <input
+                    matInput
+                    formControlName="footerPhone"
+                    placeholder="+91-XXX-XXXXXXX"
+                  />
+                  <mat-icon matPrefix>phone</mat-icon>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="col-span-2">
+                  <mat-label>Website URL</mat-label>
+                  <input
+                    matInput
+                    formControlName="footerWebsite"
+                    placeholder="https://example.gov.in"
+                  />
+                  <mat-icon matPrefix>language</mat-icon>
+                </mat-form-field>
+              </div>
             </div>
-          </mat-card-content>
-        </mat-card>
+          </div>
+        </mat-expansion-panel>
       </div>
 
-      <!-- Action Buttons -->
-      <div class="action-buttons">
-        <button
-          mat-raised-button
-          type="button"
-          color="accent"
-          (click)="resetForm()"
-          [disabled]="saving"
-        >
-          <mat-icon>refresh</mat-icon>
-          Reset
-        </button>
-        <button
-          mat-raised-button
-          type="submit"
-          color="primary"
-          [disabled]="saving || settingsForm.invalid"
-        >
-          <mat-icon *ngIf="!saving">save</mat-icon>
-          <mat-spinner
-            *ngIf="saving"
-            diameter="20"
-            class="button-spinner"
-          ></mat-spinner>
-          {{ saving ? "Saving..." : "Save Settings" }}
-        </button>
+      <!-- Sticky Action Buttons -->
+      <div class="action-buttons-container">
+        <div class="action-buttons">
+          <button
+            mat-stroked-button
+            type="button"
+            color="accent"
+            (click)="resetForm()"
+            [disabled]="saving"
+          >
+            <mat-icon>refresh</mat-icon>
+            Reset Changes
+          </button>
+          <button
+            mat-raised-button
+            type="submit"
+            color="primary"
+            [disabled]="saving || settingsForm.invalid"
+          >
+            <mat-icon *ngIf="!saving">save</mat-icon>
+            <mat-spinner
+              *ngIf="saving"
+              diameter="20"
+              class="button-spinner"
+            ></mat-spinner>
+            {{ saving ? "Saving..." : "Save All Settings" }}
+          </button>
+        </div>
       </div>
     </form>
-
-
-    <mat-card class="settings-card mt-4">
-      <mat-card-header>
-        <mat-card-title>
-          <mat-icon>campaign</mat-icon>
-          What's New
-        </mat-card-title>
-      </mat-card-header>
-      <app-whats-new></app-whats-new>
-    </mat-card>
-
   </div>
 </div>

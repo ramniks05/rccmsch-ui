@@ -1,0 +1,318 @@
+<mat-card-content>
+  <!-- ================= SINGLE ENTRY FORM ================= -->
+  <div class="form-section">
+    <div class="form-header">
+      <div class="form-header-content">
+        <mat-icon class="header-icon">description</mat-icon>
+        <div>
+          <h3 class="form-title">{{ editMode ? 'Edit Document' : 'Add New Document' }}</h3>
+          <p class="form-subtitle">{{ editMode ? 'Update the selected document' : 'Upload a document or provide a link' }}</p>
+        </div>
+      </div>
+      <button
+        mat-icon-button
+        color="warn"
+        type="button"
+        (click)="cancelEdit()"
+        *ngIf="editMode"
+        matTooltip="Cancel editing"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="save()" class="entry-form">
+      <div class="form-grid">
+        <!-- Title Field -->
+        <mat-form-field appearance="outline" class="title-field">
+          <mat-label>Document Title *</mat-label>
+          <input
+            matInput
+            formControlName="title"
+            placeholder="Enter document title"
+          />
+          <mat-icon matPrefix>title</mat-icon>
+          <mat-error *ngIf="form.get('title')?.hasError('required')">
+            Title is required
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Upload Type Toggle -->
+        <div class="upload-type-toggle">
+          <mat-button-toggle-group
+            formControlName="uploadType"
+            (change)="onUploadTypeChange()"
+            class="full-width"
+          >
+            <mat-button-toggle value="file">
+              <mat-icon>cloud_upload</mat-icon>
+              Upload File
+            </mat-button-toggle>
+            <mat-button-toggle value="url">
+              <mat-icon>link</mat-icon>
+              Add URL
+            </mat-button-toggle>
+          </mat-button-toggle-group>
+        </div>
+
+        <!-- File Upload Section -->
+        <div class="file-upload-section" *ngIf="uploadType === 'file'">
+          <div class="file-upload-container">
+            <input
+              type="file"
+              #fileInput
+              accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+              (change)="onFileSelected($event)"
+              style="display: none"
+            />
+
+            <button
+              mat-stroked-button
+              type="button"
+              color="primary"
+              (click)="fileInput.click()"
+              class="upload-trigger"
+            >
+              <mat-icon>attach_file</mat-icon>
+              {{ selectedFile ? 'Change File' : 'Choose File' }}
+            </button>
+
+            <div class="file-info" *ngIf="selectedFile">
+              <mat-icon class="file-icon">{{ getFileIcon(selectedFile.name) }}</mat-icon>
+              <div class="file-details">
+                <span class="file-name">{{ selectedFile.name }}</span>
+                <span class="file-size">{{ formatFileSize(selectedFile.size) }}</span>
+              </div>
+              <button
+                mat-icon-button
+                type="button"
+                color="warn"
+                (click)="removeFile()"
+                matTooltip="Remove file"
+              >
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+
+            <div class="upload-hint" *ngIf="!selectedFile">
+              <mat-icon>info</mat-icon>
+              <span>Supported formats: PDF, DOC, DOCX, PNG, JPG (Max 10MB)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- URL Input Section -->
+        <div class="url-input-section" *ngIf="uploadType === 'url'">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Document URL *</mat-label>
+            <input
+              matInput
+              formControlName="documentUrl"
+              placeholder="https://example.com/document.pdf"
+            />
+            <mat-icon matPrefix>link</mat-icon>
+            <mat-hint>Enter the full URL to the document</mat-hint>
+            <mat-error *ngIf="form.get('documentUrl')?.hasError('required')">
+              URL is required when not uploading a file
+            </mat-error>
+            <mat-error *ngIf="form.get('documentUrl')?.hasError('pattern')">
+              Please enter a valid URL
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+          <button
+            mat-raised-button
+            color="primary"
+            type="submit"
+            [disabled]="saving || form.invalid || (uploadType === 'file' && !selectedFile)"
+            class="save-btn"
+          >
+            <mat-icon *ngIf="!saving">{{ editMode ? 'update' : 'save' }}</mat-icon>
+            <mat-spinner
+              *ngIf="saving"
+              diameter="20"
+              class="button-spinner"
+            ></mat-spinner>
+            {{ saving ? 'Saving...' : (editMode ? 'Update Document' : 'Add Document') }}
+          </button>
+
+          <button
+            mat-stroked-button
+            type="button"
+            (click)="resetForm()"
+            [disabled]="saving"
+            class="reset-btn"
+          >
+            <mat-icon>refresh</mat-icon>
+            Reset
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <mat-divider class="section-divider"></mat-divider>
+
+  <!-- ================= DATA TABLE ================= -->
+  <div class="table-section">
+    <div class="table-header">
+      <div class="table-header-content">
+        <mat-icon class="header-icon">folder_open</mat-icon>
+        <div>
+          <h3 class="table-title">Documents Available</h3>
+          <p class="table-subtitle">View and manage all available documents</p>
+        </div>
+      </div>
+      <div class="table-stats" *ngIf="dataSource.data.length > 0">
+        <mat-chip-set>
+          <mat-chip>
+            <mat-icon>description</mat-icon>
+            {{ dataSource.data.length }} {{ dataSource.data.length === 1 ? 'Document' : 'Documents' }}
+          </mat-chip>
+        </mat-chip-set>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table
+        mat-table
+        [dataSource]="dataSource"
+        class="custom-table"
+      >
+        <!-- Icon Column -->
+        <ng-container matColumnDef="icon">
+          <th mat-header-cell *matHeaderCellDef class="icon-column">
+            <div class="header-cell">
+              <mat-icon>category</mat-icon>
+            </div>
+          </th>
+          <td mat-cell *matCellDef="let element" class="icon-column">
+            <div class="document-icon-cell">
+              <mat-icon class="doc-icon" [class.pdf-icon]="isPDF(element.documentUrl)">
+                {{ getDocumentIcon(element.documentUrl) }}
+              </mat-icon>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Title Column -->
+        <ng-container matColumnDef="title">
+          <th mat-header-cell *matHeaderCellDef>
+            <div class="header-cell">
+              <mat-icon>title</mat-icon>
+              <span>Document Title</span>
+            </div>
+          </th>
+          <td mat-cell *matCellDef="let element">
+            <div class="title-cell">
+              <span class="title-text">{{ element.title }}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Document Type Column -->
+        <ng-container matColumnDef="type">
+          <th mat-header-cell *matHeaderCellDef>
+            <div class="header-cell">
+              <mat-icon>info</mat-icon>
+              <span>Type</span>
+            </div>
+          </th>
+          <td mat-cell *matCellDef="let element">
+            <mat-chip class="type-chip" [class]="getDocumentTypeClass(element.documentUrl)">
+              {{ getDocumentType(element.documentUrl) }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <!-- Document Link Column -->
+        <ng-container matColumnDef="document">
+          <th mat-header-cell *matHeaderCellDef>
+            <div class="header-cell">
+              <mat-icon>description</mat-icon>
+              <span>Document</span>
+            </div>
+          </th>
+          <td mat-cell *matCellDef="let element">
+            <a
+              [href]="element.documentUrl"
+              target="_blank"
+              class="doc-link"
+              mat-button
+              color="primary"
+            >
+              <mat-icon>open_in_new</mat-icon>
+              View Document
+            </a>
+          </td>
+        </ng-container>
+
+        <!-- Actions Column -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>
+            <div class="header-cell">
+              <mat-icon>settings</mat-icon>
+              <span>Actions</span>
+            </div>
+          </th>
+          <td mat-cell *matCellDef="let element">
+            <div class="action-buttons-cell">
+              <button
+                mat-icon-button
+                color="primary"
+                (click)="edit(element)"
+                matTooltip="Edit document"
+              >
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                color="warn"
+                (click)="delete(element.id)"
+                matTooltip="Delete document"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Header Row -->
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+
+        <!-- Data Rows -->
+        <tr
+          mat-row
+          *matRowDef="let row; columns: displayedColumns"
+          class="data-row"
+          [class.editing-row]="editId === row.id"
+        ></tr>
+
+        <!-- No Data Row -->
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+            <div class="empty-state">
+              <mat-icon>folder_off</mat-icon>
+              <div class="empty-state-content">
+                <h4>No Documents Available</h4>
+                <p>Upload your first document using the form above</p>
+              </div>
+            </div>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Pagination -->
+      <mat-paginator
+        [pageSize]="10"
+        [pageSizeOptions]="[5, 10, 25, 50]"
+        showFirstLastButtons
+        class="custom-paginator"
+      >
+      </mat-paginator>
+    </div>
+  </div>
+</mat-card-content>

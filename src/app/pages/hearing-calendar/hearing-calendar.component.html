@@ -1,0 +1,64 @@
+<div class="card cause-card shadow-sm">
+  <!-- HEADER -->
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <strong>
+      <mat-icon class="me-1">calendar_month</mat-icon>
+      Upcoming Hearing Dates
+    </strong>
+
+    <div class="d-flex align-items-center gap-2">
+      <label class="mb-0">Court</label>
+      <select
+        class="form-select form-select-sm"
+        [(ngModel)]="selectedCourt"
+        (change)="onCourtChange()"
+      >
+        <option *ngFor="let c of courts" [value]="c">{{ c }}</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- MONTH NAV -->
+  <div class="month-bar">
+    <span class="nav" (click)="prevMonth()">
+      ‹ {{ prevMonthLabel }}
+    </span>
+
+    <span class="current">
+      {{ monthLabel }}
+    </span>
+
+    <span class="nav" (click)="nextMonth()">
+      {{ nextMonthLabel }} ›
+    </span>
+  </div>
+
+  <!-- CALENDAR -->
+  <table class="calendar-table">
+    <thead>
+      <tr>
+        <th *ngFor="let d of weekDays">{{ d }}</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr *ngFor="let week of weeks">
+        <td *ngFor="let day of week">
+          <span
+            *ngIf="day !== 0"
+            class="day"
+            [class.hearing]="getHearing(day)"
+            matTooltip="{{ getHearing(day)?.tooltip }}"
+            matTooltipClass="calendar-tooltip"
+          >
+            {{ day }}
+          </span>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="text-end px-3 pb-2">
+    <a href="#" class="text-primary fw-semibold">see more</a>
+  </div>
+</div>

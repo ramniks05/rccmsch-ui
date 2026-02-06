@@ -18,6 +18,13 @@ export class SystemSettingsComponent implements OnInit {
   saving = false;
   currentSettings: SystemSettings | null = null;
 
+  // Panel expansion states
+  panelStates = {
+    header: true,
+    website: false,
+    footer: false
+  };
+
   constructor(
     private fb: FormBuilder,
     private router: Router,
@@ -77,10 +84,15 @@ export class SystemSettingsComponent implements OnInit {
 
   addBanner(): void {
     this.banners.push(this.createBannerGroup());
+    // Auto-expand website panel when adding banner
+    this.panelStates.website = true;
   }
 
   removeBanner(index: number): void {
-    this.banners.removeAt(index);
+    if (this.banners.length > 0) {
+      this.banners.removeAt(index);
+      this.snackBar.open('Banner removed', 'Close', { duration: 2000 });
+    }
   }
 
   /**
@@ -122,8 +134,6 @@ export class SystemSettingsComponent implements OnInit {
             settings.banners.forEach(banner => {
               this.banners.push(this.createBannerGroup(banner));
             });
-          } else {
-            this.addBanner(); // show at least one input
           }
         }
 
@@ -132,7 +142,10 @@ export class SystemSettingsComponent implements OnInit {
       error: (error) => {
         console.error('Error loading settings:', error);
         this.loading = false;
-        this.snackBar.open('Failed to load settings', 'Close', { duration: 3000 });
+        this.snackBar.open('Failed to load settings', 'Close', {
+          duration: 3000,
+          panelClass: ['error-snackbar']
+        });
       },
     });
   }
@@ -142,9 +155,14 @@ export class SystemSettingsComponent implements OnInit {
    */
   saveSettings(): void {
     if (this.settingsForm.invalid) {
-      this.snackBar.open('Please fill in all required fields', 'Close', {
+      this.markFormGroupTouched(this.settingsForm);
+      this.snackBar.open('Please fill in all required fields correctly', 'Close', {
         duration: 3000,
+        panelClass: ['error-snackbar']
       });
+
+      // Expand panel with errors
+      this.expandPanelWithErrors();
       return;
     }
 
@@ -152,6 +170,7 @@ export class SystemSettingsComponent implements OnInit {
     if (!adminToken) {
       this.snackBar.open('Please login as admin to save settings', 'Close', {
         duration: 5000,
+        panelClass: ['error-snackbar']
       });
       return;
     }
@@ -171,12 +190,14 @@ export class SystemSettingsComponent implements OnInit {
         if (response.success) {
           this.snackBar.open('Settings saved successfully!', 'Close', {
             duration: 3000,
+            panelClass: ['success-snackbar']
           });
           this.currentSettings = response.data;
           this.settingsService.refreshSettings();
         } else {
           this.snackBar.open('Failed to save settings', 'Close', {
             duration: 3000,
+            panelClass: ['error-snackbar']
           });
         }
         this.saving = false;
@@ -185,6 +206,7 @@ export class SystemSettingsComponent implements OnInit {
         console.error('Error saving settings:', error);
         this.snackBar.open('Error saving settings', 'Close', {
           duration: 5000,
+          panelClass: ['error-snackbar']
         });
         this.saving = false;
       },
@@ -195,11 +217,59 @@ export class SystemSettingsComponent implements OnInit {
    * Reset form
    */
   resetForm(): void {
-    if (!this.currentSettings) return;
+    if (!this.currentSettings) {
+      this.snackBar.open('No settings to reset', 'Close', { duration: 2000 });
+      return;
+    }
 
     this.settingsForm.reset();
     this.banners.clear();
-
     this.loadCurrentSettings();
+
+    this.snackBar.open('Form reset to saved values', 'Close', { duration: 2000 });
+  }
+
+  /**
+   * Mark all form controls as touched to show validation errors
+   */
+  private markFormGroupTouched(formGroup: FormGroup | FormArray): void {
+    Object.keys(formGroup.controls).forEach(key => {
+      const control = formGroup.get(key);
+      control?.markAsTouched();
+
+      if (control instanceof FormGroup || control instanceof FormArray) {
+        this.markFormGroupTouched(control);
+      }
+    });
+  }
+
+  /**
+   * Expand the panel that contains validation errors
+   */
+  private expandPanelWithErrors(): void {
+    const headerControls = ['logoHeader', 'logoSubheader'];
+    const footerControls = ['footerEmail'];
+
+    // Check header errors
+    if (headerControls.some(control => this.settingsForm.get(control)?.invalid)) {
+      this.panelStates.header = true;
+      return;
+    }
+
+    // Check banner errors
+    if (this.banners.invalid) {
+      this.panelStates.website = true;
+      return;
+    }
+
+    // Check footer errors
+    if (footerControls.some(control => this.settingsForm.get(control)?.invalid)) {
+      this.panelStates.footer = true;
+      return;
+    }
+  }
+
+  goToAdvancedSettings() {
+    this.router.navigate(["/admin/advanced-system-settings"])
   }
 }

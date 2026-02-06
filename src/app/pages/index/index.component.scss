@@ -302,6 +302,7 @@
   border: 1px solid #e0e0e0;
   padding: 16px;
   border-radius: 6px;
+  height: 94%;
 }
 
 .doc-item {
@@ -632,4 +633,26 @@
 img.digital-logo {
   height: 60px !important;
   margin-left: 140px;
+}
+
+/* ================= EQUAL HEIGHT FIX ================= */
+
+.content-area,
+.whats-new-card {
+  height: 424px;
+}
+
+.whats-new-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.whats-new-card .card-body {
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Ensure marquee scrolls inside fixed height */
+.marquee-container {
+  height: 100%;
 }

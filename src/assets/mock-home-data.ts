@@ -35,14 +35,12 @@ export const HOME_DATA: HomeData = {
 
   // ================= HIGHLIGHTS / DASHBOARD STATS =================
   highlights: [
-    { title: 'Total Courts', description: '3073', icon: 'account_balance' },
+    { title: 'Total Users', description: '26.14 M', icon: 'check_circle' },
+    { title: 'Courts On Boarded', description: '3073', icon: 'account_balance' },
     { title: 'Total Cases', description: '27.39 M', icon: 'gavel' },
-    { title: 'Disposed Cases', description: '26.14 M', icon: 'check_circle' },
     { title: 'Pending Cases', description: '1.25 M', icon: 'hourglass_empty' },
-    { title: 'Pending (> 1 Year)', description: '0.21 M', icon: 'schedule' },
-    { title: 'Pending (> 3 Years)', description: '0.06 M', icon: 'history' },
-    { title: 'Pending (> 5 Years)', description: '0.08 M', icon: 'timelapse' },
-    { title: 'Un-Updated Cases', description: '0.47 M', icon: 'warning' },
+    { title: 'Decided Cases', description: '0.21 M', icon: 'schedule' },
+    { title: 'Cause List', description: '0.06 M', icon: 'history' },
   ],
 
   // ================= STATISTICS (existing – kept) =================

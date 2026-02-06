@@ -7,6 +7,8 @@ import { HomeComponent } from './home/home.component';
 import { LoginComponent } from './login/login.component';
 import { SharedModule } from '../shared/shared.module';
 import { LoginPageComponent } from './login-page/login-page.component';
+import { CauseListComponent } from './cause-list/cause-list.component';
+import { HearingCalendarComponent } from './hearing-calendar/hearing-calendar.component';
 
 /**
  * Routes for Pages Module
@@ -44,7 +46,9 @@ const routes: Routes = [
     HomeComponent,
     LoginComponent,
     IndexComponent,
-    LoginPageComponent
+    LoginPageComponent,
+    CauseListComponent,
+    HearingCalendarComponent
   ],
   imports: [
     RouterModule.forChild(routes),

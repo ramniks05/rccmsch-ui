@@ -1,100 +1,246 @@
 <mat-card-content>
-  <!-- TABLE -->
-  <table mat-table [dataSource]="list" class="mat-elevation-z1 full-width">
-    <ng-container matColumnDef="publishedDate">
-      <th mat-header-cell *matHeaderCellDef>Date</th>
-      <td mat-cell *matCellDef="let e">{{ e.publishedDate }}</td>
-    </ng-container>
-
-    <ng-container matColumnDef="title">
-      <th mat-header-cell *matHeaderCellDef>Title</th>
-      <td mat-cell *matCellDef="let e">{{ e.title }}</td>
-    </ng-container>
-
-    <ng-container matColumnDef="pdf">
-      <th mat-header-cell *matHeaderCellDef>PDF</th>
-      <td mat-cell *matCellDef="let e">
-        <a [href]="e.pdfUrl" target="_blank">View</a>
-      </td>
-    </ng-container>
-
-    <ng-container matColumnDef="actions">
-      <th mat-header-cell *matHeaderCellDef>Actions</th>
-      <td mat-cell *matCellDef="let e">
-        <button mat-icon-button color="primary" (click)="edit(e)">
-          <mat-icon>edit</mat-icon>
-        </button>
-        <button mat-icon-button color="warn" (click)="delete(e.id!)">
-          <mat-icon>delete</mat-icon>
-        </button>
-      </td>
-    </ng-container>
-
-    <tr
-      mat-header-row
-      *matHeaderRowDef="['publishedDate', 'title', 'pdf', 'actions']"
-    ></tr>
-    <tr
-      mat-row
-      *matRowDef="
-        let row;
-        columns: ['publishedDate', 'title', 'pdf', 'actions']
-      "
-    ></tr>
-  </table>
-
-  <mat-divider class="my-3"></mat-divider>
-
-  <!-- FORM -->
-  <form [formGroup]="form">
-    <div class="row">
-      <div class="col-lg-4">
-        <div class="form-row">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Date</mat-label>
-            <input matInput type="date" formControlName="publishedDate" />
-          </mat-form-field>
+  <!-- ================= SINGLE ENTRY FORM ================= -->
+  <div class="form-section">
+    <div class="form-header">
+      <div class="form-header-content">
+        <mat-icon class="header-icon">add_circle_outline</mat-icon>
+        <div>
+          <h3 class="form-title">{{ editMode ? 'Edit Entry' : 'Add New Entry' }}</h3>
+          <p class="form-subtitle">{{ editMode ? 'Update the selected entry' : 'Add a new what\'s new announcement' }}</p>
         </div>
       </div>
-      <div class="col-lg-4">
-        <div class="form-row">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Title</mat-label>
-            <input matInput formControlName="title" />
-          </mat-form-field>
+      <button
+        mat-icon-button
+        color="warn"
+        type="button"
+        (click)="cancelEdit()"
+        *ngIf="editMode"
+        matTooltip="Cancel editing"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="save()" class="entry-form">
+      <div class="form-grid">
+        <mat-form-field appearance="outline" class="date-field">
+          <mat-label>Date *</mat-label>
+          <input
+            matInput
+            [matDatepicker]="picker"
+            formControlName="publishedDate"
+            placeholder="Select date"
+          />
+          <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+          <mat-datepicker #picker></mat-datepicker>
+          <mat-icon matPrefix>calendar_today</mat-icon>
+          <mat-error *ngIf="form.get('publishedDate')?.hasError('required')">
+            Date is required
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="title-field">
+          <mat-label>Title *</mat-label>
+          <input
+            matInput
+            formControlName="title"
+            placeholder="Enter announcement title"
+          />
+          <mat-icon matPrefix>title</mat-icon>
+          <mat-error *ngIf="form.get('title')?.hasError('required')">
+            Title is required
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="pdf-field">
+          <mat-label>PDF URL *</mat-label>
+          <input
+            matInput
+            formControlName="pdfUrl"
+            placeholder="Enter PDF document URL"
+          />
+          <mat-icon matPrefix>picture_as_pdf</mat-icon>
+          <mat-error *ngIf="form.get('pdfUrl')?.hasError('required')">
+            PDF URL is required
+          </mat-error>
+        </mat-form-field>
+
+        <div class="form-actions">
+          <button
+            mat-raised-button
+            color="primary"
+            type="submit"
+            [disabled]="saving || form.invalid"
+            class="save-btn"
+          >
+            <mat-icon *ngIf="!saving">{{ editMode ? 'update' : 'save' }}</mat-icon>
+            <mat-spinner
+              *ngIf="saving"
+              diameter="20"
+              class="button-spinner"
+            ></mat-spinner>
+            {{ saving ? 'Saving...' : (editMode ? 'Update Entry' : 'Add Entry') }}
+          </button>
+
+          <button
+            mat-stroked-button
+            type="button"
+            (click)="resetForm()"
+            [disabled]="saving"
+            class="reset-btn"
+          >
+            <mat-icon>refresh</mat-icon>
+            Reset
+          </button>
         </div>
       </div>
-      <div class="col-lg-4">
-        <div class="form-row">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>PDF URL</mat-label>
-            <input matInput formControlName="pdfUrl" />
-          </mat-form-field>
+    </form>
+  </div>
+
+  <mat-divider class="section-divider"></mat-divider>
+
+  <!-- ================= DATA TABLE ================= -->
+  <div class="table-section">
+    <div class="table-header">
+      <div class="table-header-content">
+        <mat-icon class="header-icon">list_alt</mat-icon>
+        <div>
+          <h3 class="table-title">Announcements List</h3>
+          <p class="table-subtitle">View and manage all what's new entries</p>
         </div>
+      </div>
+      <div class="table-stats" *ngIf="dataSource.data.length > 0">
+        <mat-chip-set>
+          <mat-chip>
+            <mat-icon>inventory_2</mat-icon>
+            {{ dataSource.data.length }} {{ dataSource.data.length === 1 ? 'Entry' : 'Entries' }}
+          </mat-chip>
+        </mat-chip-set>
       </div>
     </div>
 
-    <div class="action-buttons">
-      <button
-        mat-raised-button
-        class="mr-2"
-        color="accent"
-        type="button"
-        (click)="reset()"
+    <div class="table-wrapper">
+      <table
+        mat-table
+        [dataSource]="dataSource"
+        class="custom-table"
       >
-        Reset
-      </button>
+        <!-- Date Column -->
+        <ng-container matColumnDef="publishedDate">
+          <th mat-header-cell *matHeaderCellDef>
+            <div class="header-cell">
+              <mat-icon>calendar_today</mat-icon>
+              <span>Published Date</span>
+            </div>
+          </th>
+          <td mat-cell *matCellDef="let element">
+            <div class="date-cell">
+              <mat-icon class="cell-icon">event</mat-icon>
+              <span>{{ element.publishedDate | date: 'dd MMM yyyy' }}</span>
+            </div>
+          </td>
+        </ng-container>
 
-      <button
-        mat-raised-button
-        color="primary"
-        type="button"
-        (click)="save()"
-        [disabled]="saving || form.invalid"
+        <!-- Title Column -->
+        <ng-container matColumnDef="title">
+          <th mat-header-cell *matHeaderCellDef>
+            <div class="header-cell">
+              <mat-icon>title</mat-icon>
+              <span>Title</span>
+            </div>
+          </th>
+          <td mat-cell *matCellDef="let element">
+            <div class="title-cell">
+              <span class="title-text">{{ element.title }}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- PDF Column -->
+        <ng-container matColumnDef="pdf">
+          <th mat-header-cell *matHeaderCellDef>
+            <div class="header-cell">
+              <mat-icon>picture_as_pdf</mat-icon>
+              <span>Document</span>
+            </div>
+          </th>
+          <td mat-cell *matCellDef="let element">
+            <a
+              [href]="element.pdfUrl"
+              target="_blank"
+              class="pdf-link"
+              mat-button
+              color="primary"
+            >
+              <mat-icon>open_in_new</mat-icon>
+              View PDF
+            </a>
+          </td>
+        </ng-container>
+
+        <!-- Actions Column -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>
+            <div class="header-cell">
+              <mat-icon>settings</mat-icon>
+              <span>Actions</span>
+            </div>
+          </th>
+          <td mat-cell *matCellDef="let element">
+            <div class="action-buttons-cell">
+              <button
+                mat-icon-button
+                color="primary"
+                (click)="edit(element)"
+                matTooltip="Edit entry"
+              >
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                color="warn"
+                (click)="delete(element.id)"
+                matTooltip="Delete entry"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Header Row -->
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+
+        <!-- Data Rows -->
+        <tr
+          mat-row
+          *matRowDef="let row; columns: displayedColumns"
+          class="data-row"
+          [class.editing-row]="editId === row.id"
+        ></tr>
+
+        <!-- No Data Row -->
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+            <div class="empty-state">
+              <mat-icon>inbox</mat-icon>
+              <div class="empty-state-content">
+                <h4>No Announcements Yet</h4>
+                <p>Add your first what's new entry using the form above</p>
+              </div>
+            </div>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Pagination -->
+      <mat-paginator
+        [pageSize]="10"
+        [pageSizeOptions]="[5, 10, 25, 50]"
+        showFirstLastButtons
+        class="custom-paginator"
       >
-        <mat-icon>save</mat-icon>
-        {{ editId ? "Update" : "Save" }}
-      </button>
+      </mat-paginator>
     </div>
-  </form>
+  </div>
 </mat-card-content>

@@ -1,0 +1,80 @@
+<div class="admin-page-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <mat-icon>settings</mat-icon>
+        Advanced System Settings
+      </h1>
+      <p class="page-subtitle">
+        Manage application configuration and appearance
+      </p>
+    </div>
+    <div class="header-actions">
+      <button
+        mat-raised-button
+        color="primary"
+        routerLink="/admin/system-settings"
+        class="back-btn"
+      >
+        <mat-icon>arrow_back</mat-icon>
+        Back to System Settings
+      </button>
+    </div>
+  </div>
+
+  <!-- Page Content -->
+  <div class="page-content">
+    <!-- Loading Spinner -->
+    <div *ngIf="loading" class="loading-container">
+      <mat-spinner></mat-spinner>
+      <p>Loading settings...</p>
+    </div>
+
+      <div class="form-sections">
+        <!-- What's New Section -->
+        <mat-expansion-panel
+          class="settings-panel"
+          [expanded]="panelStates.whatsNew"
+          (opened)="panelStates.whatsNew = true"
+          (closed)="panelStates.whatsNew = false"
+        >
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <mat-icon class="panel-icon">campaign</mat-icon>
+              <span class="panel-title-text">What's New</span>
+            </mat-panel-title>
+            <mat-panel-description>
+              Latest updates and announcements
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+
+          <div class="panel-content">
+            <app-whats-new></app-whats-new>
+          </div>
+        </mat-expansion-panel>
+
+        <!-- Documents Available Section -->
+        <mat-expansion-panel
+          class="settings-panel"
+          [expanded]="panelStates.documentsAvailable"
+          (opened)="panelStates.documentsAvailable = true"
+          (closed)="panelStates.documentsAvailable = false"
+        >
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <mat-icon class="panel-icon">library_books</mat-icon>
+              <span class="panel-title-text">Documents Available</span>
+            </mat-panel-title>
+            <mat-panel-description>
+              Latest Documents & Articles
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+
+          <div class="panel-content">
+            <app-documents-available></app-documents-available>
+          </div>
+        </mat-expansion-panel>
+      </div>
+  </div>
+</div>

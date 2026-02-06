@@ -1,0 +1,58 @@
+.cause-card {
+  height: 420px;
+  display: flex;
+  flex-direction: column;
+}
+
+.month-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 12px;
+  background: #f8f9fa;
+  font-weight: 600;
+}
+
+.month-bar .current {
+  font-size: 15px;
+}
+
+.month-bar .nav {
+  color: #0d6efd;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.calendar-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
+  flex: 1;
+
+  th {
+    font-weight: 600;
+    padding: 6px;
+    border-bottom: 1px solid #dee2e6;
+  }
+
+  td {
+    padding: 6px;
+  }
+}
+
+.day {
+  display: inline-block;
+  width: 34px;
+  height: 24px;
+  line-height: 24px;
+  border-radius: 12px;
+}
+
+.hearing {
+  background: #d8f0df;
+}
+
+.calendar-tooltip {
+  white-space: pre-line;
+  font-size: 13px;
+}
