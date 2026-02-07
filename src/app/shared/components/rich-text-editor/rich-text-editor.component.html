@@ -1,0 +1,95 @@
+<div class="rich-editor-container">
+  <!-- Toolbar Extensions -->
+  <div class="editor-toolbar-extensions">
+    <!-- Voice Recording -->
+    <div class="toolbar-group">
+      <button 
+        mat-icon-button 
+        [color]="isRecording ? 'warn' : 'primary'"
+        (click)="toggleVoiceRecording()"
+        [disabled]="isTranslating"
+        matTooltip="Voice Typing"
+      >
+        <mat-icon>{{ isRecording ? 'mic' : 'mic_none' }}</mat-icon>
+      </button>
+      
+      <mat-form-field appearance="outline" class="compact-field">
+        <mat-select 
+          [(value)]="selectedLanguage" 
+          (selectionChange)="changeVoiceLanguage($event.value)"
+          [disabled]="isRecording"
+        >
+          <mat-option *ngFor="let lang of voiceLanguages" [value]="lang.code">
+            {{ lang.label }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+      
+      <span class="recording-indicator" *ngIf="isRecording">
+        <span class="pulse-dot"></span>
+        Recording...
+      </span>
+    </div>
+
+    <!-- Translation -->
+    <div class="toolbar-group">
+      <mat-form-field appearance="outline" class="compact-field">
+        <mat-label>Translate</mat-label>
+        <mat-select [(value)]="selectedTranslation">
+          <mat-option value="">Select Language</mat-option>
+          <mat-option *ngFor="let pair of translationLanguages" [value]="pair.source + '-' + pair.target">
+            {{ pair.label }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+      
+      <button 
+        mat-raised-button 
+        color="accent"
+        (click)="translateContent()"
+        [disabled]="!content || !selectedTranslation || isTranslating || isRecording"
+      >
+        <mat-icon>translate</mat-icon>
+        {{ isTranslating ? 'Translating...' : 'Translate' }}
+      </button>
+    </div>
+
+    <!-- Actions -->
+    <div class="toolbar-group">
+      <button 
+        mat-icon-button 
+        color="warn"
+        (click)="clearContent()"
+        [disabled]="!content || isRecording"
+        matTooltip="Clear Content"
+      >
+        <mat-icon>delete</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Quill Editor -->
+  <quill-editor
+    #editor
+    [(ngModel)]="content"
+    [modules]="quillModules"
+    [placeholder]="placeholder"
+    [styles]="{ height: height }"
+    (onEditorCreated)="onEditorCreated($event)"
+    (onContentChanged)="onContentChanged($event)"
+    [readOnly]="isTranslating"
+  ></quill-editor>
+
+  <!-- Status Bar -->
+  <div class="editor-status-bar">
+    <span class="char-count">{{ content?.length || 0 }} characters</span>
+    <span class="status-indicator" *ngIf="isRecording">
+      <mat-icon>mic</mat-icon>
+      Listening...
+    </span>
+    <span class="status-indicator" *ngIf="isTranslating">
+      <mat-icon>translate</mat-icon>
+      Translating...
+    </span>
+  </div>
+</div>

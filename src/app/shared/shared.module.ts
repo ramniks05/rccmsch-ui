@@ -28,16 +28,25 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSortModule } from '@angular/material/sort';
-
-import { HeaderComponent } from './components/header/header.component';
-import { FooterComponent } from './components/footer/footer.component';
-import { MaskEmailPipe } from '../core/pipes/mask-email.pipe';
-import { BreadcrumbsComponent } from './components/breadcrumbs/breadcrumbs.component';
-import { JsonParsePipe } from '../core/pipes/json-parse.pipe';
-import { NgChartsModule } from 'ng2-charts';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSnackBarModule } from '@angular/material/snack-bar';
+
+// Quill Editor
+import { QuillModule } from 'ngx-quill';
+
+// Charts
+import { NgChartsModule } from 'ng2-charts';
+
+// Components
+import { HeaderComponent } from './components/header/header.component';
+import { FooterComponent } from './components/footer/footer.component';
+import { BreadcrumbsComponent } from './components/breadcrumbs/breadcrumbs.component';
+import { RichTextEditorComponent } from './components/rich-text-editor/rich-text-editor.component';
+
+// Pipes
+import { MaskEmailPipe } from '../core/pipes/mask-email.pipe';
+import { JsonParsePipe } from '../core/pipes/json-parse.pipe';
 
 /**
  * Shared Module
@@ -50,12 +59,15 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
     MaskEmailPipe,
     BreadcrumbsComponent,
     JsonParsePipe,
+    RichTextEditorComponent,
   ],
   imports: [
-    ReactiveFormsModule,
-    FormsModule,
     CommonModule,
     RouterModule,
+    ReactiveFormsModule,
+    FormsModule,
+    
+    // Angular Material
     MatToolbarModule,
     MatIconModule,
     MatButtonModule,
@@ -80,10 +92,13 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
     MatButtonToggleModule,
     MatTooltipModule,
     MatSortModule,
-    NgChartsModule,
     MatTabsModule,
     MatProgressSpinnerModule,
     MatSnackBarModule,
+    
+    // Third Party
+    NgChartsModule,
+    QuillModule,
   ],
   exports: [
     CommonModule,
@@ -96,6 +111,7 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
     BreadcrumbsComponent,
     MaskEmailPipe,
     JsonParsePipe,
+    RichTextEditorComponent,
 
     // Angular / Router
     RouterModule,
@@ -130,6 +146,9 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
     MatSnackBarModule,
     MatProgressSpinnerModule,
     MatTabsModule,
+
+    // Quill Editor
+    QuillModule,
 
     // Charts
     NgChartsModule,

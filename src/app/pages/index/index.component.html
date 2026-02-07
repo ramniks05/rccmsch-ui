@@ -21,11 +21,11 @@
 
       <!-- CENTER : Secondary Logo (Project / Portal) -->
       <div class="col-lg-4 col-md-4 col-sm-12 text-center portal-logo">
-        <img [src]="settings!.secondaryLogoUrl" alt="Portal Logo" />
+        <img [src]="settings!.secondaryLogoUrl" alt="Portal Logo" class="secondary-logo" />
         <img
           [src]="settings!.tertiaryLogoUrl"
           class="digital-logo"
-          alt="Portal Logo"
+          alt="Digital India Logo"
         />
       </div>
 
@@ -134,53 +134,82 @@
       <!-- LEFT -->
       <div class="col-12 col-lg-8 content-area d-flex">
         <section class="top-banner w-100">
-          <div
-            class="banner-slide"
-            *ngFor="let banner of settings!.banners; let i = index"
-            [class.active]="i === activeBanner"
-          >
-            <img [src]="banner.url" alt="Banner" />
-            <div class="banner-overlay">
-              <h2>{{ banner.header }}</h2>
-              <p>{{ banner.subHeader }}</p>
+          <!-- Banner slides (if available) -->
+          <ng-container *ngIf="hasBanners()">
+            <div
+              class="banner-slide"
+              *ngFor="let banner of settings!.banners; let i = index"
+              [class.active]="i === activeBanner"
+            >
+              <img [src]="banner.url" [alt]="banner.header || 'Banner'" />
+              <div class="banner-overlay">
+                <h2>{{ banner.header }}</h2>
+                <p>{{ banner.subHeader }}</p>
+              </div>
+            </div>
+          </ng-container>
+
+          <!-- Fallback / Placeholder Banner (if no banners from backend) -->
+          <div class="banner-slide active" *ngIf="!hasBanners()">
+            <div class="fallback-banner">
+              <div class="banner-overlay">
+                <h2>{{ settings?.logoHeader || 'Revenue Court Case Management System' }}</h2>
+                <p>{{ getFallbackBannerText() }}</p>
+              </div>
             </div>
           </div>
         </section>
       </div>
 
-      <!-- RIGHT -->
+      <!-- RIGHT - WHAT'S NEW -->
       <div class="col-12 col-lg-4 d-flex">
-        <div class="card w-100 whats-new-card">
-          <h5 class="card-title whats_new">WHAT'S NEW</h5>
+        <div class="whats-new-card">
+          <!-- HEADER -->
+          <div class="whats-new-header">
+            <div class="header-content">
+              <mat-icon class="header-icon">campaign</mat-icon>
+              <h3 class="header-title">What's New</h3>
+            </div>
+            <span class="live-badge">
+              <span class="pulse-dot"></span>
+              Live
+            </span>
+          </div>
 
-          <div class="card-body card_1 hsbhdb shadow-sm">
+          <!-- CONTENT -->
+          <div class="whats-new-body">
             <div class="news-list">
               <div class="marquee-container">
                 <div class="marquee-inner">
-                  <div class="marquee-item" *ngFor="let item of whatsNewList">
-                    <div class="date">{{ item.date }}</div>
-                    <div class="title">{{ item.title }}</div>
+                  <div class="news-item" *ngFor="let item of whatsNewList; let i = index">
+                    <div class="news-index">{{ i + 1 }}</div>
+                    <div class="news-content">
+                      <div class="news-date">
+                        <mat-icon>description</mat-icon>
+                        {{ item.date }}
+                      </div>
+                      <div class="news-title">{{ item.title }}</div>
+                    </div>
                     <a
-                      class="btn read-more-btn view-pdf"
+                      class="news-link"
                       [href]="item.pdfUrl"
                       target="_blank"
+                      matTooltip="View Document"
                     >
-                      View PDF
+                      <mat-icon>picture_as_pdf</mat-icon>
                     </a>
                   </div>
                 </div>
-
-                <div class="read-more-wrapper">
-                  <a
-                    class="read-more-link"
-                    href="/Home/AllNotification"
-                    target="_blank"
-                  >
-                    Read More <i class="bi bi-arrow-right"></i>
-                  </a>
-                </div>
               </div>
             </div>
+          </div>
+
+          <!-- FOOTER -->
+          <div class="whats-new-footer">
+            <a href="/Home/AllNotification" target="_blank" class="view-all-btn">
+              <span>View All Updates</span>
+              <mat-icon>open_in_new</mat-icon>
+            </a>
           </div>
         </div>
       </div>
@@ -188,65 +217,151 @@
 
     <!-- SECTION HEADER -->
     <div class="section-header">
-      <h2>Latest Updates & Highlights</h2>
-      <p>Important announcements, circulars and department updates</p>
+      <h2>System Overview & Statistics</h2>
+      <p>Transparency and progress of the Revenue Court Case Management System</p>
     </div>
 
-    <!-- CARDS GRID -->
-    <div class="row">
-      <div class="col-md-6 col-lg-4 mb-4">
-        <div class="doc-section">
-          <h5 class="section-title">📄 Documents Available</h5>
-
-          <div class="doc-item">
-            <span class="pdf-icon">PDF</span>
-            <a href="#">The Manipur Revenue Code (Amendment) Act, 2021</a>
+    <!-- STATISTICS HIGHLIGHTS (PRIORITY FOR PUBLIC) -->
+    <div class="row mb-4">
+      <div class="col-md-4 mb-4" *ngFor="let item of highlights">
+        <div class="info-card">
+          <div class="card-icon">
+            <mat-icon>{{ item.icon }}</mat-icon>
           </div>
 
-          <div class="doc-item">
-            <span class="pdf-icon">PDF</span>
-            <a href="#">The Manipur Revenue Code (Amendment) Act, 2020</a>
+          <div class="card-body">
+            <h5>{{ item.title }}</h5>
+            <h2 class="stat-value">{{ item.description }}</h2>
           </div>
 
-          <div class="doc-item">
-            <span class="pdf-icon">PDF</span>
-            <a href="#">The Manipur Revenue Code (Amendment) Act, 2019</a>
-          </div>
-
-          <div class="doc-item highlight">
-            <span class="pdf-icon">PDF</span>
-            <a href="#">Manipur Revenue Code Bill – 2006 (E-Book)</a>
+          <div class="card-footer">
+            <a href="javascript:void(0)">View Details →</a>
           </div>
         </div>
       </div>
-      <div class="col-md-6 col-lg-8 mb-4">
-        <div class="row">
-          <div class="col-md-6 col-lg-4 mb-4" *ngFor="let item of highlights">
-            <div class="info-card">
-              <div class="card-icon">
-                <mat-icon>{{ item.icon }}</mat-icon>
-              </div>
+    </div>
 
-              <div class="card-body">
-                <h5>{{ item.title }}</h5>
-                <h2 class="stat-value">{{ item.description }}</h2>
-              </div>
+    <!-- SECTION HEADER -->
+    <div class="section-header">
+      <h2>Court Schedules</h2>
+      <p>Check cause lists and upcoming hearing dates</p>
+    </div>
 
-              <div class="card-footer">
-                <a href="javascript:void(0)">View Details →</a>
+    <!-- ROW 1: CAUSE LISTS & HEARING CALENDAR (LARGER) -->
+    <div class="row mb-4">
+      <div class="col-lg-6 mb-4">
+        <app-cause-list></app-cause-list>
+      </div>
+      <div class="col-lg-6 mb-4">
+        <app-hearing-calendar></app-hearing-calendar>
+      </div>
+    </div>
+
+    <!-- SECTION HEADER -->
+    <div class="section-header">
+      <h2>Services & Resources</h2>
+      <p>Access our digital services and legal documents</p>
+    </div>
+
+    <!-- ROW 2: SERVICES & DOCUMENTS SIDE BY SIDE -->
+    <div class="row mb-4">
+      <!-- LEFT: SERVICES (6 columns) -->
+      <div class="col-lg-6 mb-4">
+        <div class="services-container">
+          <div class="services-header">
+            <mat-icon class="header-icon">apps</mat-icon>
+            <h3 class="header-title">Our Services</h3>
+            <span class="services-count">8</span>
+          </div>
+          <div class="services-grid">
+            <div class="service-item" *ngFor="let service of services | slice:0:8">
+              <div class="service-icon-circle">
+                <mat-icon>{{ service.icon }}</mat-icon>
               </div>
+              <h6 class="service-name">{{ service.title }}</h6>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="row">
-      <div class="col-lg-6">
-        <app-cause-list></app-cause-list>
-      </div>
-      <div class="col-lg-6">
-        <app-hearing-calendar></app-hearing-calendar>
+      <!-- RIGHT: DOCUMENTS (6 columns) -->
+      <div class="col-lg-6 mb-4">
+        <div class="documents-card">
+          <!-- HEADER -->
+          <div class="docs-header">
+            <mat-icon class="header-icon">folder_open</mat-icon>
+            <h3 class="header-title">Legal Documents</h3>
+            <span class="docs-count">4</span>
+          </div>
+
+          <!-- DOCUMENT LIST - VERTICAL LIST -->
+          <div class="docs-list">
+            <a href="#" class="doc-item">
+              <div class="doc-icon-wrapper">
+                <mat-icon class="doc-icon">picture_as_pdf</mat-icon>
+              </div>
+              <div class="doc-content">
+                <div class="doc-title">The Manipur Revenue Code (Amendment) Act, 2021</div>
+                <div class="doc-meta">
+                  <span class="doc-size">2.4 MB</span>
+                  <span class="doc-type">PDF</span>
+                </div>
+              </div>
+              <mat-icon class="download-icon">download</mat-icon>
+            </a>
+
+            <a href="#" class="doc-item">
+              <div class="doc-icon-wrapper">
+                <mat-icon class="doc-icon">picture_as_pdf</mat-icon>
+              </div>
+              <div class="doc-content">
+                <div class="doc-title">The Manipur Revenue Code (Amendment) Act, 2020</div>
+                <div class="doc-meta">
+                  <span class="doc-size">1.8 MB</span>
+                  <span class="doc-type">PDF</span>
+                </div>
+              </div>
+              <mat-icon class="download-icon">download</mat-icon>
+            </a>
+
+            <a href="#" class="doc-item">
+              <div class="doc-icon-wrapper">
+                <mat-icon class="doc-icon">picture_as_pdf</mat-icon>
+              </div>
+              <div class="doc-content">
+                <div class="doc-title">The Manipur Revenue Code (Amendment) Act, 2019</div>
+                <div class="doc-meta">
+                  <span class="doc-size">2.1 MB</span>
+                  <span class="doc-type">PDF</span>
+                </div>
+              </div>
+              <mat-icon class="download-icon">download</mat-icon>
+            </a>
+
+            <a href="#" class="doc-item featured">
+              <div class="doc-icon-wrapper featured-icon">
+                <mat-icon class="doc-icon">menu_book</mat-icon>
+              </div>
+              <div class="doc-content">
+                <div class="doc-title">Manipur Revenue Code Bill – 2006 (E-Book)</div>
+                <div class="doc-meta">
+                  <span class="doc-size">5.2 MB</span>
+                  <span class="doc-type">E-BOOK</span>
+                  <span class="featured-badge">Featured</span>
+                </div>
+              </div>
+              <mat-icon class="download-icon">download</mat-icon>
+            </a>
+          </div>
+
+          <!-- FOOTER -->
+          <div class="docs-footer">
+            <a href="#" class="view-all-docs">
+              <span>Browse All Documents</span>
+              <mat-icon>arrow_forward</mat-icon>
+            </a>
+          </div>
+        </div>
       </div>
     </div>
 

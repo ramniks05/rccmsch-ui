@@ -1,58 +1,362 @@
-.cause-card {
-  height: 420px;
+// ================= HEARING CALENDAR CARD =================
+.hearing-calendar-card {
+  height: 100%;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
   display: flex;
   flex-direction: column;
+  transition: all 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  }
 }
 
-.month-bar {
+// ================= HEADER =================
+.card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 6px 12px;
-  background: #f8f9fa;
-  font-weight: 600;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #0b5fa5 0%, #4a90e2 100%);
+  color: #fff;
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .header-icon {
+      font-size: 28px;
+      width: 28px;
+      height: 28px;
+    }
+
+    .header-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 0;
+    }
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .filter-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+      opacity: 0.9;
+    }
+
+    .court-select {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      outline: none;
+      transition: all 0.3s ease;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.25);
+      }
+
+      option {
+        background: #ffffff;
+        color: #333;
+      }
+    }
+  }
 }
 
-.month-bar .current {
-  font-size: 15px;
+// ================= MONTH NAVIGATION =================
+.month-navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: linear-gradient(to bottom, #f8f9fa, #ffffff);
+  border-bottom: 1px solid #e9ecef;
+
+  .nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 12px;
+    background: transparent;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    color: #495057;
+    font-weight: 500;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+
+    .nav-label {
+      @media (max-width: 576px) {
+        display: none;
+      }
+    }
+
+    &:hover {
+      background: #43e97b;
+      color: white;
+      border-color: #43e97b;
+    }
+  }
+
+  .current-month {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 16px;
+    color: #495057;
+
+    mat-icon {
+      color: #43e97b;
+      font-size: 22px;
+      width: 22px;
+      height: 22px;
+    }
+  }
 }
 
-.month-bar .nav {
-  color: #0d6efd;
-  cursor: pointer;
-  font-weight: 500;
+// ================= CALENDAR =================
+.calendar-container {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #ddd;
+    border-radius: 3px;
+  }
 }
 
 .calendar-table {
   width: 100%;
-  border-collapse: collapse;
-  text-align: center;
-  flex: 1;
+  border-collapse: separate;
+  border-spacing: 4px;
 
-  th {
+  thead {
+    th {
+      text-align: center;
+      font-weight: 600;
+      font-size: 12px;
+      color: #6c757d;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 12px 4px;
+      background: #f8f9fa;
+      border-radius: 6px;
+    }
+  }
+
+  tbody {
+    td {
+      text-align: center;
+      padding: 4px;
+      height: 50px;
+    }
+  }
+}
+
+.day-cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 46px;
+  border-radius: 8px;
+  background: #f8f9fa;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+
+  .day-number {
+    font-size: 14px;
+    font-weight: 500;
+    color: #495057;
+  }
+
+  .hearing-indicator {
+    position: absolute;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+
+    mat-icon {
+      font-size: 8px;
+      width: 8px;
+      height: 8px;
+      color: #10b981;
+    }
+  }
+
+  &:hover {
+    background: #e9ecef;
+    transform: scale(1.05);
+  }
+
+  &.has-hearing {
+    background: linear-gradient(135deg, #e7f3ff 0%, #cfe7ff 100%);
+    border-color: #0b5fa5;
+
+    .day-number {
+      font-weight: 600;
+      color: #003d82;
+    }
+  }
+
+  &.today {
+    background: linear-gradient(135deg, #0b5fa5 0%, #4a90e2 100%);
+    border-color: #0b5fa5;
+
+    .day-number {
+      color: white;
+      font-weight: 700;
+    }
+
+    .hearing-indicator mat-icon {
+      color: white;
+    }
+  }
+}
+
+// ================= LEGEND =================
+.calendar-legend {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  padding: 16px 24px;
+  background: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #6c757d;
+
+    .legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .today-dot {
+      background: linear-gradient(135deg, #0b5fa5 0%, #4a90e2 100%);
+    }
+
+    .hearing-dot {
+      background: linear-gradient(135deg, #e7f3ff 0%, #cfe7ff 100%);
+      border: 2px solid #0b5fa5;
+    }
+  }
+}
+
+// ================= FOOTER =================
+.card-footer {
+  display: flex;
+  justify-content: center;
+  padding: 16px 24px;
+  background: #fff;
+  border-top: 1px solid #e9ecef;
+
+  .view-all-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #0b5fa5;
     font-weight: 600;
-    padding: 6px;
-    border-bottom: 1px solid #dee2e6;
+    font-size: 14px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      transition: transform 0.3s ease;
+    }
+
+    &:hover {
+      color: #003d82;
+
+      mat-icon {
+        transform: translateX(4px);
+      }
+    }
   }
-
-  td {
-    padding: 6px;
-  }
 }
 
-.day {
-  display: inline-block;
-  width: 34px;
-  height: 24px;
-  line-height: 24px;
-  border-radius: 12px;
-}
-
-.hearing {
-  background: #d8f0df;
-}
-
-.calendar-tooltip {
+// ================= CUSTOM TOOLTIP =================
+::ng-deep .custom-tooltip {
+  background: #495057 !important;
+  color: white !important;
+  font-size: 12px !important;
+  padding: 8px 12px !important;
+  border-radius: 6px !important;
   white-space: pre-line;
-  font-size: 13px;
+}
+
+// ================= RESPONSIVE =================
+@media (max-width: 991px) {
+  .card-header {
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+
+    .header-left,
+    .header-right {
+      width: 100%;
+      justify-content: space-between;
+    }
+  }
+
+  .month-navigation {
+    padding: 12px 16px;
+  }
+
+  .calendar-container {
+    padding: 12px;
+  }
+
+  .calendar-table thead th {
+    font-size: 10px;
+    padding: 8px 2px;
+  }
+
+  .day-cell {
+    height: 38px;
+
+    .day-number {
+      font-size: 12px;
+    }
+  }
+
+  .calendar-legend {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
 }

@@ -120,8 +120,11 @@
                     </div>
                   </div>
                   <div class="card-footer bg-transparent">
-                    <button class="btn btn-sm btn-info me-1" (click)="viewTemplate(template)" title="Preview">
+                    <button class="btn btn-sm btn-info me-1" (click)="viewTemplate(template)" title="Preview HTML">
                       <i class="bi bi-eye"></i>
+                    </button>
+                    <button class="btn btn-sm btn-success me-1" (click)="exportAsWord(template)" title="Export as Word">
+                      <i class="bi bi-file-word"></i>
                     </button>
                     <button class="btn btn-sm btn-primary me-1" (click)="editTemplate(template)" title="Edit">
                       <i class="bi bi-pencil"></i>
@@ -183,27 +186,46 @@
               </div>
 
               <div class="col-12">
-                <label class="form-label">Available Placeholders</label>
-                <div class="placeholder-buttons mb-2">
+                <label class="form-label">Template Content <span class="text-danger">*</span></label>
+                <div class="mb-2">
+                  <span class="badge bg-info me-2">
+                    <i class="bi bi-info-circle"></i> Use Rich Text Editor with Voice Typing & Translation
+                  </span>
+                  <button 
+                    type="button" 
+                    class="btn btn-sm btn-success"
+                    (click)="previewAsWord()">
+                    <i class="bi bi-file-word"></i> Preview as Word
+                  </button>
+                </div>
+                
+                <!-- Rich Text Editor -->
+                <app-rich-text-editor
+                  [(content)]="templateHtmlContent"
+                  [placeholder]="'Enter template content here. Use voice typing or write manually...'"
+                  [height]="'500px'"
+                ></app-rich-text-editor>
+                
+                <small class="form-text text-muted mt-2">
+                  <i class="bi bi-lightbulb"></i> 
+                  <strong>Tips:</strong> Use the microphone for voice typing. Use placeholders like {{'{{'}}caseNumber{{'}}'}} for dynamic content.
+                  Content will be saved and can be exported as Word document.
+                </small>
+              </div>
+
+              <!-- Placeholder Insertion Helper -->
+              <div class="col-12">
+                <label class="form-label">Insert Placeholders</label>
+                <div class="placeholder-buttons">
                   <button 
                     *ngFor="let placeholder of availablePlaceholders" 
                     type="button"
-                    class="btn btn-sm btn-outline-secondary me-1 mb-1"
-                    (click)="insertPlaceholder(placeholder)">
+                    class="btn btn-sm btn-outline-primary me-1 mb-1"
+                    (click)="insertPlaceholderIntoEditor(placeholder)">
                     {{ placeholder }}
                   </button>
                 </div>
-              </div>
-
-              <div class="col-12">
-                <label for="templateHtml" class="form-label">HTML Template <span class="text-danger">*</span></label>
-                <textarea 
-                  id="templateHtml" 
-                  class="form-control font-monospace" 
-                  rows="15"
-                  [(ngModel)]="templateForm.templateHtml"
-                  placeholder="Enter HTML template content"></textarea>
-                <small class="form-text text-muted">Use placeholders like {{'{{'}}caseNumber{{'}}'}} for dynamic content</small>
+                <small class="form-text text-muted">Click to insert dynamic placeholders into your template</small>
               </div>
 
               <div class="col-12">

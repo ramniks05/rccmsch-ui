@@ -12,4 +12,42 @@
   .badge {
     font-size: 0.85em;
   }
+
+  // Rich text view mode styling
+  .rich-text-view {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+    min-height: 100px;
+    
+    // Quill content styles
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 0.5em;
+      margin-bottom: 0.5em;
+    }
+    
+    ul, ol {
+      padding-left: 1.5em;
+    }
+    
+    blockquote {
+      border-left: 4px solid #ccc;
+      margin-left: 0;
+      padding-left: 1em;
+      color: #666;
+    }
+    
+    pre {
+      background-color: #f4f4f4;
+      padding: 10px;
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+    
+    a {
+      color: #0066cc;
+      text-decoration: underline;
+    }
+  }
 }

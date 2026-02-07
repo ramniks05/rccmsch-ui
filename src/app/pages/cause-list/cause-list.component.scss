@@ -1,15 +1,307 @@
-table {
-  width: 100%;
+// ================= CAUSE LIST CARD ================= 
+.cause-list-card {
+  height: 100%;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  }
 }
 
-.mat-header-cell {
-  font-weight: 600;
-}
-
+// ================= HEADER =================
 .card-header {
-  background: #f8f9fa;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #0b5fa5 0%, #4a90e2 100%);
+  color: white;
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .header-icon {
+      font-size: 28px;
+      width: 28px;
+      height: 28px;
+    }
+
+    .header-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .badge-count {
+      background: rgba(255, 255, 255, 0.25);
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .filter-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+      opacity: 0.9;
+    }
+
+    .court-select {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      outline: none;
+      transition: all 0.3s ease;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.25);
+      }
+
+      option {
+        background: #ffffff;
+        color: #333;
+      }
+    }
+  }
 }
 
-.card.shadow-sm {
-    height: 420px;
+// ================= TABLE =================
+.table-container {
+  flex: 1;
+  overflow-y: auto;
+  
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #ddd;
+    border-radius: 3px;
+  }
+}
+
+.modern-table {
+  width: 100%;
+  
+  .mat-header-cell {
+    background: #f8f9fa;
+    color: #495057;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 16px;
+    border-bottom: 2px solid #e9ecef;
+
+    .column-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      vertical-align: middle;
+      margin-right: 6px;
+      color: #667eea;
+    }
+  }
+
+  .mat-cell {
+    padding: 16px;
+    border-bottom: 1px solid #f1f3f5;
+    font-size: 14px;
+  }
+
+  .col-index {
+    width: 60px;
+    text-align: center;
+  }
+
+  .index-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #0b5fa5 0%, #4a90e2 100%);
+    color: white;
+    border-radius: 50%;
+    font-weight: 600;
+    font-size: 13px;
+  }
+
+  .court-cell {
+    .court-name {
+      font-weight: 600;
+      color: #495057;
+      margin-bottom: 4px;
+    }
+
+    .court-address {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      color: #6c757d;
+
+      mat-icon {
+        font-size: 14px;
+        width: 14px;
+        height: 14px;
+      }
+    }
+  }
+
+  .cases-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 50px;
+    padding: 6px 14px;
+    background: linear-gradient(135deg, #0b5fa5 0%, #4a90e2 100%);
+    color: white;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  .date-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: #e7f3ff;
+    color: #0066cc;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 13px;
+
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+  }
+
+  .table-row {
+    transition: all 0.2s ease;
+    cursor: pointer;
+
+    &:hover {
+      background: #f8f9fa;
+      transform: translateX(4px);
+    }
+  }
+}
+
+// ================= FOOTER =================
+.card-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0;
+  background: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+
+  .footer-paginator {
+    padding: 8px 16px;
+    border-bottom: 1px solid #e9ecef;
+    
+    mat-paginator {
+      background: transparent;
+    }
+  }
+
+  .footer-link {
+    padding: 12px 24px;
+    display: flex;
+    justify-content: center;
+    background: linear-gradient(to bottom, #ffffff, #f8f9fa);
+  }
+
+  .view-all-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 24px;
+    background: linear-gradient(135deg, #0b5fa5 0%, #4a90e2 100%);
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(11, 95, 165, 0.3);
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      transition: transform 0.3s ease;
+    }
+
+    &:hover {
+      background: linear-gradient(135deg, #003d82 0%, #0b5fa5 100%);
+      box-shadow: 0 4px 16px rgba(11, 95, 165, 0.5);
+      transform: translateY(-2px);
+      
+      mat-icon {
+        transform: translateX(4px);
+      }
+    }
+  }
+}
+
+// ================= RESPONSIVE =================
+@media (max-width: 991px) {
+  .card-header {
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+
+    .header-left,
+    .header-right {
+      width: 100%;
+      justify-content: space-between;
+    }
+  }
+
+  .modern-table {
+    .mat-cell,
+    .mat-header-cell {
+      padding: 12px 8px;
+      font-size: 13px;
+    }
+
+    .court-address {
+      display: none;
+    }
+  }
+
+  .card-footer {
+    .footer-link {
+      padding: 16px;
+    }
+
+    .view-all-link {
+      width: 100%;
+      justify-content: center;
+    }
+  }
 }
