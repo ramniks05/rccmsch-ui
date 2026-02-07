@@ -109,4 +109,16 @@ export class HearingCalendarComponent implements OnInit {
     return new Date(this.currentYear, this.currentMonth + 1)
       .toLocaleString('default', { month: 'short' });
   }
+
+  /**
+   * Check if a given day is today
+   */
+  isToday(day: number): boolean {
+    const today = new Date();
+    return (
+      day === today.getDate() &&
+      this.currentMonth === today.getMonth() &&
+      this.currentYear === today.getFullYear()
+    );
+  }
 }

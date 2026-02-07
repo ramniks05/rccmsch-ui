@@ -9,11 +9,23 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
 
   h2 {
     margin: 0;
     font-size: 28px;
     font-weight: 500;
+  }
+
+  .header-actions button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    
+    mat-icon {
+      margin: 0;
+    }
   }
 }
 
@@ -31,6 +43,15 @@
 
   .status-filter {
     width: 200px;
+    min-width: 150px;
+  }
+  
+  button {
+    white-space: nowrap;
+    
+    mat-icon {
+      margin-right: 4px;
+    }
   }
 }
 
@@ -71,20 +92,25 @@
 .table-container {
   background: white;
   border-radius: 8px;
-  overflow: hidden;
+  overflow: auto;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  max-width: 100%;
 }
 
 .cases-table {
   width: 100%;
+  min-width: 900px;
 
   th {
     font-weight: 600;
     background-color: #f5f5f5;
+    padding: 12px 16px;
+    white-space: nowrap;
   }
 
   td {
     padding: 12px 16px;
+    vertical-align: middle;
   }
 
   .subject-cell {
@@ -101,11 +127,30 @@
 
     .name {
       font-weight: 500;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 200px;
     }
 
     .mobile {
       font-size: 12px;
       color: rgba(0, 0, 0, 0.6);
+    }
+  }
+  
+  // Fix action buttons in table cells
+  button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      line-height: 18px;
     }
   }
 }
@@ -118,6 +163,7 @@
   font-size: 12px;
   font-weight: 500;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .status-badge {
@@ -169,9 +215,39 @@
   }
 }
 
+// Tablet
+@media (max-width: 991px) {
+  .officer-cases-container {
+    padding: 20px;
+  }
+
+  .header-section {
+    h2 {
+      font-size: 24px;
+    }
+  }
+  
+  .cases-table {
+    min-width: 800px;
+    font-size: 13px;
+  }
+}
+
+// Mobile
 @media (max-width: 768px) {
   .officer-cases-container {
     padding: 16px;
+  }
+
+  .header-section {
+    h2 {
+      font-size: 20px;
+    }
+    
+    .header-actions button {
+      font-size: 13px;
+      padding: 8px 16px;
+    }
   }
 
   .filters-section {
@@ -182,13 +258,69 @@
     .status-filter {
       width: 100%;
     }
+    
+    button {
+      width: 100%;
+    }
   }
 
   .cases-table {
+    min-width: 700px;
     font-size: 12px;
 
-    td {
-      padding: 8px;
+    th, td {
+      padding: 8px 10px;
+    }
+    
+    .subject-cell {
+      max-width: 200px;
+    }
+    
+    .applicant-info .name {
+      max-width: 150px;
+    }
+    
+    button {
+      font-size: 11px;
+      padding: 6px 12px;
+      
+      mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
+    }
+  }
+  
+  .status-badge,
+  .priority-badge {
+    font-size: 10px;
+    padding: 3px 8px;
+  }
+}
+
+// Extra small mobile
+@media (max-width: 575px) {
+  .officer-cases-container {
+    padding: 12px;
+  }
+  
+  .header-section {
+    h2 {
+      font-size: 18px;
+    }
+  }
+  
+  .table-container {
+    border-radius: 6px;
+  }
+  
+  .cases-table {
+    min-width: 650px;
+    font-size: 11px;
+    
+    th, td {
+      padding: 6px 8px;
     }
   }
 }

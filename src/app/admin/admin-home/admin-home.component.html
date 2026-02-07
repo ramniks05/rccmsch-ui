@@ -17,103 +17,163 @@
 
   <!-- Main Content -->
   <div class="main-content">
-    <!-- Quick Actions Card -->
-    <mat-card class="quick-actions-card">
-      <mat-card-header>
-        <mat-card-title>
-          <mat-icon>dashboard</mat-icon>
-          Quick Actions
-        </mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="action-buttons">
-          <button mat-raised-button color="primary" class="action-btn" routerLink="/admin/officers">
-            <mat-icon>people</mat-icon>
-            Manage Officers
-          </button>
-          <button mat-raised-button color="accent" class="action-btn" routerLink="/admin/postings">
-            <mat-icon>assignment_ind</mat-icon>
-            Manage Postings
-          </button>
-          <button mat-raised-button color="primary" class="action-btn" routerLink="/admin/administrative-units">
-            <mat-icon>location_city</mat-icon>
-            Administrative Units
-          </button>
-          <button mat-raised-button color="primary" class="action-btn" routerLink="/admin/case-types">
-            <mat-icon>folder_special</mat-icon>
-            Case Types
-          </button>
-          <button mat-raised-button color="primary" class="action-btn" routerLink="/admin/acts">
-            <mat-icon>gavel</mat-icon>
-            Acts
-          </button>
-          <button mat-raised-button color="primary" class="action-btn" routerLink="/admin/case-natures">
-            <mat-icon>category</mat-icon>
-            Case Natures
-          </button>
-          <button mat-raised-button color="primary" class="action-btn" routerLink="/admin/courts">
-            <mat-icon>account_balance</mat-icon>
-            Courts
-          </button>
-          <button mat-raised-button color="accent" class="action-btn" routerLink="/admin/system-settings">
-            <mat-icon>settings</mat-icon>
-            System Settings
-          </button>
-          <button mat-raised-button color="primary" class="action-btn" routerLink="/admin/workflows">
-            <mat-icon>account_tree</mat-icon>
-            Workflow Configuration
-          </button>
-          <button mat-raised-button color="accent" class="action-btn" routerLink="/admin/registration-forms">
-            <mat-icon>dynamic_form</mat-icon>
-            Registration Forms
-          </button>
-          <button mat-raised-button color="primary" class="action-btn" routerLink="/admin/module-forms">
-            <mat-icon>list_alt</mat-icon>
-            Module Forms
-          </button>
-          <button mat-raised-button color="accent" class="action-btn" routerLink="/admin/document-templates">
-            <mat-icon>description</mat-icon>
-            Document Templates
-          </button>
-          <button mat-raised-button color="primary" class="action-btn" routerLink="/admin/calendar">
-            <mat-icon>calendar_today</mat-icon>
-              Calendar
-          </button>
+    <!-- Category Sections -->
+    
+    <!-- 1. USER MANAGEMENT -->
+    <div class="category-section">
+      <div class="category-header">
+        <mat-icon class="category-icon">people</mat-icon>
+        <h2 class="category-title">User Management</h2>
+      </div>
+      <div class="category-cards">
+        <div class="feature-card" routerLink="/admin/officers">
+          <div class="card-icon-wrapper primary">
+            <mat-icon>badge</mat-icon>
+          </div>
+          <div class="card-content">
+            <h3>Manage Officers</h3>
+            <p>Add, edit, and manage court officers</p>
+          </div>
         </div>
-      </mat-card-content>
-    </mat-card>
+        <div class="feature-card" routerLink="/admin/postings">
+          <div class="card-icon-wrapper accent">
+            <mat-icon>assignment_ind</mat-icon>
+          </div>
+          <div class="card-content">
+            <h3>Manage Postings</h3>
+            <p>Assign officers to courts and units</p>
+          </div>
+        </div>
+      </div>
+    </div>
 
-    <!-- Information Cards -->
-    <div class="info-cards">
-      <mat-card class="info-card">
-        <mat-card-header>
-          <mat-card-title>
-            <mat-icon class="card-icon">info</mat-icon>
-            About Admin Panel
-          </mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <p>
-            The Admin Panel allows you to manage officers, assign postings, configure administrative units,
-            and manage case types. Use the quick actions above to navigate to different sections.
-          </p>
-        </mat-card-content>
-      </mat-card>
+    <!-- 2. CASE CONFIGURATION -->
+    <div class="category-section">
+      <div class="category-header">
+        <mat-icon class="category-icon">gavel</mat-icon>
+        <h2 class="category-title">Case Configuration</h2>
+      </div>
+      <div class="category-cards">
+        <div class="feature-card" routerLink="/admin/case-types">
+          <div class="card-icon-wrapper primary">
+            <mat-icon>folder_special</mat-icon>
+          </div>
+          <div class="card-content">
+            <h3>Case Types</h3>
+            <p>Configure case type categories</p>
+          </div>
+        </div>
+        <div class="feature-card" routerLink="/admin/case-natures">
+          <div class="card-icon-wrapper primary">
+            <mat-icon>category</mat-icon>
+          </div>
+          <div class="card-content">
+            <h3>Case Natures</h3>
+            <p>Define case nature classifications</p>
+          </div>
+        </div>
+        <div class="feature-card" routerLink="/admin/acts">
+          <div class="card-icon-wrapper primary">
+            <mat-icon>menu_book</mat-icon>
+          </div>
+          <div class="card-content">
+            <h3>Acts & Laws</h3>
+            <p>Manage legal acts and sections</p>
+          </div>
+        </div>
+        <div class="feature-card" routerLink="/admin/courts">
+          <div class="card-icon-wrapper primary">
+            <mat-icon>account_balance</mat-icon>
+          </div>
+          <div class="card-content">
+            <h3>Courts</h3>
+            <p>Configure court hierarchies</p>
+          </div>
+        </div>
+      </div>
+    </div>
 
-      <mat-card class="info-card">
-        <mat-card-header>
-          <mat-card-title>
-            <mat-icon class="card-icon">help</mat-icon>
-            Need Help?
-          </mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <p>
-            For assistance with using the admin panel, please refer to the API documentation
-            or contact the system administrator.
-          </p>
-        </mat-card-content>
-      </mat-card>
+    <!-- 3. WORKFLOW & FORMS -->
+    <div class="category-section">
+      <div class="category-header">
+        <mat-icon class="category-icon">account_tree</mat-icon>
+        <h2 class="category-title">Workflow & Forms</h2>
+      </div>
+      <div class="category-cards">
+        <div class="feature-card" routerLink="/admin/workflows">
+          <div class="card-icon-wrapper accent">
+            <mat-icon>device_hub</mat-icon>
+          </div>
+          <div class="card-content">
+            <h3>Workflow Configuration</h3>
+            <p>Design case workflows and transitions</p>
+          </div>
+        </div>
+        <div class="feature-card" routerLink="/admin/registration-forms">
+          <div class="card-icon-wrapper accent">
+            <mat-icon>dynamic_form</mat-icon>
+          </div>
+          <div class="card-content">
+            <h3>Registration Forms</h3>
+            <p>Configure case registration forms</p>
+          </div>
+        </div>
+        <div class="feature-card" routerLink="/admin/module-forms">
+          <div class="card-icon-wrapper accent">
+            <mat-icon>list_alt</mat-icon>
+          </div>
+          <div class="card-content">
+            <h3>Module Forms</h3>
+            <p>Setup hearing and module forms</p>
+          </div>
+        </div>
+        <div class="feature-card" routerLink="/admin/document-templates">
+          <div class="card-icon-wrapper accent">
+            <mat-icon>description</mat-icon>
+          </div>
+          <div class="card-content">
+            <h3>Document Templates</h3>
+            <p>Manage notice, order, judgement templates</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. SYSTEM SETUP -->
+    <div class="category-section">
+      <div class="category-header">
+        <mat-icon class="category-icon">settings</mat-icon>
+        <h2 class="category-title">System Setup</h2>
+      </div>
+      <div class="category-cards">
+        <div class="feature-card" routerLink="/admin/administrative-units">
+          <div class="card-icon-wrapper primary">
+            <mat-icon>location_city</mat-icon>
+          </div>
+          <div class="card-content">
+            <h3>Administrative Units</h3>
+            <p>Manage state, district, tehsil hierarchy</p>
+          </div>
+        </div>
+        <div class="feature-card" routerLink="/admin/system-settings">
+          <div class="card-icon-wrapper accent">
+            <mat-icon>tune</mat-icon>
+          </div>
+          <div class="card-content">
+            <h3>System Settings</h3>
+            <p>Configure logos, banners, and settings</p>
+          </div>
+        </div>
+        <div class="feature-card" routerLink="/admin/calendar">
+          <div class="card-icon-wrapper primary">
+            <mat-icon>calendar_today</mat-icon>
+          </div>
+          <div class="card-content">
+            <h3>Calendar</h3>
+            <p>Manage holidays and court schedules</p>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>

@@ -31,7 +31,7 @@ export class DocumentTemplatesComponent implements OnInit {
   // Template form
   templateForm: Partial<DocumentTemplate> = {
     templateName: '',
-    templateHtml: '',
+    templateHtml: '', // Initialize with empty string, not undefined
     templateData: '',
     version: 1,
     allowEditAfterSign: false,
@@ -56,6 +56,20 @@ export class DocumentTemplatesComponent implements OnInit {
     private documentTemplatesService: DocumentTemplatesService,
     private adminService: AdminService
   ) {}
+
+  /**
+   * Get template HTML content as string (never undefined)
+   */
+  get templateHtmlContent(): string {
+    return this.templateForm.templateHtml || '';
+  }
+
+  /**
+   * Set template HTML content
+   */
+  set templateHtmlContent(value: string) {
+    this.templateForm.templateHtml = value;
+  }
 
   ngOnInit(): void {
     this.loadCaseNatures();
@@ -368,6 +382,15 @@ export class DocumentTemplatesComponent implements OnInit {
   }
 
   /**
+   * Insert placeholder into Rich Text Editor
+   */
+  insertPlaceholderIntoEditor(placeholder: string): void {
+    // Simply append the placeholder to the current content
+    const currentContent = this.templateForm.templateHtml || '';
+    this.templateForm.templateHtml = currentContent + ' ' + placeholder + ' ';
+  }
+
+  /**
    * Get module type label
    */
   getModuleTypeLabel(moduleType: ModuleType): string {
@@ -378,5 +401,124 @@ export class DocumentTemplatesComponent implements OnInit {
       'JUDGEMENT': 'Judgement'
     };
     return labels[moduleType] || moduleType;
+  }
+
+  /**
+   * Export template as Word document
+   * Uses a simple HTML to Word conversion approach
+   */
+  exportAsWord(template: DocumentTemplate): void {
+    try {
+      const blob = this.htmlToWordBlob(template.templateHtml);
+      const fileName = `${template.templateName.replace(/\s+/g, '_')}_Template.docx`;
+      this.downloadBlob(blob, fileName);
+    } catch (error) {
+      console.error('Error exporting to Word:', error);
+      alert('Failed to export template as Word document. Exporting as HTML instead.');
+      this.exportAsHtml(template);
+    }
+  }
+
+  /**
+   * Preview template as Word
+   */
+  previewAsWord(): void {
+    if (!this.templateForm.templateHtml) {
+      alert('Please enter template content first');
+      return;
+    }
+
+    try {
+      const blob = this.htmlToWordBlob(this.templateForm.templateHtml);
+      const fileName = `Preview_${this.selectedModuleType}_${Date.now()}.docx`;
+      this.downloadBlob(blob, fileName);
+    } catch (error) {
+      console.error('Error previewing as Word:', error);
+      alert('Failed to generate Word preview');
+    }
+  }
+
+  /**
+   * Convert HTML to Word-compatible blob
+   * This creates a .docx file from HTML content
+   */
+  private htmlToWordBlob(html: string): Blob {
+    // Wrap HTML in proper Word XML structure
+    const wordXml = `
+      <html xmlns:o='urn:schemas-microsoft-com:office:office' 
+            xmlns:w='urn:schemas-microsoft-com:office:word' 
+            xmlns='http://www.w3.org/TR/REC-html40'>
+      <head>
+        <meta charset='utf-8'>
+        <title>Document</title>
+        <!--[if gte mso 9]>
+        <xml>
+          <w:WordDocument>
+            <w:View>Print</w:View>
+            <w:Zoom>100</w:Zoom>
+            <w:DoNotOptimizeForBrowser/>
+          </w:WordDocument>
+        </xml>
+        <![endif]-->
+        <style>
+          @page {
+            size: 8.5in 11in;
+            margin: 1in;
+          }
+          body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+          }
+          h1, h2, h3, h4, h5, h6 {
+            font-weight: bold;
+            margin-top: 12pt;
+            margin-bottom: 6pt;
+          }
+          p {
+            margin: 0;
+            margin-bottom: 6pt;
+          }
+          table {
+            border-collapse: collapse;
+          }
+          table, th, td {
+            border: 1px solid black;
+            padding: 5px;
+          }
+        </style>
+      </head>
+      <body>
+        ${html}
+      </body>
+      </html>
+    `;
+
+    // Create blob with proper MIME type for Word
+    return new Blob(['\ufeff', wordXml], {
+      type: 'application/msword'
+    });
+  }
+
+  /**
+   * Download blob as file
+   */
+  private downloadBlob(blob: Blob, filename: string): void {
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+  }
+
+  /**
+   * Fallback: Export as HTML file
+   */
+  private exportAsHtml(template: DocumentTemplate): void {
+    const blob = new Blob([template.templateHtml], { type: 'text/html' });
+    const fileName = `${template.templateName.replace(/\s+/g, '_')}_Template.html`;
+    this.downloadBlob(blob, fileName);
   }
 }

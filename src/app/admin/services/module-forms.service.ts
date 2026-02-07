@@ -11,7 +11,7 @@ export type ModuleType = 'HEARING' | 'NOTICE' | 'ORDERSHEET' | 'JUDGEMENT';
 /**
  * Field Types
  */
-export type FieldType = 'TEXT' | 'TEXTAREA' | 'NUMBER' | 'DATE' | 'DATETIME' | 'SELECT' | 'MULTISELECT' | 'CHECKBOX' | 'RADIO' | 'FILE';
+export type FieldType = 'TEXT' | 'TEXTAREA' | 'RICH_TEXT' | 'NUMBER' | 'DATE' | 'DATETIME' | 'SELECT' | 'MULTISELECT' | 'CHECKBOX' | 'RADIO' | 'FILE';
 
 /**
  * Module Form Field

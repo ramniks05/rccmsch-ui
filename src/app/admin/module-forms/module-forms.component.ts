@@ -23,7 +23,7 @@ export class ModuleFormsComponent implements OnInit {
   
   // Field types for dropdown
   fieldTypes: FieldType[] = [
-    'TEXT', 'TEXTAREA', 'NUMBER', 'DATE', 'DATETIME', 
+    'TEXT', 'TEXTAREA', 'RICH_TEXT', 'NUMBER', 'DATE', 'DATETIME', 
     'SELECT', 'MULTISELECT', 'CHECKBOX', 'RADIO', 'FILE'
   ];
   
@@ -327,6 +327,7 @@ export class ModuleFormsComponent implements OnInit {
     const labels: Record<FieldType, string> = {
       'TEXT': 'Text',
       'TEXTAREA': 'Text Area',
+      'RICH_TEXT': 'Rich Text Editor (WYSIWYG)',
       'NUMBER': 'Number',
       'DATE': 'Date',
       'DATETIME': 'Date & Time',

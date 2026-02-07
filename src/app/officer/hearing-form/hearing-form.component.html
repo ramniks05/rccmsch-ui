@@ -67,6 +67,17 @@
                 [placeholder]="field.placeholder || ''"
                 [required]="field.isRequired"></textarea>
 
+              <!-- Rich Text Editor -->
+              <app-rich-text-editor
+                *ngIf="!viewMode && field.fieldType === 'RICH_TEXT'"
+                [(content)]="formData[field.fieldName]"
+                [placeholder]="field.placeholder || 'Enter content...'"
+                [height]="'400px'"
+              ></app-rich-text-editor>
+              
+              <!-- Rich Text View Mode -->
+              <div *ngIf="viewMode && field.fieldType === 'RICH_TEXT'" class="rich-text-view" [innerHTML]="formData[field.fieldName]"></div>
+
               <!-- Number Input -->
               <input 
                 *ngIf="!viewMode && field.fieldType === 'NUMBER'"

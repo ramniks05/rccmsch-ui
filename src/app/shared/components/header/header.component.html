@@ -1,7 +1,7 @@
 <div class="app-header header-wrapper">
   <div class="container">
     <div class="row align-items-center">
-      <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6 header-left">
+      <div class="col-lg-6 col-md-6 col-sm-8 col-xs-8 header-left">
         <button mat-icon-button class="back-btn" (click)="goBack()">
           <mat-icon>arrow_back</mat-icon>
         </button>
@@ -29,7 +29,7 @@
         </div>
       </div>
 
-      <div class="col-lg-4 col-md-4 col-sm-3 col-xs-3 header-center">
+      <div class="col-lg-4 col-md-4 d-none d-lg-block header-center" *ngIf="!(newCode$ | async)">
         <a
           target="_blank"
           rel="noopener noreferrer"
@@ -52,7 +52,7 @@
         </a>
       </div>
 
-      <div class="col-lg-2 col-md-2 col-sm-3 col-xs-3 header-right">
+      <div class="col-lg-2 col-md-2 col-sm-4 col-xs-4 header-right">
         <div class="header-icon" *ngIf="newCode$ | async">
           <button
             mat-button

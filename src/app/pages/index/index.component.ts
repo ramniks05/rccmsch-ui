@@ -36,10 +36,13 @@ export class IndexComponent implements OnInit {
 
   ngOnInit(): void {
     this.setThemeColor();
-    this.startBannerRotation();
     this.animateStatistics();
     this.subscription = this.settings$.subscribe((settings) => {
       this.settings = settings;
+      // Start banner rotation after settings are loaded
+      if (settings?.banners) {
+        this.startBannerRotation();
+      }
     });
     this.whatsNewList = WHATS_NEW_DATA;
   }
@@ -52,10 +55,13 @@ export class IndexComponent implements OnInit {
   }
 
   private startBannerRotation(): void {
-    if (!this.banners.length) return;
+    // Only start rotation if there are multiple banners
+    if (!this.settings?.banners || this.settings.banners.length <= 1) {
+      return;
+    }
 
     setInterval(() => {
-      this.activeBanner = (this.activeBanner + 1) % this.banners.length;
+      this.activeBanner = (this.activeBanner + 1) % this.settings!.banners.length;
     }, 5000);
   }
 
@@ -90,5 +96,22 @@ export class IndexComponent implements OnInit {
 
   goToRegistration() {
     this.router.navigate(['registration']);
+  }
+
+  /**
+   * Check if banners are available
+   */
+  hasBanners(): boolean {
+    return !!(this.settings && this.settings.banners && this.settings.banners.length > 0);
+  }
+
+  /**
+   * Get fallback banner text
+   */
+  getFallbackBannerText(): string {
+    if (this.settings && this.settings.stateName) {
+      return `Government of ${this.settings.stateName}`;
+    }
+    return 'Digital Court Management Platform';
   }
 }
