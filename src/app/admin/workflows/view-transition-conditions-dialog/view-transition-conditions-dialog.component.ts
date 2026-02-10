@@ -80,7 +80,11 @@ export class ViewTransitionConditionsDialogComponent implements OnInit {
   }
 
   getWorkflowFlagLabel(flag: string): string {
-    const allFlags = [...WORKFLOW_FLAGS.formSubmitted, ...WORKFLOW_FLAGS.documentReady];
+    const allFlags = [
+      ...WORKFLOW_FLAGS.formSubmitted,
+      ...WORKFLOW_FLAGS.documentReady,
+      ...WORKFLOW_FLAGS.documentSigned
+    ];
     const found = allFlags.find(f => f.value === flag);
     return found ? found.label : flag;
   }

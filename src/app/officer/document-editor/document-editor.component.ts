@@ -101,28 +101,27 @@ export class DocumentEditorComponent implements OnInit {
   }
 
   /**
-   * Load existing document
+   * Load latest document (for edit/sign). Uses GET .../documents/{moduleType}/latest.
+   * When status === 'SIGNED', editing is blocked unless template.allowEditAfterSign is true.
    */
   loadDocument(): void {
     this.loading = true;
-    this.officerCaseService.getSavedDocument(this.caseId, this.documentType).subscribe({
+    this.officerCaseService.getLatestDocument(this.caseId, this.documentType).subscribe({
       next: (response) => {
         if (response.data) {
           const doc = response.data;
           this.document = doc;
-          this.contentHtml = doc.contentHtml;
-          this.documentStatus = doc.status;
-          
-          // Parse content data if available
+          this.contentHtml = doc.contentHtml ?? '';
+          this.documentStatus = doc.status ?? 'DRAFT';
+
           if (doc.contentData) {
             try {
-              this.contentData = JSON.parse(doc.contentData);
+              this.contentData = typeof doc.contentData === 'string' ? JSON.parse(doc.contentData) : doc.contentData;
             } catch {
               this.contentData = {};
             }
           }
-          
-          // Check if document can be edited
+
           if (doc.status === 'SIGNED' && this.template && !this.template.allowEditAfterSign) {
             this.editMode = false;
           }
@@ -131,7 +130,6 @@ export class DocumentEditorComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error loading document:', error);
-        // Not an error if document doesn't exist yet
         this.loading = false;
       }
     });

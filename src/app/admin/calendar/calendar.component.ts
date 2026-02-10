@@ -180,7 +180,6 @@ export class CalendarComponent implements OnInit {
     const payload = {
       title: this.eventTitle,
       eventType: this.eventType,
-      financialYear: '2026-2027',
       date: this.formatDateForApi(this.selectedDate),
       description: this.eventDescription,
     };

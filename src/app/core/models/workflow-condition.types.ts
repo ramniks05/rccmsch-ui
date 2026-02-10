@@ -73,7 +73,7 @@ export interface ConditionsPayload {
   casePriorityIn?: string[];
 }
 
-/** Predefined workflow flags (form submitted / document ready). */
+/** Predefined workflow flags (form submitted / document ready / document signed). */
 export const WORKFLOW_FLAGS = {
   formSubmitted: [
     { value: 'HEARING_SUBMITTED', label: 'Require Hearing form submitted' },
@@ -85,6 +85,12 @@ export const WORKFLOW_FLAGS = {
     { value: 'NOTICE_READY', label: 'Require Notice document ready' },
     { value: 'ORDERSHEET_READY', label: 'Require Ordersheet document ready' },
     { value: 'JUDGEMENT_READY', label: 'Require Judgement document ready' }
+  ] as const,
+  /** Digital signature required only when finalizing (not for drafting). Add to the transition that finalizes. */
+  documentSigned: [
+    { value: 'NOTICE_SIGNED', label: 'Require Notice signed before finalize (not for draft)' },
+    { value: 'ORDERSHEET_SIGNED', label: 'Require Ordersheet signed before finalize (not for draft)' },
+    { value: 'JUDGEMENT_SIGNED', label: 'Require Judgement signed before finalize (not for draft)' }
   ] as const
 };
 

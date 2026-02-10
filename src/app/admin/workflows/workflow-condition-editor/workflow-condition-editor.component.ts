@@ -26,10 +26,12 @@ export class WorkflowConditionEditorComponent implements OnInit, OnChanges {
 
   readonly formFlags = WORKFLOW_FLAGS.formSubmitted;
   readonly docFlags = WORKFLOW_FLAGS.documentReady;
+  readonly docSignedFlags = WORKFLOW_FLAGS.documentSigned;
   readonly moduleTypes = MODULE_TYPES;
 
   selectedFormFlags: Set<string> = new Set();
   selectedDocFlags: Set<string> = new Set();
+  selectedDocSignedFlags: Set<string> = new Set();
   formFields: Array<{ moduleType: ModuleType; fieldName: string }> = [];
 
   getFieldOptions(moduleType: ModuleType): { value: string; label: string }[] {
@@ -48,12 +50,14 @@ export class WorkflowConditionEditorComponent implements OnInit, OnChanges {
 
   private readonly formFlagValues = ['HEARING_SUBMITTED', 'NOTICE_SUBMITTED', 'ORDERSHEET_SUBMITTED', 'JUDGEMENT_SUBMITTED'];
   private readonly docFlagValues = ['NOTICE_READY', 'ORDERSHEET_READY', 'JUDGEMENT_READY'];
+  private readonly docSignedFlagValues = ['NOTICE_SIGNED', 'ORDERSHEET_SIGNED', 'JUDGEMENT_SIGNED'];
 
   private applyInitial(): void {
     const payload = this.parsePayload(this.initialConditions);
     const all = payload?.workflowDataFieldsRequired ?? [];
     this.selectedFormFlags = new Set(all.filter((f: string) => this.formFlagValues.includes(f)));
     this.selectedDocFlags = new Set(all.filter((f: string) => this.docFlagValues.includes(f)));
+    this.selectedDocSignedFlags = new Set(all.filter((f: string) => this.docSignedFlagValues.includes(f)));
     this.formFields = payload?.moduleFormFieldsRequired?.length
       ? [...payload.moduleFormFieldsRequired]
       : [];
@@ -96,6 +100,19 @@ export class WorkflowConditionEditorComponent implements OnInit, OnChanges {
     this.emitChange();
   }
 
+  isDocSignedFlagChecked(value: string): boolean {
+    return this.selectedDocSignedFlags.has(value);
+  }
+
+  onDocSignedFlagChange(value: string, checked: boolean): void {
+    if (checked) {
+      this.selectedDocSignedFlags.add(value);
+    } else {
+      this.selectedDocSignedFlags.delete(value);
+    }
+    this.emitChange();
+  }
+
   addFormField(): void {
     this.formFields.push({ moduleType: 'HEARING', fieldName: 'hearingDate' });
     this.emitChange();
@@ -123,7 +140,8 @@ export class WorkflowConditionEditorComponent implements OnInit, OnChanges {
   private emitChange(): void {
     const workflowDataFieldsRequired = [
       ...this.selectedFormFlags,
-      ...this.selectedDocFlags
+      ...this.selectedDocFlags,
+      ...this.selectedDocSignedFlags
     ];
     const moduleFormFieldsRequired = this.formFields
       .filter((f) => f.moduleType && f.fieldName)

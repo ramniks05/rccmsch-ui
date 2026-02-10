@@ -26,6 +26,11 @@ export class RichTextEditorComponent implements OnInit, OnDestroy, AfterViewInit
   @Input() height: string = '400px';
   @Output() contentChange = new EventEmitter<string>();
 
+  /** Character count for template; avoids optional chaining (NG8107) since content defaults to ''. */
+  get contentLength(): number {
+    return this.content.length;
+  }
+
   @ViewChild('editor') editorComponent!: QuillEditorComponent;
 
   // ControlValueAccessor properties

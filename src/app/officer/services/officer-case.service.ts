@@ -309,14 +309,16 @@ export class OfficerCaseService {
   }
 
   /**
-   * Save document
+   * Create or update document (use for sign by sending status: 'SIGNED').
    * POST /api/cases/{caseId}/documents/{moduleType}
+   * Body: CreateCaseDocumentDTO { templateId?, contentHtml (required), contentData?, status: 'DRAFT'|'FINAL'|'SIGNED', remarks? }
    */
   saveDocument(caseId: number, moduleType: string, documentData: {
-    templateId: number;
+    templateId?: number;
     contentHtml: string;
     contentData?: string;
     status: 'DRAFT' | 'FINAL' | 'SIGNED';
+    remarks?: string;
   }): Observable<ApiResponse<any>> {
     return this.http.post<ApiResponse<any>>(
       `${this.apiUrl}/${caseId}/documents/${moduleType}`,
@@ -331,7 +333,7 @@ export class OfficerCaseService {
   }
 
   /**
-   * Get saved document
+   * Get saved document (list or single by module type)
    * GET /api/cases/{caseId}/documents/{moduleType}
    */
   getSavedDocument(caseId: number, moduleType: string): Observable<ApiResponse<any>> {
@@ -347,13 +349,32 @@ export class OfficerCaseService {
   }
 
   /**
-   * Update document
+   * Get latest document for a module type (for edit/sign flow).
+   * GET /api/cases/{caseId}/documents/{moduleType}/latest
+   * Response: CaseDocumentDTO (id, caseId, moduleType, contentHtml, contentData, status, signedByOfficerId?, signedAt?, ...)
+   */
+  getLatestDocument(caseId: number, moduleType: string): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.apiUrl}/${caseId}/documents/${moduleType}/latest`,
+      { headers: this.getAuthHeaders() }
+    ).pipe(
+      catchError(error => {
+        console.error(`Error fetching latest document for case ${caseId}, ${moduleType}:`, error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Update specific document (use for sign by sending status: 'SIGNED').
    * PUT /api/cases/{caseId}/documents/{moduleType}/{documentId}
+   * Body: { contentHtml?, contentData?, status?: 'DRAFT'|'FINAL'|'SIGNED', remarks? }
    */
   updateDocument(caseId: number, moduleType: string, documentId: number, documentData: {
     contentHtml?: string;
     contentData?: string;
     status?: 'DRAFT' | 'FINAL' | 'SIGNED';
+    remarks?: string;
   }): Observable<ApiResponse<any>> {
     return this.http.put<ApiResponse<any>>(
       `${this.apiUrl}/${caseId}/documents/${moduleType}/${documentId}`,

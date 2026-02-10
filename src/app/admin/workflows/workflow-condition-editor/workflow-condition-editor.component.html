@@ -35,6 +35,24 @@
 
   <section class="condition-section">
     <h4 class="section-title">
+      <mat-icon>draw</mat-icon>
+      Digital signature (only for finalize, not drafting)
+    </h4>
+    <p class="section-hint">Add these only to the transition that <strong>finalizes</strong> Notice/Ordersheet/Judgement. Drafting does not require signature.</p>
+    <div class="checkbox-list">
+      <label *ngFor="let flag of docSignedFlags" class="checkbox-item">
+        <mat-checkbox
+          [checked]="isDocSignedFlagChecked(flag.value)"
+          (change)="onDocSignedFlagChange(flag.value, $event.checked)"
+        >
+          {{ flag.label }}
+        </mat-checkbox>
+      </label>
+    </div>
+  </section>
+
+  <section class="condition-section">
+    <h4 class="section-title">
       <mat-icon>edit_note</mat-icon>
       Form fields
     </h4>
