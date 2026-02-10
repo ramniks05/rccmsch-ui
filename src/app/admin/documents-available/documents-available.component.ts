@@ -9,8 +9,9 @@ import { AdvancedSettingsService } from 'src/app/core/services/advanced-settings
 export interface DocumentAvailable {
   id?: number;
   title: string;
-  documentUrl: string;
+  url: string;
   createdAt?: Date;
+  publishedOn?: string;
 }
 
 // You'll need to create this service
@@ -18,10 +19,9 @@ export interface DocumentAvailable {
 @Component({
   selector: 'app-documents-available',
   templateUrl: './documents-available.component.html',
-  styleUrls: ['./documents-available.component.scss']
+  styleUrls: ['./documents-available.component.scss'],
 })
 export class DocumentsAvailableComponent implements OnInit {
-
   displayedColumns = ['icon', 'title', 'type', 'document', 'actions'];
   dataSource = new MatTableDataSource<DocumentAvailable>([]);
 
@@ -38,7 +38,7 @@ export class DocumentsAvailableComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private service: AdvancedSettingsService,
-    private snack: MatSnackBar
+    private snack: MatSnackBar,
   ) {
     this.form = this.initForm();
   }
@@ -58,7 +58,8 @@ export class DocumentsAvailableComponent implements OnInit {
     return this.fb.group({
       title: ['', Validators.required],
       uploadType: ['file'],
-      documentUrl: ['']
+      url: [''],
+      publishedOn: [],
     });
   }
 
@@ -74,9 +75,9 @@ export class DocumentsAvailableComponent implements OnInit {
         console.error('Error loading documents:', err);
         this.snack.open('Failed to load documents', 'Close', {
           duration: 3000,
-          panelClass: ['error-snackbar']
+          panelClass: ['error-snackbar'],
         });
-      }
+      },
     });
   }
 
@@ -87,7 +88,7 @@ export class DocumentsAvailableComponent implements OnInit {
     this.uploadType = this.form.get('uploadType')?.value;
 
     // Reset validations and values
-    const urlControl = this.form.get('documentUrl');
+    const urlControl = this.form.get('url');
 
     if (this.uploadType === 'url') {
       // Clear file selection
@@ -96,7 +97,7 @@ export class DocumentsAvailableComponent implements OnInit {
       // Add URL validation
       urlControl?.setValidators([
         Validators.required,
-        Validators.pattern(/^https?:\/\/.+/)
+        Validators.pattern(/^https?:\/\/.+/),
       ]);
     } else {
       // Remove URL validation for file upload
@@ -121,7 +122,7 @@ export class DocumentsAvailableComponent implements OnInit {
       if (file.size > maxSize) {
         this.snack.open('File size exceeds 10MB limit', 'Close', {
           duration: 3000,
-          panelClass: ['error-snackbar']
+          panelClass: ['error-snackbar'],
         });
         return;
       }
@@ -133,14 +134,18 @@ export class DocumentsAvailableComponent implements OnInit {
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         'image/png',
         'image/jpeg',
-        'image/jpg'
+        'image/jpg',
       ];
 
       if (!allowedTypes.includes(file.type)) {
-        this.snack.open('Invalid file type. Please upload PDF, DOC, DOCX, PNG, or JPG files.', 'Close', {
-          duration: 4000,
-          panelClass: ['error-snackbar']
-        });
+        this.snack.open(
+          'Invalid file type. Please upload PDF, DOC, DOCX, PNG, or JPG files.',
+          'Close',
+          {
+            duration: 4000,
+            panelClass: ['error-snackbar'],
+          },
+        );
         return;
       }
 
@@ -165,7 +170,7 @@ export class DocumentsAvailableComponent implements OnInit {
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
 
-    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
   }
 
   /**
@@ -254,7 +259,7 @@ export class DocumentsAvailableComponent implements OnInit {
       this.markFormGroupTouched(this.form);
       this.snack.open('Please fill in all required fields correctly', 'Close', {
         duration: 3000,
-        panelClass: ['error-snackbar']
+        panelClass: ['error-snackbar'],
       });
       return;
     }
@@ -263,7 +268,7 @@ export class DocumentsAvailableComponent implements OnInit {
     if (this.uploadType === 'file' && !this.selectedFile && !this.editMode) {
       this.snack.open('Please select a file to upload', 'Close', {
         duration: 3000,
-        panelClass: ['error-snackbar']
+        panelClass: ['error-snackbar'],
       });
       return;
     }
@@ -286,12 +291,14 @@ export class DocumentsAvailableComponent implements OnInit {
     if (!this.selectedFile) return;
 
     const formData = new FormData();
-    formData.append('file', this.selectedFile);
+    formData.append('title', this.form.get('title')?.value);
+    formData.append('url', this.selectedFile);
+    formData.append('publishedOn', '2026-02-10');
 
     this.service.uploadDocumentsAvailableFile(formData).subscribe({
       next: (response) => {
         // Assuming the response contains the uploaded file URL
-        this.form.patchValue({ documentUrl: response.data.url });
+        this.form.patchValue({ url: response.data.url });
         this.saveDocument();
       },
       error: (err) => {
@@ -299,36 +306,33 @@ export class DocumentsAvailableComponent implements OnInit {
         this.saving = false;
         this.snack.open('Failed to upload file', 'Close', {
           duration: 3000,
-          panelClass: ['error-snackbar']
+          panelClass: ['error-snackbar'],
         });
-      }
+      },
     });
   }
 
-  /**
-   * Save document data
-   */
   private saveDocument(): void {
-    const formData: DocumentAvailable = {
-      title: this.form.get('title')?.value,
-      documentUrl: this.form.get('documentUrl')?.value
-    };
+    const formData = new FormData();
 
-    const request$ = this.editMode && this.editId
-      ? this.service.updateDocumentsAvailable(this.editId, formData)
-      : this.service.createDocumentsAvailable(formData);
+    formData.append('title', this.form.get('title')?.value);
+    formData.append('url', this.form.get('url')?.value);
+    formData.append('publishedOn', '2026-02-10');
+
+    const request$ =
+      this.editMode && this.editId
+        ? this.service.updateDocumentsAvailable(this.editId, formData)
+        : this.service.createDocumentsAvailable(formData);
 
     request$.subscribe({
       next: () => {
-        const message = this.editMode
-          ? 'Document updated successfully'
-          : 'Document added successfully';
-
-        this.snack.open(message, 'Close', {
-          duration: 3000,
-          panelClass: ['success-snackbar']
-        });
-
+        this.snack.open(
+          this.editMode
+            ? 'Document updated successfully'
+            : 'Document added successfully',
+          'Close',
+          { duration: 3000, panelClass: ['success-snackbar'] },
+        );
         this.resetForm();
         this.loadData();
         this.saving = false;
@@ -338,9 +342,9 @@ export class DocumentsAvailableComponent implements OnInit {
         this.saving = false;
         this.snack.open('Failed to save document', 'Close', {
           duration: 3000,
-          panelClass: ['error-snackbar']
+          panelClass: ['error-snackbar'],
         });
-      }
+      },
     });
   }
 
@@ -358,7 +362,8 @@ export class DocumentsAvailableComponent implements OnInit {
     this.form.patchValue({
       title: item.title,
       uploadType: 'url',
-      documentUrl: item.documentUrl
+      url: item.url,
+      publishedOn: item.publishedOn ? new Date(item.publishedOn) : null,
     });
 
     this.onUploadTypeChange();
@@ -367,7 +372,7 @@ export class DocumentsAvailableComponent implements OnInit {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     this.snack.open('Editing document - update and save when ready', 'Close', {
-      duration: 2000
+      duration: 2000,
     });
   }
 
@@ -384,7 +389,7 @@ export class DocumentsAvailableComponent implements OnInit {
       next: () => {
         this.snack.open('Document deleted successfully', 'Close', {
           duration: 2000,
-          panelClass: ['success-snackbar']
+          panelClass: ['success-snackbar'],
         });
 
         if (this.editId === id) {
@@ -397,9 +402,9 @@ export class DocumentsAvailableComponent implements OnInit {
         console.error('Error deleting document:', err);
         this.snack.open('Failed to delete document', 'Close', {
           duration: 3000,
-          panelClass: ['error-snackbar']
+          panelClass: ['error-snackbar'],
         });
-      }
+      },
     });
   }
 
@@ -408,7 +413,7 @@ export class DocumentsAvailableComponent implements OnInit {
    */
   resetForm(): void {
     this.form.reset({
-      uploadType: 'file'
+      uploadType: 'file',
     });
     this.editMode = false;
     this.editId = null;
@@ -429,7 +434,7 @@ export class DocumentsAvailableComponent implements OnInit {
    * Mark all form controls as touched to show validation errors
    */
   private markFormGroupTouched(formGroup: FormGroup): void {
-    Object.keys(formGroup.controls).forEach(key => {
+    Object.keys(formGroup.controls).forEach((key) => {
       const control = formGroup.get(key);
       control?.markAsTouched();
     });

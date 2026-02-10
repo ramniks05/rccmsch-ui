@@ -21,8 +21,9 @@ export interface ApiResponse<T> {
 export interface DocumentAvailable {
   id?: number;
   title: string;
-  documentUrl: string;
+  url: string;
   createdAt?: Date;
+  publishedOn?: string;
 }
 
 /* =======================
@@ -37,18 +38,18 @@ export interface WhatsNew {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AdvancedSettingsService {
-
   private readonly apiUrl = environment.apiUrl;
 
-  private readonly documentsPath = '/documents-available';
+  private readonly documentsPath =
+    '/admin/system-settings/document/fetch/document-list';
   private readonly whatsNewPath = '/admin/system-settings';
 
   constructor(
     private http: HttpClient,
-    private authService: AuthService
+    private authService: AuthService,
   ) {}
 
   /* =======================
@@ -63,6 +64,13 @@ export class AdvancedSettingsService {
     });
   }
 
+  getFormDataHeaders(): HttpHeaders {
+    const token = localStorage.getItem('adminToken');
+    return new HttpHeaders({
+      Authorization: `Bearer ${token}`,
+    });
+  }
+
   /* =====================================================
      DOCUMENTS AVAILABLE APIs
   ===================================================== */
@@ -70,56 +78,56 @@ export class AdvancedSettingsService {
   getAllDocumentsAvailable(): Observable<ApiResponse<DocumentAvailable[]>> {
     return this.http.get<ApiResponse<DocumentAvailable[]>>(
       `${this.apiUrl}${this.documentsPath}`,
-      { headers: this.getAuthHeaders() }
+      { headers: this.getFormDataHeaders() },
     );
   }
 
   getDocumentsAvailableById(
-    id: number
+    id: number,
   ): Observable<ApiResponse<DocumentAvailable>> {
     return this.http.get<ApiResponse<DocumentAvailable>>(
       `${this.apiUrl}${this.documentsPath}/${id}`,
-      { headers: this.getAuthHeaders() }
+      { headers: this.getFormDataHeaders() },
     );
   }
 
   createDocumentsAvailable(
-    document: DocumentAvailable
+    document: FormData,
   ): Observable<ApiResponse<DocumentAvailable>> {
     return this.http.post<ApiResponse<DocumentAvailable>>(
-      `${this.apiUrl}${this.documentsPath}`,
+      `${this.apiUrl}/admin/system-settings/document/upload/document-available`,
       document,
-      { headers: this.getAuthHeaders() }
+      {
+        headers: this.getFormDataHeaders(),
+      },
     );
   }
 
   updateDocumentsAvailable(
     id: number,
-    document: DocumentAvailable
+    document: FormData,
   ): Observable<ApiResponse<DocumentAvailable>> {
     return this.http.put<ApiResponse<DocumentAvailable>>(
-      `${this.apiUrl}${this.documentsPath}/${id}`,
+      `${this.apiUrl}'/admin/system-settings/document/upload/document-available'/${id}`,
       document,
-      { headers: this.getAuthHeaders() }
+      { headers: this.getFormDataHeaders() },
     );
   }
 
-  deleteDocumentsAvailable(
-    id: number
-  ): Observable<ApiResponse<void>> {
+  deleteDocumentsAvailable(id: number): Observable<ApiResponse<void>> {
     return this.http.delete<ApiResponse<void>>(
       `${this.apiUrl}${this.documentsPath}/${id}`,
-      { headers: this.getAuthHeaders() }
+      { headers: this.getFormDataHeaders() },
     );
   }
 
   uploadDocumentsAvailableFile(
-    formData: FormData
+    formData: FormData,
   ): Observable<ApiResponse<{ url: string }>> {
     return this.http.post<ApiResponse<{ url: string }>>(
-      `${this.apiUrl}${this.documentsPath}/upload`,
+      `${this.apiUrl}/admin/system-settings/document/upload/document-available`,
       formData,
-      { headers: this.getAuthHeaders() }
+      { headers: this.getFormDataHeaders() },
     );
   }
 
@@ -130,37 +138,33 @@ export class AdvancedSettingsService {
   getAllWhatsNew(): Observable<ApiResponse<WhatsNew[]>> {
     return this.http.get<ApiResponse<WhatsNew[]>>(
       `${this.apiUrl}${this.whatsNewPath}/fetch/whats-new-list`,
-      { headers: this.getAuthHeaders() }
+      { headers: this.getAuthHeaders() },
     );
   }
 
-  createWhatsNew(
-    payload: WhatsNew
-  ): Observable<ApiResponse<WhatsNew>> {
+  createWhatsNew(payload: WhatsNew): Observable<ApiResponse<WhatsNew>> {
     return this.http.post<ApiResponse<WhatsNew>>(
       `${this.apiUrl}${this.whatsNewPath}/create/whats-new`,
       payload,
-      { headers: this.getAuthHeaders() }
+      { headers: this.getAuthHeaders() },
     );
   }
 
   updateWhatsNew(
     id: number,
-    payload: WhatsNew
+    payload: WhatsNew,
   ): Observable<ApiResponse<WhatsNew>> {
     return this.http.put<ApiResponse<WhatsNew>>(
       `${this.apiUrl}${this.whatsNewPath}/update/whats-new/${id}`,
       payload,
-      { headers: this.getAuthHeaders() }
+      { headers: this.getAuthHeaders() },
     );
   }
 
-  deleteWhatsNew(
-    id: number
-  ): Observable<ApiResponse<null>> {
+  deleteWhatsNew(id: number): Observable<ApiResponse<null>> {
     return this.http.delete<ApiResponse<null>>(
       `${this.apiUrl}${this.whatsNewPath}/delete/whats-new/${id}`,
-      { headers: this.getAuthHeaders() }
+      { headers: this.getAuthHeaders() },
     );
   }
 }
