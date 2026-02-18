@@ -12,11 +12,11 @@
       <select
         class="court-select"
         [(ngModel)]="selectedCourt"
-        (change)="onCourtChange()"
+        (change)="onCourtChange($event)"
       >
         <option value="">All Courts</option>
-        <option *ngFor="let court of courts" [value]="court">
-          {{ court }}
+        <option *ngFor="let court of courts" [value]="court.id">
+          {{ court.courtName }}
         </option>
       </select>
     </div>
@@ -88,7 +88,7 @@
         showFirstLastButtons>
       </mat-paginator>
     </div>
-    
+
     <div class="footer-link">
       <a href="#" class="view-all-link">
         <span>View All Cause Lists</span>

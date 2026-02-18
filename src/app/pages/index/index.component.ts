@@ -132,8 +132,8 @@ export class IndexComponent implements OnInit {
   constructor(
     private router: Router,
     private settingsService: SystemSettingsService,
-    private service: AdvancedSettingsService,
-    private snack: MatSnackBar,
+    private advancedSettingsService: AdvancedSettingsService,
+    private snack: MatSnackBar
   ) {
     this.settings$ = this.settingsService.getSettings();
   }
@@ -155,7 +155,7 @@ export class IndexComponent implements OnInit {
 
   getWhatsNewData(): void {
     // this.whatsNewList = WHATS_NEW_DATA;
-    this.service.getAllWhatsNew().subscribe({
+    this.advancedSettingsService.getAllWhatsNew().subscribe({
       next: (res) => {
         this.whatsNewList = res.data ?? [];
       },
@@ -170,7 +170,7 @@ export class IndexComponent implements OnInit {
   }
 
   getDocumentsAvailableList(): void {
-    this.service.getAllDocumentsAvailable().subscribe({
+    this.advancedSettingsService.getAllDocumentsAvailable().subscribe({
       next: (res) => {
         this.documentsList = res?.data ?? [];
       },

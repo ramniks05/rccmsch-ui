@@ -1,4 +1,6 @@
 import { Component, OnInit } from '@angular/core';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { AdminService } from 'src/app/admin/admin.service';
 import { CommonService } from 'src/app/core/services/common-service';
 
 export interface HearingDay {
@@ -14,8 +16,8 @@ export interface HearingDay {
 })
 export class HearingCalendarComponent implements OnInit {
 
-  courts: string[] = [];
-  selectedCourt = 'Tehsildar-Hamirpur';
+  courts: any[] = [];
+  selectedCourt:any;
 
   currentDate = new Date();
   currentMonth = this.currentDate.getMonth();
@@ -26,7 +28,11 @@ export class HearingCalendarComponent implements OnInit {
 
   readonly weekDays = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 
-  constructor(private service: CommonService) {}
+  constructor(
+    private service: CommonService,
+    private adminService: AdminService,
+    private snack: MatSnackBar
+  ) {}
 
   ngOnInit(): void {
     this.loadCourts();
@@ -35,10 +41,24 @@ export class HearingCalendarComponent implements OnInit {
   }
 
   loadCourts(): void {
-    this.service.getCourts().subscribe(res => this.courts = res);
+    this.adminService.getAllCourts().subscribe({
+      next: (res) => {
+        this.courts = res.data ?? [];
+      },
+      error: (err) => {
+        console.error('Error fetching courts list:', err);
+        this.snack.open('Failed to load courts list', 'Close', {
+          duration: 3000,
+          panelClass: ['error-snackbar'],
+        });
+      },
+    });
   }
 
   onCourtChange(): void {
+    if (this.selectedCourt === '') {
+      this.selectedCourt = null;
+    }
     this.loadHearings();
   }
 
@@ -87,7 +107,7 @@ export class HearingCalendarComponent implements OnInit {
 
   loadHearings(): void {
     this.service
-      .getCalendar(this.currentMonth, this.currentYear, this.selectedCourt)
+      .getCalendar(this.currentMonth + 1, this.currentYear, this.selectedCourt)
       .subscribe(res => this.hearings = res);
   }
 

@@ -3,10 +3,15 @@ import { Observable, of } from 'rxjs';
 
 import { HearingDay } from 'src/app/pages/hearing-calendar/hearing-calendar.component';
 import { CauseList } from 'src/app/pages/cause-list/cause-list.component';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { environment } from 'src/environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class CommonService {
-  /* ================= HEARING CALENDAR SERVICE METHODS ================= */
+  private readonly baseUrl: string;
+  constructor(private http: HttpClient) {
+    this.baseUrl = environment.apiUrl;
+  }
 
   getCourts(): Observable<string[]> {
     return of([
@@ -19,28 +24,21 @@ export class CommonService {
   getCalendar(
     month: number,
     year: number,
-    court: string,
+    courtId?: number,
   ): Observable<HearingDay[]> {
-    return of([
-      { date: 3, isHearing: true, tooltip: this.tooltip(court, 4) },
-      { date: 6, isHearing: true, tooltip: this.tooltip(court, 2) },
-      { date: 10, isHearing: true, tooltip: this.tooltip(court, 3) },
-      { date: 14, isHearing: true, tooltip: this.tooltip(court, 5) },
-      { date: 18, isHearing: true, tooltip: this.tooltip(court, 1) },
-      { date: 22, isHearing: true, tooltip: this.tooltip(court, 2) },
-      { date: 26, isHearing: true, tooltip: this.tooltip(court, 4) },
-    ]);
+    let params = new HttpParams()
+      .set('year', year)
+      .set('month', month);
+
+    if (courtId !== undefined && courtId !== null) {
+      params = params.set('courtId', courtId);
+    }
+
+    return this.http.get<HearingDay[]>(
+      `${this.baseUrl}/dashboard/hearings/calendar`,
+      { params },
+    );
   }
-
-  private tooltip(court: string, cases: number): string {
-    return `
-${court}, Manipur
-Total Cases - ${cases}
-
-Field Report (${cases})
-`.trim();
-  }
-
   /* ================= CAUSE LIST SERVICE METHODS ================= */
 
   private data: CauseList[] = [
@@ -69,6 +67,20 @@ Field Report (${cases})
 
   getLatest(): Observable<CauseList[]> {
     return of(this.data.slice(0, 5));
+  }
+
+  getLatestCauseList(
+    courtId?: any,
+  ): Observable<CauseList[]> {
+    let params = new HttpParams()
+    if (courtId !== undefined && courtId !== null && courtId !== '') {
+      params = params.set('courtId', courtId);
+    }
+
+    return this.http.get<CauseList[]>(
+      `${this.baseUrl}/dashboard/cause-list`,
+      { params },
+    );
   }
 
   getByCourt(court: string): Observable<CauseList[]> {

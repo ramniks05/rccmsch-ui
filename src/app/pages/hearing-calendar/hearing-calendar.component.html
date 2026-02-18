@@ -13,7 +13,8 @@
         [(ngModel)]="selectedCourt"
         (change)="onCourtChange()"
       >
-        <option *ngFor="let c of courts" [value]="c">{{ c }}</option>
+        <option value="">All Courts</option>
+        <option *ngFor="let c of courts" [value]="c.id">{{ c.courtName }}</option>
       </select>
     </div>
   </div>
