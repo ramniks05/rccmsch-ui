@@ -198,7 +198,7 @@
                     <div class="news-content">
                       <div class="news-date">
                         <mat-icon>description</mat-icon>
-                        {{ item.date }}
+                        {{ item.publishedDate | date: "dd MMM yyyy" }}
                       </div>
                       <div class="news-title">{{ item.title }}</div>
                     </div>
@@ -421,70 +421,41 @@
 
           <!-- DOCUMENT LIST - VERTICAL LIST -->
           <div class="docs-list">
-            <a href="#" class="doc-item">
+            <a
+              *ngFor="let doc of documentsList"
+              [href]="getFileUrl(doc.filePath)"
+              target="_blank"
+              class="doc-item"
+            >
               <div class="doc-icon-wrapper">
-                <mat-icon class="doc-icon">picture_as_pdf</mat-icon>
+                <mat-icon class="doc-icon">
+                  {{ isPdf(doc.filePath) ? "picture_as_pdf" : "description" }}
+                </mat-icon>
               </div>
+
               <div class="doc-content">
                 <div class="doc-title">
-                  The Manipur Revenue Code (Amendment) Act, 2021
+                  {{ doc.title }}
                 </div>
+
                 <div class="doc-meta">
-                  <span class="doc-size">2.4 MB</span>
-                  <span class="doc-type">PDF</span>
+                  <span class="doc-date">
+                    {{ doc.publishedOn | date: "dd MMM yyyy" }}
+                  </span>
+
+                  <span class="doc-type">
+                    {{ getFileType(doc.filePath) }}
+                  </span>
                 </div>
               </div>
+
               <mat-icon class="download-icon">download</mat-icon>
             </a>
 
-            <a href="#" class="doc-item">
-              <div class="doc-icon-wrapper">
-                <mat-icon class="doc-icon">picture_as_pdf</mat-icon>
-              </div>
-              <div class="doc-content">
-                <div class="doc-title">
-                  The Manipur Revenue Code (Amendment) Act, 2020
-                </div>
-                <div class="doc-meta">
-                  <span class="doc-size">1.8 MB</span>
-                  <span class="doc-type">PDF</span>
-                </div>
-              </div>
-              <mat-icon class="download-icon">download</mat-icon>
-            </a>
-
-            <a href="#" class="doc-item">
-              <div class="doc-icon-wrapper">
-                <mat-icon class="doc-icon">picture_as_pdf</mat-icon>
-              </div>
-              <div class="doc-content">
-                <div class="doc-title">
-                  The Manipur Revenue Code (Amendment) Act, 2019
-                </div>
-                <div class="doc-meta">
-                  <span class="doc-size">2.1 MB</span>
-                  <span class="doc-type">PDF</span>
-                </div>
-              </div>
-              <mat-icon class="download-icon">download</mat-icon>
-            </a>
-
-            <a href="#" class="doc-item featured">
-              <div class="doc-icon-wrapper featured-icon">
-                <mat-icon class="doc-icon">menu_book</mat-icon>
-              </div>
-              <div class="doc-content">
-                <div class="doc-title">
-                  Manipur Revenue Code Bill – 2006 (E-Book)
-                </div>
-                <div class="doc-meta">
-                  <span class="doc-size">5.2 MB</span>
-                  <span class="doc-type">E-BOOK</span>
-                  <span class="featured-badge">Featured</span>
-                </div>
-              </div>
-              <mat-icon class="download-icon">download</mat-icon>
-            </a>
+            <!-- No Data -->
+            <div *ngIf="!documentsList?.length" class="no-data">
+              No documents available
+            </div>
           </div>
 
           <!-- FOOTER -->
