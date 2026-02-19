@@ -132,6 +132,20 @@ interface ApiResponse<T> {
   timestamp?: string;
 }
 
+/** Dashboard: single action-required item for citizen */
+export interface CitizenActionRequiredItem {
+  caseId: number;
+  caseNumber: string;
+  subject: string;
+  actionCode: string;
+  actionLabel: string;
+}
+
+export interface CitizenActionsRequiredData {
+  totalCount: number;
+  items: CitizenActionRequiredItem[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -300,6 +314,23 @@ export class CitizenCaseService {
       `${this.apiUrl}/citizen/cases`,
       request,
       { headers: this.getHeaders() }
+    );
+  }
+
+  /**
+   * GET /api/citizen/cases/dashboard/actions-required
+   * Dashboard: cases requiring citizen action (e.g. acknowledge notice, resubmit).
+   */
+  getActionsRequired(limit?: number): Observable<ApiResponse<CitizenActionsRequiredData>> {
+    let url = `${this.apiUrl}/citizen/cases/dashboard/actions-required`;
+    if (limit != null && limit > 0) {
+      url += `?limit=${limit}`;
+    }
+    return this.http.get<ApiResponse<CitizenActionsRequiredData>>(url, { headers: this.getHeaders() }).pipe(
+      catchError(err => {
+        console.error('getActionsRequired failed', err);
+        return throwError(() => err);
+      })
     );
   }
 

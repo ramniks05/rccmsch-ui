@@ -33,17 +33,17 @@
           </button>
         </div>
 
-        <!-- Form Fields -->
+        <!-- Form Fields (only visible fields; conditional logic applied) -->
         <div class="row g-3">
-          <div *ngFor="let field of formSchema" class="col-md-6">
+          <div *ngFor="let field of visibleFields" [class.col-md-6]="field.fieldType !== 'REPEATABLE_SECTION' && field.fieldType !== 'DYNAMIC_FILES'" [class.col-12]="field.fieldType === 'REPEATABLE_SECTION' || field.fieldType === 'DYNAMIC_FILES'">
             <div class="mb-3">
-              <label [for]="field.fieldName" class="form-label">
+              <label *ngIf="field.fieldType !== 'REPEATABLE_SECTION' && field.fieldType !== 'DYNAMIC_FILES'" [for]="field.fieldName" class="form-label">
                 {{ field.fieldLabel }}
-                <span *ngIf="field.isRequired" class="text-danger">*</span>
+                <span *ngIf="isFieldRequired(field)" class="text-danger">*</span>
               </label>
 
-              <!-- Read-only view -->
-              <div *ngIf="viewMode" class="form-control-plaintext">
+              <!-- Read-only view (non-repeatable, non-dynamic) -->
+              <div *ngIf="viewMode && field.fieldType !== 'REPEATABLE_SECTION' && field.fieldType !== 'DYNAMIC_FILES'" class="form-control-plaintext">
                 <strong>{{ getFieldValue(field) || '-' }}</strong>
               </div>
 
@@ -70,7 +70,8 @@
               <!-- Rich Text Editor -->
               <app-rich-text-editor
                 *ngIf="!viewMode && field.fieldType === 'RICH_TEXT'"
-                [(content)]="formData[field.fieldName]"
+                [content]="getRichTextContent(field.fieldName)"
+                (contentChange)="formData[field.fieldName] = $event"
                 [placeholder]="field.placeholder || 'Enter content...'"
                 [height]="'400px'"
               ></app-rich-text-editor>
@@ -106,31 +107,39 @@
                 [(ngModel)]="formData[field.fieldName]"
                 [required]="field.isRequired">
 
-              <!-- Select Dropdown -->
-              <select 
-                *ngIf="!viewMode && field.fieldType === 'SELECT'"
-                [id]="field.fieldName"
-                class="form-select"
-                [(ngModel)]="formData[field.fieldName]"
-                [required]="field.isRequired">
-                <option value="">-- Select --</option>
-                <option *ngFor="let option of getOptions(field)" [value]="option.value">
-                  {{ option.label }}
-                </option>
-              </select>
+              <!-- Select Dropdown (supports dataSource API) -->
+              <div *ngIf="!viewMode && field.fieldType === 'SELECT'" class="position-relative">
+                <select 
+                  [id]="field.fieldName"
+                  class="form-select"
+                  [ngModel]="formData[field.fieldName]"
+                  (ngModelChange)="onFieldChange(field.fieldName, $event)"
+                  [required]="field.isRequired"
+                  [disabled]="isOptionsLoading(field)">
+                  <option value="">-- Select --</option>
+                  <option *ngFor="let option of getOptions(field)" [value]="option.value">
+                    {{ option.label }}
+                  </option>
+                </select>
+                <span *ngIf="isOptionsLoading(field)" class="position-absolute end-0 top-50 translate-middle-y me-2 spinner-border spinner-border-sm text-primary" role="status"></span>
+              </div>
 
-              <!-- Multi-Select -->
-              <select 
-                *ngIf="!viewMode && field.fieldType === 'MULTISELECT'"
-                [id]="field.fieldName"
-                class="form-select"
-                multiple
-                [(ngModel)]="formData[field.fieldName]"
-                [required]="field.isRequired">
-                <option *ngFor="let option of getOptions(field)" [value]="option.value">
-                  {{ option.label }}
-                </option>
-              </select>
+              <!-- Multi-Select (supports dataSource API) -->
+              <div *ngIf="!viewMode && field.fieldType === 'MULTISELECT'" class="position-relative">
+                <select 
+                  [id]="field.fieldName"
+                  class="form-select"
+                  multiple
+                  [ngModel]="formData[field.fieldName]"
+                  (ngModelChange)="onFieldChange(field.fieldName, $event)"
+                  [required]="field.isRequired"
+                  [disabled]="isOptionsLoading(field)">
+                  <option *ngFor="let option of getOptions(field)" [value]="option.value">
+                    {{ option.label }}
+                  </option>
+                </select>
+                <span *ngIf="isOptionsLoading(field)" class="position-absolute end-0 top-50 translate-middle-y me-2 spinner-border spinner-border-sm text-primary" role="status"></span>
+              </div>
 
               <!-- Checkbox -->
               <div *ngIf="!viewMode && field.fieldType === 'CHECKBOX'" class="form-check">
@@ -144,8 +153,9 @@
                 </label>
               </div>
 
-              <!-- Radio Buttons -->
+              <!-- Radio Buttons (supports dataSource API) -->
               <div *ngIf="!viewMode && field.fieldType === 'RADIO'">
+                <span *ngIf="isOptionsLoading(field)" class="spinner-border spinner-border-sm text-primary me-2" role="status"></span>
                 <div *ngFor="let option of getOptions(field)" class="form-check">
                   <input 
                     [id]="field.fieldName + '_' + option.value"
@@ -153,8 +163,10 @@
                     class="form-check-input"
                     [name]="field.fieldName"
                     [value]="option.value"
-                    [(ngModel)]="formData[field.fieldName]"
-                    [required]="field.isRequired">
+                    [ngModel]="formData[field.fieldName]"
+                    (ngModelChange)="onFieldChange(field.fieldName, $event)"
+                    [required]="field.isRequired"
+                    [disabled]="isOptionsLoading(field)">
                   <label [for]="field.fieldName + '_' + option.value" class="form-check-label">
                     {{ option.label }}
                   </label>
@@ -168,6 +180,28 @@
                 type="file"
                 class="form-control"
                 [required]="field.isRequired">
+
+              <!-- Repeatable Section (e.g. attendance, party list) -->
+              <app-repeatable-section
+                *ngIf="field.fieldType === 'REPEATABLE_SECTION'"
+                [field]="field"
+                [value]="getRepeatableValue(field.fieldName)"
+                [formData]="formData"
+                [viewMode]="viewMode"
+                [errors]="validationErrors"
+                (valueChange)="onRepeatableChange(field.fieldName, $event)">
+              </app-repeatable-section>
+
+              <!-- Dynamic Files (multiple file uploads) -->
+              <app-dynamic-files-field
+                *ngIf="field.fieldType === 'DYNAMIC_FILES'"
+                [field]="field"
+                [value]="getDynamicFilesValue(field.fieldName)"
+                [caseId]="caseId"
+                [viewMode]="viewMode"
+                [errors]="validationErrors"
+                (valueChange)="onDynamicFilesChange(field.fieldName, $event)">
+              </app-dynamic-files-field>
 
               <!-- Help Text -->
               <small *ngIf="!viewMode && field.helpText" class="form-text text-muted">

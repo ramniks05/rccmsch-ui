@@ -1,6 +1,10 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { OfficerCaseService } from '../services/officer-case.service';
 import { ModuleFormField, FieldType } from '../../admin/services/module-forms.service';
+import { getVisibleFields, isFieldVisible, isFieldRequired } from '../../core/utils/conditional-logic';
+import { validateFormData, ValidationErrors } from '../../core/utils/form-validation';
+import { FormDataSourceService, parseDataSource } from '../../core/services/form-data-source.service';
+import type { OptionItem } from '../../core/models/form-builder.types';
 
 @Component({
   selector: 'app-hearing-form',
@@ -12,16 +16,30 @@ export class HearingFormComponent implements OnInit {
   
   // Form data
   formSchema: ModuleFormField[] = [];
-  formData: any = {};
+  formData: Record<string, unknown> = {};
   remarks: string = '';
   submittedData: any = null;
-  
+  validationErrors: ValidationErrors = {};
+
   // UI state
   loading = false;
   submitting = false;
   viewMode = false;
 
-  constructor(private officerCaseService: OfficerCaseService) {}
+  /** API-driven options cache (fieldName -> OptionItem[]) */
+  fieldOptionsMap: Record<string, OptionItem[]> = {};
+  /** Loading state per field for dataSource */
+  optionsLoadingMap: Record<string, boolean> = {};
+
+  /** Visible fields based on conditional logic (for template) */
+  get visibleFields(): ModuleFormField[] {
+    return getVisibleFields(this.formSchema, this.formData as Record<string, unknown>) as ModuleFormField[];
+  }
+
+  constructor(
+    private officerCaseService: OfficerCaseService,
+    private formDataSourceService: FormDataSourceService
+  ) {}
 
   ngOnInit(): void {
     if (this.caseId) {
@@ -52,6 +70,7 @@ export class HearingFormComponent implements OnInit {
           } else {
             this.initializeFormData(); // Initialize with defaults
           }
+          this.loadDataSourceOptions();
         }
       },
       error: (error: any) => {
@@ -67,8 +86,11 @@ export class HearingFormComponent implements OnInit {
    */
   initializeFormData(): void {
     this.formSchema.forEach(field => {
-      if (field.defaultValue && !this.formData[field.fieldName]) {
+      if (this.formData[field.fieldName] !== undefined) return;
+      if (field.defaultValue) {
         this.formData[field.fieldName] = field.defaultValue;
+      } else if (field.fieldType === 'REPEATABLE_SECTION' || field.fieldType === 'DYNAMIC_FILES') {
+        this.formData[field.fieldName] = [];
       }
     });
   }
@@ -77,13 +99,15 @@ export class HearingFormComponent implements OnInit {
    * Submit hearing form
    */
   submitForm(): void {
-    // Validate required fields
-    const missingFields = this.formSchema
-      .filter(field => field.isRequired && !this.formData[field.fieldName])
-      .map(field => field.fieldLabel);
-
-    if (missingFields.length > 0) {
-      alert(`Please fill in the following required fields:\n${missingFields.join(', ')}`);
+    this.validationErrors = validateFormData(
+      this.formSchema,
+      this.formData as Record<string, unknown>
+    );
+    if (Object.keys(this.validationErrors).length > 0) {
+      const msg = Object.entries(this.validationErrors)
+        .map(([k, v]) => `${k}: ${v}`)
+        .join('\n');
+      alert(`Please fix the following:\n${msg}`);
       return;
     }
 
@@ -93,9 +117,9 @@ export class HearingFormComponent implements OnInit {
 
     this.submitting = true;
     this.officerCaseService.submitModuleForm(
-      this.caseId, 
-      'HEARING', 
-      this.formData, 
+      this.caseId,
+      'HEARING',
+      this.formData,
       this.remarks
     ).subscribe({
       next: (response) => {
@@ -103,6 +127,7 @@ export class HearingFormComponent implements OnInit {
         this.submittedData = response.data;
         this.viewMode = true;
         this.submitting = false;
+        this.validationErrors = {};
       },
       error: (error) => {
         console.error('Error submitting form:', error);
@@ -141,42 +166,132 @@ export class HearingFormComponent implements OnInit {
    */
   getFieldValue(field: ModuleFormField): any {
     const value = this.formData[field.fieldName];
-    
-    // Format based on field type
+    if (field.fieldType === 'REPEATABLE_SECTION' || field.fieldType === 'DYNAMIC_FILES') {
+      return Array.isArray(value) ? `${value.length} item(s)` : value;
+    }
     switch (field.fieldType) {
       case 'DATE':
-        return value ? new Date(value).toLocaleDateString() : '';
+        return value ? new Date(value as string).toLocaleDateString() : '';
       case 'DATETIME':
-        return value ? new Date(value).toLocaleString() : '';
+        return value ? new Date(value as string).toLocaleString() : '';
       case 'CHECKBOX':
         return value ? 'Yes' : 'No';
       case 'SELECT':
-      case 'RADIO':
-        if (field.options) {
-          try {
-            const options = JSON.parse(field.options);
-            const option = options.find((opt: any) => opt.value === value);
-            return option ? option.label : value;
-          } catch {
-            return value;
-          }
-        }
-        return value;
+      case 'RADIO': {
+        const options = this.getOptions(field);
+        const option = options.find((o) => o.value === value || String(o.value) === String(value));
+        return option ? option.label : value;
+      }
       default:
         return value;
     }
   }
 
+  isFieldVisible(field: ModuleFormField): boolean {
+    return isFieldVisible(field, this.formData as Record<string, unknown>);
+  }
+
+  isFieldRequired(field: ModuleFormField): boolean {
+    return isFieldRequired(field, this.formData as Record<string, unknown>);
+  }
+
+  onRepeatableChange(fieldName: string, value: Record<string, unknown>[]): void {
+    this.formData[fieldName] = value;
+  }
+
+  /** Typed getter for repeatable section value (avoids template type errors). */
+  getRepeatableValue(fieldName: string): Record<string, unknown>[] {
+    const v = this.formData[fieldName];
+    return Array.isArray(v) ? (v as Record<string, unknown>[]) : [];
+  }
+
+  /** Typed getter for dynamic files value (avoids template type errors). */
+  getDynamicFilesValue(fieldName: string): { fileId: string; fileName: string; fileSize: number }[] {
+    const v = this.formData[fieldName];
+    return Array.isArray(v) ? (v as { fileId: string; fileName: string; fileSize: number }[]) : [];
+  }
+
+  /** Get rich text content as string for binding (template cannot use type casts). */
+  getRichTextContent(fieldName: string): string {
+    const v = this.formData[fieldName];
+    return v != null && typeof v === 'string' ? v : '';
+  }
+
+  onDynamicFilesChange(fieldName: string, value: { fileId: string; fileName: string; fileSize: number }[]): void {
+    this.formData[fieldName] = value;
+  }
+
   /**
-   * Get options for select/radio fields
+   * When a field value changes, update formData and refetch options for any field that depends on it.
    */
-  getOptions(field: ModuleFormField): any[] {
+  onFieldChange(fieldName: string, value: unknown): void {
+    this.formData[fieldName] = value;
+    this.refreshDataSourceOptionsForDependents(fieldName);
+  }
+
+  /**
+   * Load options from API for all fields that have dataSource.
+   */
+  loadDataSourceOptions(): void {
+    this.formSchema.forEach((field) => {
+      if (!parseDataSource(field.dataSource)) return;
+      this.optionsLoadingMap[field.fieldName] = true;
+      this.formDataSourceService
+        .getOptionsForField(field, this.formData as Record<string, unknown>)
+        .subscribe({
+          next: (list) => {
+            this.fieldOptionsMap[field.fieldName] = list;
+            this.optionsLoadingMap[field.fieldName] = false;
+          },
+          error: () => {
+            this.optionsLoadingMap[field.fieldName] = false;
+          },
+        });
+    });
+  }
+
+  /**
+   * Refetch options for fields whose dependsOnField is the given field name.
+   */
+  refreshDataSourceOptionsForDependents(changedFieldName: string): void {
+    this.formSchema.forEach((field) => {
+      if (field.dependsOnField !== changedFieldName || !parseDataSource(field.dataSource)) return;
+      this.optionsLoadingMap[field.fieldName] = true;
+      this.formData[field.fieldName] = undefined; // clear dependent value
+      this.formDataSourceService
+        .getOptionsForField(field, this.formData as Record<string, unknown>)
+        .subscribe({
+          next: (list) => {
+            this.fieldOptionsMap[field.fieldName] = list;
+            this.optionsLoadingMap[field.fieldName] = false;
+          },
+          error: () => {
+            this.optionsLoadingMap[field.fieldName] = false;
+          },
+        });
+    });
+  }
+
+  /**
+   * Get options for select/radio: from API (dataSource) or static fieldOptions.
+   */
+  getOptions(field: ModuleFormField): OptionItem[] {
+    if (parseDataSource(field.dataSource)) {
+      return this.fieldOptionsMap[field.fieldName] ?? [];
+    }
     if (!field.options) return [];
     try {
-      return JSON.parse(field.options);
+      const arr = JSON.parse(field.options) as { value?: string | number; label?: string }[];
+      return Array.isArray(arr)
+        ? arr.map((o) => ({ value: o.value ?? o.label ?? '', label: String(o.label ?? o.value ?? '') }))
+        : [];
     } catch {
       return [];
     }
+  }
+
+  isOptionsLoading(field: ModuleFormField): boolean {
+    return !!this.optionsLoadingMap[field.fieldName];
   }
 
   /**

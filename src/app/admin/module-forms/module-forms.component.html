@@ -230,14 +230,47 @@
               </div>
 
               <div *ngIf="fieldForm.fieldType && needsOptions(fieldForm.fieldType)" class="col-12">
-                <label for="options" class="form-label">Options (JSON) <span class="text-danger">*</span></label>
+                <label for="options" class="form-label">Options (JSON)</label>
                 <textarea 
                   id="options" 
                   class="form-control font-monospace" 
                   rows="4"
                   [(ngModel)]="fieldForm.options"
                   placeholder='[{"value":"opt1","label":"Option 1"},{"value":"opt2","label":"Option 2"}]'></textarea>
-                <small class="form-text text-muted">Enter options as JSON array</small>
+                <small class="form-text text-muted">Static options. Leave empty if using Data Source (API).</small>
+              </div>
+
+              <div *ngIf="fieldForm.fieldType && needsOptions(fieldForm.fieldType)" class="col-12">
+                <label for="dataSource" class="form-label">Data Source (API) – JSON</label>
+                <textarea 
+                  id="dataSource" 
+                  class="form-control font-monospace" 
+                  rows="4"
+                  [(ngModel)]="fieldForm.dataSource"
+                  placeholder='{"type":"CASE_NATURES"} or {"type":"CASE_TYPES","parentField":"caseNatureId"}'></textarea>
+                <small class="form-text text-muted">Types: ADMIN_UNITS, COURTS, ACTS, CASE_NATURES, CASE_TYPES. Use parentField for cascading (e.g. caseNatureId for CASE_TYPES).</small>
+              </div>
+
+              <div *ngIf="fieldForm.fieldType && needsOptions(fieldForm.fieldType)" class="col-md-6">
+                <label for="dependsOnField" class="form-label">Depends on field</label>
+                <input 
+                  type="text" 
+                  id="dependsOnField" 
+                  class="form-control" 
+                  [(ngModel)]="fieldForm.dependsOnField"
+                  placeholder="e.g. caseNatureId, stateId">
+                <small class="form-text text-muted">When this field changes, options are refetched (for cascading dropdowns).</small>
+              </div>
+
+              <div *ngIf="fieldForm.fieldType && needsItemSchema(fieldForm.fieldType)" class="col-12">
+                <label for="itemSchema" class="form-label">Item Schema (JSON) <span class="text-danger">*</span></label>
+                <textarea 
+                  id="itemSchema" 
+                  class="form-control font-monospace" 
+                  rows="6"
+                  [(ngModel)]="fieldForm.itemSchema"
+                  placeholder='[{"fieldName":"name","fieldLabel":"Name","fieldType":"TEXT","isRequired":true},{"fieldName":"status","fieldLabel":"Status","fieldType":"SELECT","fieldOptions":"[{\"value\":\"Present\",\"label\":\"Present\"}]"}]'></textarea>
+                <small class="form-text text-muted">JSON array of field definitions for each row (e.g. name, status, remarks)</small>
               </div>
 
               <div class="col-12">

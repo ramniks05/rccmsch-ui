@@ -1,0 +1,123 @@
+<div class="repeatable-section">
+  <div class="section-header d-flex justify-content-between align-items-center mb-2">
+    <label class="form-label mb-0">
+      {{ field.fieldLabel }}
+      <span *ngIf="field.isRequired" class="text-danger">*</span>
+    </label>
+    <button
+      *ngIf="!viewMode && canAdd"
+      type="button"
+      class="btn btn-sm btn-outline-primary"
+      (click)="addRow()">
+      <i class="bi bi-plus-circle"></i> Add
+    </button>
+  </div>
+
+  <!-- View mode: summary -->
+  <div *ngIf="viewMode" class="form-control-plaintext">
+    <strong>{{ getDisplayValue() }}</strong>
+    <div *ngIf="value?.length" class="mt-2 repeatable-view-list">
+      <div *ngFor="let row of value; let i = index" class="repeatable-view-row border-bottom pb-2 mb-2">
+        <span class="text-muted small">#{{ i + 1 }}</span>
+        <span *ngFor="let sub of itemSchema" class="me-3">
+          <strong>{{ sub.fieldLabel }}:</strong> {{ row[sub.fieldName] ?? '—' }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit mode: rows -->
+  <div *ngIf="!viewMode">
+    <div *ngFor="let row of value; let i = index" class="repeatable-row card card-body mb-2">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="text-muted small">#{{ i + 1 }}</span>
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-danger"
+          (click)="removeRow(i)"
+          title="Remove row">
+          <i class="bi bi-dash-circle"></i> Remove
+        </button>
+      </div>
+      <div class="row g-2">
+        <div *ngFor="let sub of itemSchema" class="col-md-4">
+          <label [for]="field.fieldName + '_' + i + '_' + sub.fieldName" class="form-label small">
+            {{ sub.fieldLabel }}
+            <span *ngIf="sub.isRequired" class="text-danger">*</span>
+          </label>
+          <!-- TEXT -->
+          <input
+            *ngIf="sub.fieldType === 'TEXT'"
+            [id]="field.fieldName + '_' + i + '_' + sub.fieldName"
+            type="text"
+            class="form-control form-control-sm"
+            [value]="getRowValue(i, sub.fieldName)"
+            (input)="updateRow(i, sub.fieldName, $any($event.target).value)"
+            [placeholder]="sub.placeholder || ''">
+          <!-- TEXTAREA -->
+          <textarea
+            *ngIf="sub.fieldType === 'TEXTAREA'"
+            [id]="field.fieldName + '_' + i + '_' + sub.fieldName"
+            class="form-control form-control-sm"
+            rows="2"
+            [value]="getRowValue(i, sub.fieldName)"
+            (input)="updateRow(i, sub.fieldName, $any($event.target).value)"
+            [placeholder]="sub.placeholder || ''"></textarea>
+          <!-- NUMBER -->
+          <input
+            *ngIf="sub.fieldType === 'NUMBER'"
+            [id]="field.fieldName + '_' + i + '_' + sub.fieldName"
+            type="number"
+            class="form-control form-control-sm"
+            [value]="getRowValue(i, sub.fieldName)"
+            (input)="updateRow(i, sub.fieldName, parseNumber($any($event.target).value))"
+            [placeholder]="sub.placeholder || ''">
+          <!-- SELECT -->
+          <select
+            *ngIf="sub.fieldType === 'SELECT'"
+            [id]="field.fieldName + '_' + i + '_' + sub.fieldName"
+            class="form-select form-select-sm"
+            [ngModel]="getRowValue(i, sub.fieldName)"
+            (ngModelChange)="updateRow(i, sub.fieldName, $event)">
+            <option value="">— Select —</option>
+            <option *ngFor="let opt of getOptionsFor(sub)" [value]="opt.value">{{ opt.label }}</option>
+          </select>
+          <!-- RADIO -->
+          <div *ngIf="sub.fieldType === 'RADIO'" class="d-flex flex-wrap gap-2">
+            <div *ngFor="let opt of getOptionsFor(sub)" class="form-check form-check-inline">
+              <input
+                [id]="field.fieldName + '_' + i + '_' + sub.fieldName + '_' + opt.value"
+                type="radio"
+                class="form-check-input"
+                [name]="field.fieldName + '_' + i + '_' + sub.fieldName"
+                [value]="opt.value"
+                [checked]="getRowValue(i, sub.fieldName) === opt.value"
+                (change)="updateRow(i, sub.fieldName, opt.value)">
+              <label [for]="field.fieldName + '_' + i + '_' + sub.fieldName + '_' + opt.value" class="form-check-label small">{{ opt.label }}</label>
+            </div>
+          </div>
+          <!-- CHECKBOX -->
+          <div *ngIf="sub.fieldType === 'CHECKBOX'" class="form-check">
+            <input
+              [id]="field.fieldName + '_' + i + '_' + sub.fieldName"
+              type="checkbox"
+              class="form-check-input"
+              [checked]="getRowValue(i, sub.fieldName)"
+              (change)="updateRow(i, sub.fieldName, $any($event.target).checked)">
+            <label [for]="field.fieldName + '_' + i + '_' + sub.fieldName" class="form-check-label small">Yes</label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <button
+      *ngIf="value.length === 0 && canAdd"
+      type="button"
+      class="btn btn-outline-primary btn-sm"
+      (click)="addRow()">
+      <i class="bi bi-plus-circle"></i> Add first item
+    </button>
+  </div>
+
+  <small *ngIf="field.helpText && !viewMode" class="form-text text-muted">{{ field.helpText }}</small>
+  <div *ngIf="getError()" class="invalid-feedback d-block">{{ getError() }}</div>
+</div>

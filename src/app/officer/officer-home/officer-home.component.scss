@@ -217,6 +217,71 @@
   gap: 24px;
 }
 
+.actions-required-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border-left: 4px solid #4facfe;
+
+  &.loading,
+  &.error {
+    mat-card-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+  }
+
+  mat-card-header mat-card-title .card-icon.accent {
+    color: #4facfe;
+  }
+
+  .actions-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 16px 0;
+  }
+
+  .action-item {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+
+    &:last-of-type {
+      border-bottom: none;
+    }
+
+    .case-num { font-weight: 600; min-width: 100px; }
+    .subject { flex: 1; min-width: 120px; }
+    .state { color: #666; font-size: 0.9rem; }
+    .transitions { font-size: 0.9rem; color: #4facfe; }
+  }
+
+  .view-all-btn {
+    margin-top: 8px;
+  }
+}
+
+.action-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 22px;
+  text-align: center;
+  background: #f44336;
+  color: white;
+  border-radius: 11px;
+}
+
 .quick-actions-card {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);

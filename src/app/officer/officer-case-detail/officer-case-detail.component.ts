@@ -20,6 +20,8 @@ export class OfficerCaseDetailComponent implements OnInit {
   loadingTransitions = false;
   loadingHistory = false;
   error: string | null = null;
+  /** Workflow/condition failure message – shown on screen until dismissed */
+  transitionError: string | null = null;
   executing = false;
 
   parsedCaseData: Record<string, any> = {};
@@ -213,6 +215,7 @@ export class OfficerCaseDetailComponent implements OnInit {
    * Execute workflow transition
    */
   executeTransition(transitionCode: string, comments: string): void {
+    this.transitionError = null;
     this.executing = true;
 
     this.caseService.executeTransition(this.caseId, {
@@ -223,21 +226,52 @@ export class OfficerCaseDetailComponent implements OnInit {
       next: (response) => {
         this.executing = false;
         if (response.success) {
+          this.transitionError = null;
           this.snackBar.open('Action completed successfully!', 'Close', { duration: 5000 });
-          // Reload all data
           this.loadCaseDetails();
           this.loadAvailableTransitions();
           this.loadWorkflowHistory();
         } else {
-          this.snackBar.open(response.message || 'Failed to execute action', 'Close', { duration: 5000 });
+          const reason = this.getTransitionFailureReason(response);
+          this.transitionError = reason;
+          this.snackBar.open(reason, 'Close', { duration: 8000 });
         }
       },
       error: (err) => {
         this.executing = false;
-        const errorMessage = err.error?.message || 'Failed to execute action';
-        this.snackBar.open(errorMessage, 'Close', { duration: 6000 });
+        const reason = this.getTransitionFailureReasonFromError(err);
+        this.transitionError = reason;
+        this.snackBar.open(reason, 'Close', { duration: 8000 });
       }
     });
+  }
+
+  /**
+   * Get user-visible reason from failed transition response (condition failure, etc.)
+   */
+  private getTransitionFailureReason(response: { message?: string; reason?: string; data?: any }): string {
+    const msg = response.reason
+      || response.message
+      || (response.data && (response.data.reason || response.data.message));
+    return msg && String(msg).trim() ? String(msg).trim() : 'Workflow condition not met. This action cannot be performed.';
+  }
+
+  /**
+   * Get user-visible reason from HTTP error (e.g. 400 with body.reason)
+   */
+  private getTransitionFailureReasonFromError(err: any): string {
+    const body = err?.error;
+    if (body && typeof body === 'object') {
+      const msg = body.reason || body.message || (body.data && (body.data.reason || body.data.message));
+      if (msg && String(msg).trim()) {
+        return String(msg).trim();
+      }
+    }
+    return err?.error?.message || err?.message || 'Failed to execute action. Please try again.';
+  }
+
+  clearTransitionError(): void {
+    this.transitionError = null;
   }
 
   /**

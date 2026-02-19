@@ -102,6 +102,26 @@ export interface WorkflowHistory {
   comments?: string;
 }
 
+/** Dashboard: single action-required item for officer */
+export interface OfficerActionRequiredItem {
+  caseId: number;
+  caseNumber: string;
+  subject: string;
+  currentStateCode: string;
+  currentStateName: string;
+  availableTransitions: { code: string; label: string }[];
+}
+
+export interface OfficerActionsRequiredData {
+  totalCount: number;
+  items: OfficerActionRequiredItem[];
+}
+
+export interface OfficerActionType {
+  code: string;
+  label: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -132,14 +152,49 @@ export class OfficerCaseService {
   /**
    * Get cases assigned to current officer
    * GET /api/cases/my-cases
+   * @param transitionCode Optional – filter to cases where this transition is available
    */
-  getMyCases(): Observable<ApiResponse<CaseDTO[]>> {
-    return this.http.get<ApiResponse<CaseDTO[]>>(
-      `${this.apiUrl}/my-cases`,
+  getMyCases(transitionCode?: string): Observable<ApiResponse<CaseDTO[]>> {
+    let url = `${this.apiUrl}/my-cases`;
+    if (transitionCode) {
+      url += `?transitionCode=${encodeURIComponent(transitionCode)}`;
+    }
+    return this.http.get<ApiResponse<CaseDTO[]>>(url, { headers: this.getAuthHeaders() }).pipe(
+      catchError(error => {
+        console.error('Error fetching my cases:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * GET /api/cases/my-cases/action-types
+   * List of action types (transition code + label) present in officer's caseload (for filter dropdown).
+   */
+  getMyCasesActionTypes(): Observable<ApiResponse<OfficerActionType[]>> {
+    return this.http.get<ApiResponse<OfficerActionType[]>>(
+      `${this.apiUrl}/my-cases/action-types`,
       { headers: this.getAuthHeaders() }
     ).pipe(
       catchError(error => {
-        console.error('Error fetching my cases:', error);
+        console.error('Error fetching action types:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * GET /api/cases/dashboard/actions-required
+   * Dashboard: cases requiring officer action (have at least one available transition).
+   */
+  getOfficerActionsRequired(limit?: number): Observable<ApiResponse<OfficerActionsRequiredData>> {
+    let url = `${this.apiUrl}/dashboard/actions-required`;
+    if (limit != null && limit > 0) {
+      url += `?limit=${limit}`;
+    }
+    return this.http.get<ApiResponse<OfficerActionsRequiredData>>(url, { headers: this.getAuthHeaders() }).pipe(
+      catchError(error => {
+        console.error('Error fetching officer actions required:', error);
         return throwError(() => error);
       })
     );

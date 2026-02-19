@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AdminService } from '../../admin/admin.service';
 import { AuthService } from 'src/app/core/services/auth.service';
+import { OfficerCaseService, OfficerActionRequiredItem } from '../services/officer-case.service';
 
 /**
  * Officer Home Component
@@ -26,15 +27,21 @@ export class OfficerHomeComponent implements OnInit {
   districtName: string = '';
   stateName: string = '';
 
+  /** Actions required for dashboard */
+  actionsRequiredCount = 0;
+  actionsRequiredItems: OfficerActionRequiredItem[] = [];
+  actionsRequiredLoading = false;
+  actionsRequiredError: string | null = null;
+
   constructor(
     private adminService: AdminService,
     private router: Router,
     private authService: AuthService,
+    private officerCaseService: OfficerCaseService
   ) {}
 
   ngOnInit(): void {
     // OfficerGuard already handles authentication check
-    // Load officer data from localStorage (includes posting information from login response)
     const storedData = localStorage.getItem('adminUserData');
     if (storedData) {
       try {
@@ -44,6 +51,31 @@ export class OfficerHomeComponent implements OnInit {
         console.error('Error parsing officer user data:', e);
       }
     }
+    this.loadActionsRequired();
+  }
+
+  loadActionsRequired(): void {
+    this.actionsRequiredLoading = true;
+    this.actionsRequiredError = null;
+    this.officerCaseService.getOfficerActionsRequired(10).subscribe({
+      next: (res) => {
+        this.actionsRequiredLoading = false;
+        if (res.success && res.data) {
+          this.actionsRequiredCount = res.data.totalCount ?? 0;
+          this.actionsRequiredItems = res.data.items ?? [];
+        }
+      },
+      error: () => {
+        this.actionsRequiredLoading = false;
+        this.actionsRequiredError = 'Could not load actions';
+        this.actionsRequiredCount = 0;
+        this.actionsRequiredItems = [];
+      }
+    });
+  }
+
+  viewCase(caseId: number): void {
+    this.router.navigate(['/officer/cases', caseId]);
   }
 
   /**

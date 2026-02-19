@@ -16,6 +16,45 @@
 
   <!-- Main Content -->
   <div class="main-content">
+    <!-- Actions Required Card (top, when there are pending actions) -->
+    <mat-card *ngIf="actionsRequiredLoading" class="actions-required-card loading">
+      <mat-card-content>
+        <mat-spinner diameter="32"></mat-spinner>
+        <span class="loading-text">Checking for actions required...</span>
+      </mat-card-content>
+    </mat-card>
+    <mat-card *ngIf="!actionsRequiredLoading && actionsRequiredError" class="actions-required-card error">
+      <mat-card-content>
+        <mat-icon color="warn">error</mat-icon>
+        <span>{{ actionsRequiredError }}</span>
+        <button mat-button (click)="loadActionsRequired()">Retry</button>
+      </mat-card-content>
+    </mat-card>
+    <mat-card *ngIf="!actionsRequiredLoading && !actionsRequiredError && actionsRequiredCount > 0" class="actions-required-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon class="card-icon accent">notifications_active</mat-icon>
+          Actions required
+        </mat-card-title>
+        <mat-card-subtitle>You have {{ actionsRequiredCount }} case(s) requiring your attention</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <ul class="actions-list">
+          <li *ngFor="let item of actionsRequiredItems" class="action-item">
+            <span class="case-num">{{ item.caseNumber }}</span>
+            <span class="subject">{{ item.subject }}</span>
+            <span class="action-label">{{ item.actionLabel }}</span>
+            <button mat-raised-button color="primary" (click)="viewCase(item.caseId)">
+              View case
+            </button>
+          </li>
+        </ul>
+        <button mat-stroked-button color="primary" routerLink="/citizen/my-cases" class="view-all-btn">
+          View all my cases
+        </button>
+      </mat-card-content>
+    </mat-card>
+
     <!-- Quick Actions Card -->
     <mat-card class="quick-actions-card">
       <mat-card-header>
@@ -29,6 +68,7 @@
           <button mat-raised-button color="primary" class="action-btn" routerLink="/citizen/my-cases">
             <mat-icon>description</mat-icon>
             My Cases
+            <span *ngIf="actionsRequiredCount > 0" class="action-badge">{{ actionsRequiredCount }}</span>
           </button>
           <button mat-raised-button color="accent" class="action-btn" (click)="services()">
             <mat-icon>add_circle</mat-icon>

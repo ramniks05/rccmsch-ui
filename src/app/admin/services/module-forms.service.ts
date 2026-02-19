@@ -9,9 +9,13 @@ import { environment } from '../../../environments/environment';
 export type ModuleType = 'HEARING' | 'NOTICE' | 'ORDERSHEET' | 'JUDGEMENT';
 
 /**
- * Field Types
+ * Field Types (includes REPEATABLE_SECTION and DYNAMIC_FILES for attendance/party lists and multi-file uploads)
  */
-export type FieldType = 'TEXT' | 'TEXTAREA' | 'RICH_TEXT' | 'NUMBER' | 'DATE' | 'DATETIME' | 'SELECT' | 'MULTISELECT' | 'CHECKBOX' | 'RADIO' | 'FILE';
+export type FieldType =
+  | 'TEXT' | 'TEXTAREA' | 'RICH_TEXT' | 'NUMBER' | 'DATE' | 'DATETIME'
+  | 'SELECT' | 'MULTISELECT' | 'CHECKBOX' | 'RADIO' | 'FILE'
+  | 'REPEATABLE_SECTION'
+  | 'DYNAMIC_FILES';
 
 /**
  * Module Form Field
@@ -34,6 +38,16 @@ export interface ModuleFormField {
   isActive?: boolean;
   createdAt?: string;
   updatedAt?: string;
+  /** For REPEATABLE_SECTION: JSON array of field definitions per row */
+  itemSchema?: string | null;
+  /** Show field only when condition matches (JSON: { showIf: {...} }) */
+  conditionalLogic?: string | null;
+  /** Field required when condition matches (JSON) */
+  requiredCondition?: string | null;
+  /** API-driven options for SELECT/RADIO (JSON: DataSourceConfig) */
+  dataSource?: string | null;
+  /** Parent field for cascading; when it changes, options are refetched */
+  dependsOnField?: string | null;
 }
 
 /**

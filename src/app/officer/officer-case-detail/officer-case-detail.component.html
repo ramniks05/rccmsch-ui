@@ -28,6 +28,18 @@
 
   <!-- Case Details -->
   <div *ngIf="!loading && !error && caseData" class="case-content">
+    <!-- Workflow / condition failure message (stays visible until dismissed) -->
+    <div *ngIf="transitionError" class="workflow-error-banner" role="alert">
+      <mat-icon color="warn">warning</mat-icon>
+      <div class="workflow-error-content">
+        <strong>Action could not be completed</strong>
+        <p class="workflow-error-reason">{{ transitionError }}</p>
+      </div>
+      <button mat-icon-button (click)="clearTransitionError()" aria-label="Dismiss">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
     <!-- Tabs for different sections -->
     <mat-tab-group class="case-tabs" animationDuration="300ms">
       

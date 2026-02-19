@@ -4,7 +4,7 @@ import { MatTableDataSource } from '@angular/material/table';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { OfficerCaseService, CaseDTO } from '../services/officer-case.service';
+import { OfficerCaseService, CaseDTO, OfficerActionType } from '../services/officer-case.service';
 
 @Component({
   selector: 'app-officer-my-cases',
@@ -30,6 +30,9 @@ export class OfficerMyCasesComponent implements OnInit {
   error: string | null = null;
   filterStatus: string | null = null;
   searchTerm: string = '';
+  /** Action types for filter dropdown (from API) */
+  actionTypes: OfficerActionType[] = [];
+  selectedActionCode: string | null = null;
 
   // Priority order for sorting
   priorityOrder: { [key: string]: number } = {
@@ -46,7 +49,19 @@ export class OfficerMyCasesComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.loadActionTypes();
     this.loadCases();
+  }
+
+  loadActionTypes(): void {
+    this.caseService.getMyCasesActionTypes().subscribe({
+      next: (res) => {
+        if (res.success && res.data) {
+          this.actionTypes = res.data;
+        }
+      },
+      error: () => { this.actionTypes = []; }
+    });
   }
 
   ngAfterViewInit(): void {
@@ -69,7 +84,7 @@ export class OfficerMyCasesComponent implements OnInit {
     this.loading = true;
     this.error = null;
 
-    this.caseService.getMyCases().subscribe({
+    this.caseService.getMyCases(this.selectedActionCode ?? undefined).subscribe({
       next: (response) => {
         this.loading = false;
         if (response.success && response.data) {
@@ -97,6 +112,14 @@ export class OfficerMyCasesComponent implements OnInit {
    */
   viewCase(caseId: number): void {
     this.router.navigate(['/officer/cases', caseId]);
+  }
+
+  /**
+   * Filter by action (transition). Reloads from server.
+   */
+  filterByAction(code: string | null): void {
+    this.selectedActionCode = code;
+    this.loadCases();
   }
 
   /**
@@ -149,6 +172,7 @@ export class OfficerMyCasesComponent implements OnInit {
   clearFilters(): void {
     this.filterStatus = null;
     this.searchTerm = '';
+    this.selectedActionCode = null;
     this.loadCases();
   }
 

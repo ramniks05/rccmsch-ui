@@ -54,6 +54,44 @@
   gap: 24px;
 }
 
+.workflow-error-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px 20px;
+  background: #ffebee;
+  border: 1px solid #f44336;
+  border-radius: 8px;
+  color: #b71c1c;
+
+  mat-icon:first-child {
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .workflow-error-content {
+    flex: 1;
+    min-width: 0;
+
+    strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .workflow-error-reason {
+      margin: 0;
+      font-size: 0.95rem;
+      line-height: 1.4;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+  }
+
+  button[mat-icon-button] {
+    flex-shrink: 0;
+  }
+}
+
 .info-card {
   mat-card-header {
     mat-card-title {

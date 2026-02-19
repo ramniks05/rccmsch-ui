@@ -1,0 +1,43 @@
+<div class="dynamic-files-field">
+  <label class="form-label">
+    {{ field.fieldLabel }}
+    <span *ngIf="field.isRequired" class="text-danger">*</span>
+  </label>
+
+  <!-- View mode -->
+  <div *ngIf="viewMode" class="form-control-plaintext">
+    <strong>{{ getDisplayValue() }}</strong>
+    <ul *ngIf="value?.length" class="list-unstyled mt-1 mb-0 small">
+      <li *ngFor="let f of value">
+        {{ f.fileName }} ({{ (f.fileSize / 1024).toFixed(1) }} KB)
+      </li>
+    </ul>
+  </div>
+
+  <!-- Edit mode -->
+  <div *ngIf="!viewMode">
+    <input
+      type="file"
+      class="form-control"
+      [accept]="acceptAttr"
+      [multiple]="true"
+      [disabled]="uploading || !canAdd"
+      (change)="onFileSelect($event)">
+    <small *ngIf="field.helpText" class="form-text text-muted">{{ field.helpText }}</small>
+    <small class="form-text text-muted">Max {{ maxFiles }} file(s), {{ maxSizePerFile / 1024 / 1024 }}MB each. Allowed: {{ allowedTypes.join(', ') }}</small>
+    <div *ngIf="uploading" class="mt-2 text-primary">
+      <span class="spinner-border spinner-border-sm me-1"></span> Uploading...
+    </div>
+    <div *ngIf="uploadError" class="mt-2 text-danger small">{{ uploadError }}</div>
+    <ul *ngIf="value?.length" class="list-group list-group-flush mt-2">
+      <li *ngFor="let f of value; let i = index" class="list-group-item d-flex justify-content-between align-items-center py-2">
+        <span>{{ f.fileName }} <span class="text-muted small">({{ (f.fileSize / 1024).toFixed(1) }} KB)</span></span>
+        <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeFile(i)" title="Remove file">
+          <i class="bi bi-x-circle"></i>
+        </button>
+      </li>
+    </ul>
+  </div>
+
+  <div *ngIf="getError()" class="invalid-feedback d-block">{{ getError() }}</div>
+</div>

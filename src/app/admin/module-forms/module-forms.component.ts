@@ -23,8 +23,9 @@ export class ModuleFormsComponent implements OnInit {
   
   // Field types for dropdown
   fieldTypes: FieldType[] = [
-    'TEXT', 'TEXTAREA', 'RICH_TEXT', 'NUMBER', 'DATE', 'DATETIME', 
-    'SELECT', 'MULTISELECT', 'CHECKBOX', 'RADIO', 'FILE'
+    'TEXT', 'TEXTAREA', 'RICH_TEXT', 'NUMBER', 'DATE', 'DATETIME',
+    'SELECT', 'MULTISELECT', 'CHECKBOX', 'RADIO', 'FILE',
+    'REPEATABLE_SECTION', 'DYNAMIC_FILES'
   ];
   
   // UI state
@@ -43,7 +44,12 @@ export class ModuleFormsComponent implements OnInit {
     placeholder: '',
     helpText: '',
     options: '',
-    validationRules: ''
+    validationRules: '',
+    itemSchema: '',
+    conditionalLogic: '',
+    requiredCondition: '',
+    dataSource: '',
+    dependsOnField: ''
   };
 
   constructor(
@@ -158,7 +164,12 @@ export class ModuleFormsComponent implements OnInit {
       placeholder: '',
       helpText: '',
       options: '',
-      validationRules: ''
+      validationRules: '',
+      itemSchema: '',
+      conditionalLogic: '',
+      requiredCondition: '',
+      dataSource: '',
+      dependsOnField: ''
     };
     this.showFieldForm = true;
   }
@@ -324,7 +335,7 @@ export class ModuleFormsComponent implements OnInit {
    * Get field type label
    */
   getFieldTypeLabel(fieldType: FieldType): string {
-    const labels: Record<FieldType, string> = {
+    const labels: Record<string, string> = {
       'TEXT': 'Text',
       'TEXTAREA': 'Text Area',
       'RICH_TEXT': 'Rich Text Editor (WYSIWYG)',
@@ -335,7 +346,9 @@ export class ModuleFormsComponent implements OnInit {
       'MULTISELECT': 'Multi-Select',
       'CHECKBOX': 'Checkbox',
       'RADIO': 'Radio Button',
-      'FILE': 'File Upload'
+      'FILE': 'File Upload',
+      'REPEATABLE_SECTION': 'Repeatable Section (e.g. Attendance / Party list)',
+      'DYNAMIC_FILES': 'Dynamic Files (multiple uploads)'
     };
     return labels[fieldType] || fieldType;
   }
@@ -345,5 +358,12 @@ export class ModuleFormsComponent implements OnInit {
    */
   needsOptions(fieldType: FieldType): boolean {
     return ['SELECT', 'MULTISELECT', 'RADIO', 'CHECKBOX'].includes(fieldType);
+  }
+
+  /**
+   * Check if field type uses item schema (repeatable section)
+   */
+  needsItemSchema(fieldType: FieldType): boolean {
+    return fieldType === 'REPEATABLE_SECTION';
   }
 }

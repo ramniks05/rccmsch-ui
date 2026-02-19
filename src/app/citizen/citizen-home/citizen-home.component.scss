@@ -68,6 +68,72 @@
   gap: 24px;
 }
 
+// Actions Required Card
+.actions-required-card {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  border-left: 4px solid #ff9800;
+
+  &.loading mat-card-content,
+  &.error mat-card-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .loading-text {
+    margin-left: 8px;
+  }
+
+  .actions-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 16px 0;
+  }
+
+  .action-item {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .case-num {
+      font-weight: 600;
+      min-width: 180px;
+    }
+
+    .subject {
+      flex: 1;
+      min-width: 150px;
+      color: #555;
+    }
+
+    .action-label {
+      font-size: 0.9rem;
+      color: #666;
+    }
+  }
+
+  .view-all-btn {
+    margin-top: 8px;
+  }
+}
+
+.action-badge {
+  background: #ff9800;
+  color: white;
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-left: 8px;
+}
+
 // Quick Actions Card
 .quick-actions-card {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);

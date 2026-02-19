@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { AuthService } from '../../core/services/auth.service';
 import { Router } from '@angular/router';
+import { CitizenCaseService, CitizenActionRequiredItem, CitizenActionsRequiredData } from '../services/citizen-case.service';
 
 /**
  * Citizen Home Component
@@ -15,9 +16,16 @@ export class CitizenHomeComponent implements OnInit {
   userData: any = null;
   userName: string = '';
 
+  /** Actions required for dashboard */
+  actionsRequiredCount = 0;
+  actionsRequiredItems: CitizenActionRequiredItem[] = [];
+  actionsRequiredLoading = false;
+  actionsRequiredError: string | null = null;
+
   constructor(
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private citizenCaseService: CitizenCaseService
   ) {}
 
   ngOnInit(): void {
@@ -32,7 +40,6 @@ export class CitizenHomeComponent implements OnInit {
     }
 
     // Extract user name from user data
-    // Adjust based on your API response structure
     if (this.userData.firstName) {
       this.userName = this.userData.firstName;
       if (this.userData.lastName) {
@@ -45,6 +52,32 @@ export class CitizenHomeComponent implements OnInit {
     } else {
       this.userName = 'Citizen';
     }
+
+    this.loadActionsRequired();
+  }
+
+  loadActionsRequired(): void {
+    this.actionsRequiredLoading = true;
+    this.actionsRequiredError = null;
+    this.citizenCaseService.getActionsRequired(10).subscribe({
+      next: (res) => {
+        this.actionsRequiredLoading = false;
+        if (res.success && res.data) {
+          this.actionsRequiredCount = res.data.totalCount ?? 0;
+          this.actionsRequiredItems = res.data.items ?? [];
+        }
+      },
+      error: () => {
+        this.actionsRequiredLoading = false;
+        this.actionsRequiredError = 'Could not load actions';
+        this.actionsRequiredCount = 0;
+        this.actionsRequiredItems = [];
+      }
+    });
+  }
+
+  viewCase(caseId: number): void {
+    this.router.navigate(['/citizen/cases', caseId]);
   }
 
   services() {

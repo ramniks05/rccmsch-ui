@@ -108,6 +108,7 @@ export const MODULE_FIELDS: Record<ModuleType, { value: string; label: string }[
     { value: 'hearingDate', label: 'Hearing date' },
     { value: 'hearingTime', label: 'Hearing time' },
     { value: 'venue', label: 'Venue' },
+    { value: 'attendance', label: 'Attendance (repeatable)' },
     { value: 'remarks', label: 'Remarks' }
   ],
   NOTICE: [

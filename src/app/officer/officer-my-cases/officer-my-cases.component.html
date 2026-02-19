@@ -11,6 +11,14 @@
 
   <!-- Filters -->
   <div class="filters-section">
+    <mat-form-field appearance="outline" class="action-filter">
+      <mat-label>Filter by action</mat-label>
+      <mat-select [value]="selectedActionCode" (selectionChange)="filterByAction($event.value)">
+        <mat-option [value]="null">All actions</mat-option>
+        <mat-option *ngFor="let a of actionTypes" [value]="a.code">{{ a.label }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+
     <mat-form-field appearance="outline" class="search-field">
       <mat-label>Search</mat-label>
       <input matInput [(ngModel)]="searchTerm" (keyup)="applySearch()" placeholder="Case number, applicant name, subject...">
@@ -31,7 +39,7 @@
       </mat-select>
     </mat-form-field>
 
-    <button mat-button (click)="clearFilters()" *ngIf="filterStatus || searchTerm">
+    <button mat-button (click)="clearFilters()" *ngIf="filterStatus || searchTerm || selectedActionCode">
       <mat-icon>clear</mat-icon>
       Clear Filters
     </button>
