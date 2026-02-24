@@ -14,3 +14,29 @@
     cursor: not-allowed;
   }
 }
+
+.posting-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+
+  &.court-based {
+    background-color: rgba(25, 118, 210, 0.1);
+    color: #1976d2;
+  }
+
+  &.unit-based {
+    background-color: rgba(76, 175, 80, 0.1);
+    color: #4caf50;
+  }
+}

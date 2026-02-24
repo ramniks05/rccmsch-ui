@@ -127,11 +127,13 @@ export class AdminService {
   // ==================== Posting Management ====================
 
   /**
-   * Assign Officer to Post
-   * Now uses courtId instead of unitId
+   * Assign Officer to Post (Unified)
+   * Supports both court-based and unit-based postings
+   * Either courtId OR unitId must be provided (not both, not neither)
    */
   assignOfficerToPost(posting: {
-    courtId: number;
+    courtId: number | null;
+    unitId: number | null;
     roleCode: string;
     officerId: number;
   }): Observable<any> {
@@ -141,11 +143,12 @@ export class AdminService {
   }
 
   /**
-   * Transfer Officer
-   * Now uses courtId instead of unitId
+   * Transfer Officer (Unified)
+   * Supports both court-based and unit-based postings
    */
   transferOfficer(posting: {
-    courtId: number;
+    courtId: number | null;
+    unitId: number | null;
     roleCode: string;
     officerId: number;
   }): Observable<any> {
@@ -199,11 +202,54 @@ export class AdminService {
 
   /**
    * Get All Active Postings
+   * Returns both court-based and unit-based postings
    */
   getAllActivePostings(): Observable<any> {
     return this.http.get(`${this.baseUrl}/admin/postings/active`, {
       headers: this.getAuthHeaders(),
     });
+  }
+
+  /**
+   * Get Field Officers for Court
+   * Finds unit-based postings (field officers) available to a court
+   */
+  getFieldOfficersForCourt(courtId: number, roleCode: string): Observable<any> {
+    return this.http.get(
+      `${this.baseUrl}/admin/postings/field-officers/court/${courtId}?roleCode=${roleCode}`,
+      {
+        headers: this.getAuthHeaders(),
+      },
+    );
+  }
+
+  /**
+   * Get Field Officers by Role
+   * Get all unit-based postings (field officers) for a specific role
+   */
+  getFieldOfficersByRole(roleCode: string): Observable<any> {
+    return this.http.get(
+      `${this.baseUrl}/admin/postings/field-officers/role/${roleCode}`,
+      {
+        headers: this.getAuthHeaders(),
+      },
+    );
+  }
+
+  /**
+   * Get Field Officers by Unit and Role
+   * Get unit-based postings for a specific unit and role
+   */
+  getFieldOfficersByUnitAndRole(
+    unitId: number,
+    roleCode: string,
+  ): Observable<any> {
+    return this.http.get(
+      `${this.baseUrl}/admin/postings/field-officers/unit/${unitId}/role/${roleCode}`,
+      {
+        headers: this.getAuthHeaders(),
+      },
+    );
   }
 
   // ==================== Roles Management ====================

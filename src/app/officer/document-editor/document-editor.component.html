@@ -70,15 +70,15 @@
 
         <!-- Editor Mode -->
         <div *ngIf="editMode" class="mb-3">
-          <label for="contentHtml" class="form-label fw-bold">Document Content (HTML)</label>
+          <label for="contentHtml" class="form-label fw-bold">Document Content (Word Text)</label>
           <textarea 
             id="contentHtml"
             class="form-control font-monospace"
             rows="20"
             [(ngModel)]="contentHtml"
-            placeholder="Enter HTML content"></textarea>
+            placeholder="Enter Word text content"></textarea>
           <small class="form-text text-muted">
-            Edit the HTML content. Use placeholders like {{'{{'}}caseNumber{{'}}'}} for dynamic data.
+            Edit the Word text content. Use placeholders like {{'{{'}}caseNumber{{'}}'}} for dynamic data.
           </small>
         </div>
 

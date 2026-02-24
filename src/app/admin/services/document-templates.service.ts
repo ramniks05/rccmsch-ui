@@ -15,7 +15,7 @@ export interface DocumentTemplate {
   caseTypeName?: string;
   moduleType: ModuleType;
   templateName: string;
-  templateHtml: string;
+  templateHtml: string; // Word text content (stored as HTML for rich formatting)
   templateData?: string; // JSON string with metadata (placeholders, etc.)
   version?: number;
   allowEditAfterSign: boolean;

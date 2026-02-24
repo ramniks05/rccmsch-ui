@@ -432,4 +432,25 @@ export class CitizenCaseService {
       { headers: this.getHeaders() }
     );
   }
+
+  /**
+   * Execute a workflow transition
+   * POST /api/cases/{caseId}/transitions/execute
+   */
+  executeTransition(caseId: number, request: { transitionCode: string; comments?: string }): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${this.apiUrl}/cases/${caseId}/transitions/execute`,
+      {
+        caseId: caseId,
+        transitionCode: request.transitionCode,
+        comments: request.comments
+      },
+      { headers: this.getHeaders() }
+    ).pipe(
+      catchError(error => {
+        console.error(`Error executing transition for case ${caseId}:`, error);
+        return throwError(() => error);
+      })
+    );
+  }
 }

@@ -101,6 +101,7 @@ export class OfficerCaseDetailComponent implements OnInit {
    */
   loadAvailableTransitions(): void {
     this.loadingTransitions = true;
+    this.transitionError = null;
 
     this.caseService.getAvailableTransitions(this.caseId).subscribe({
       next: (response) => {
@@ -108,11 +109,34 @@ export class OfficerCaseDetailComponent implements OnInit {
         if (response.success && response.data) {
           this.transitions = response.data;
           this.determineRequiredModules();
+          
+          // If no transitions available, show appropriate message
+          if (this.transitions.length === 0) {
+            // No error, just no actions available - this is handled in the template
+            this.transitionError = null;
+          }
+        } else {
+          // Response indicates no actions available
+          this.transitions = [];
+          this.transitionError = null; // No error, just no actions
         }
       },
       error: (err) => {
         this.loadingTransitions = false;
         console.error('Error loading transitions:', err);
+        
+        // Check if it's a case where no actions are available (not a real error)
+        if (err?.status === 404 || err?.error?.message?.toLowerCase().includes('no action') || 
+            err?.error?.message?.toLowerCase().includes('no transition')) {
+          this.transitions = [];
+          this.transitionError = null; // No error, just no actions available
+        } else {
+          // Real error occurred
+          const errorMsg = err?.error?.message || err?.message || 'Failed to load available actions';
+          this.transitionError = errorMsg;
+          this.transitions = [];
+          this.snackBar.open(errorMsg, 'Close', { duration: 5000 });
+        }
       }
     });
   }
@@ -267,6 +291,21 @@ export class OfficerCaseDetailComponent implements OnInit {
         return String(msg).trim();
       }
     }
+    
+    // Handle specific error cases
+    if (err?.status === 400) {
+      return 'Invalid request. Please check the action requirements and try again.';
+    } else if (err?.status === 403) {
+      return 'You do not have permission to perform this action.';
+    } else if (err?.status === 404) {
+      return 'Action not found or no longer available.';
+    } else if (err?.status === 0 || err?.statusText === 'Unknown Error') {
+      return 'Network error: Could not connect to server. Please check your connection.';
+    } else if (err?.status >= 500) {
+      return 'Server error occurred. Please try again later.';
+    }
+    
+    // Return specific error message if available, otherwise a helpful generic message
     return err?.error?.message || err?.message || 'Failed to execute action. Please try again.';
   }
 

@@ -186,7 +186,7 @@
               </div>
 
               <div class="col-12">
-                <label class="form-label">Template Content <span class="text-danger">*</span></label>
+                <label class="form-label">Template Content (Word Text) <span class="text-danger">*</span></label>
                 <div class="mb-2">
                   <span class="badge bg-info me-2">
                     <i class="bi bi-info-circle"></i> Use Rich Text Editor with Voice Typing & Translation
@@ -202,14 +202,14 @@
                 <!-- Rich Text Editor -->
                 <app-rich-text-editor
                   [(content)]="templateHtmlContent"
-                  [placeholder]="'Enter template content here. Use voice typing or write manually...'"
+                  [placeholder]="'Enter Word text content here. Use voice typing or write manually...'"
                   [height]="'500px'"
                 ></app-rich-text-editor>
                 
                 <small class="form-text text-muted mt-2">
                   <i class="bi bi-lightbulb"></i> 
-                  <strong>Tips:</strong> Use the microphone for voice typing. Use placeholders like {{'{{'}}caseNumber{{'}}'}} for dynamic content.
-                  Content will be saved and can be exported as Word document.
+                  <strong>Tips:</strong> Enter Word text content. Use the microphone for voice typing. Use placeholders like {{'{{'}}caseNumber{{'}}'}} for dynamic content.
+                  Content will be saved as Word text and can be exported as Word document.
                 </small>
               </div>
 

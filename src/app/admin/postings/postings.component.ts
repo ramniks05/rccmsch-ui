@@ -19,7 +19,7 @@ import { throwError } from 'rxjs';
   styleUrls: ['./postings.component.scss']
 })
 export class PostingsComponent implements OnInit, AfterViewInit {
-  displayedColumns: string[] = ['postingUserid', 'officerName', 'roleName', 'courtName', 'unitName', 'mobileNo', 'fromDate', 'toDate', 'isCurrent', 'actions'];
+  displayedColumns: string[] = ['postingUserid', 'officerName', 'roleName', 'postingType', 'courtName', 'unitName', 'mobileNo', 'fromDate', 'toDate', 'isCurrent', 'actions'];
   dataSource = new MatTableDataSource<any>([]);
   private _paginator!: MatPaginator;
   private _sort!: MatSort;
@@ -216,7 +216,7 @@ export class PostingsComponent implements OnInit, AfterViewInit {
 }
 
 /**
- * Dialog Component for Create Posting
+ * Dialog Component for Create Posting (Unified - Court-Based and Unit-Based)
  */
 @Component({
   selector: 'app-posting-dialog',
@@ -224,6 +224,25 @@ export class PostingsComponent implements OnInit, AfterViewInit {
     <h2 mat-dialog-title>Assign Officer to Post</h2>
     <mat-dialog-content>
       <form [formGroup]="postingForm" class="posting-form">
+        <!-- Posting Type Selection -->
+        <div class="posting-type-section">
+          <label class="section-label">Posting Type *</label>
+          <mat-radio-group formControlName="postingType" class="radio-group">
+            <mat-radio-button value="COURT" class="radio-button">
+              <mat-icon>account_balance</mat-icon>
+              <span>Court-Based</span>
+            </mat-radio-button>
+            <mat-radio-button value="UNIT" class="radio-button">
+              <mat-icon>location_city</mat-icon>
+              <span>Unit-Based</span>
+            </mat-radio-button>
+          </mat-radio-group>
+          <mat-error *ngIf="postingForm.get('postingType')?.hasError('required') && postingForm.get('postingType')?.touched">
+            Posting type is required
+          </mat-error>
+        </div>
+
+        <!-- Officer Selection -->
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Officer *</mat-label>
           <mat-select formControlName="officerId">
@@ -234,9 +253,11 @@ export class PostingsComponent implements OnInit, AfterViewInit {
           <mat-error *ngIf="postingForm.get('officerId')?.hasError('required')">Officer is required</mat-error>
         </mat-form-field>
 
-        <mat-form-field appearance="outline" class="full-width">
+        <!-- Court Selection (for Court-Based Posting) -->
+        <mat-form-field appearance="outline" class="full-width" *ngIf="postingForm.get('postingType')?.value === 'COURT'">
           <mat-label>Court *</mat-label>
           <mat-select formControlName="courtId">
+            <mat-option [value]="null">-- Select Court --</mat-option>
             <mat-option *ngFor="let court of data.courts" [value]="court.id">
               {{ court.courtName }} ({{ court.courtType }}) - {{ court.unitName || 'N/A' }}
             </mat-option>
@@ -244,15 +265,28 @@ export class PostingsComponent implements OnInit, AfterViewInit {
           <mat-error *ngIf="postingForm.get('courtId')?.hasError('required')">Court is required</mat-error>
         </mat-form-field>
 
+        <!-- Unit Selection (for Unit-Based Posting) -->
+        <mat-form-field appearance="outline" class="full-width" *ngIf="postingForm.get('postingType')?.value === 'UNIT'">
+          <mat-label>Administrative Unit *</mat-label>
+          <mat-select formControlName="unitId">
+            <mat-option [value]="null">-- Select Unit --</mat-option>
+            <mat-option *ngFor="let unit of units" [value]="unit.unitId">
+              {{ unit.unitName }} ({{ unit.unitLevel }}) - LGD: {{ unit.lgdCode }}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="postingForm.get('unitId')?.hasError('required')">Administrative unit is required</mat-error>
+        </mat-form-field>
+
+        <!-- Role Selection -->
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Role *</mat-label>
-          <mat-select formControlName="roleCode" [disabled]="!postingForm.get('courtId')?.value">
+          <mat-select formControlName="roleCode">
+            <mat-option [value]="null">-- Select Role --</mat-option>
             <mat-option *ngFor="let role of availableRoles" [value]="role.roleCode">
               <mat-icon class="role-option-icon">{{ getRoleIcon(role.roleCode) }}</mat-icon>
               {{ role.roleName }} ({{ role.roleCode }})
             </mat-option>
           </mat-select>
-          <mat-hint *ngIf="!postingForm.get('courtId')?.value">Please select a court first</mat-hint>
           <mat-error *ngIf="postingForm.get('roleCode')?.hasError('required')">Role is required</mat-error>
         </mat-form-field>
       </form>
@@ -288,6 +322,30 @@ export class PostingsComponent implements OnInit, AfterViewInit {
       vertical-align: middle;
       color: #667eea;
     }
+    .posting-type-section {
+      margin-bottom: 8px;
+    }
+    .section-label {
+      display: block;
+      margin-bottom: 12px;
+      font-weight: 500;
+      color: rgba(0, 0, 0, 0.87);
+    }
+    .radio-group {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+    .radio-button {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .radio-button mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
     mat-hint {
       font-size: 0.85rem;
       color: #666;
@@ -298,6 +356,7 @@ export class PostingDialogComponent {
   postingForm: FormGroup;
   isLoading = false;
   availableRoles: any[] = [];
+  units: any[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -307,51 +366,53 @@ export class PostingDialogComponent {
     private snackBar: MatSnackBar
   ) {
     this.postingForm = this.fb.group({
+      postingType: ['COURT', Validators.required],
       officerId: ['', Validators.required],
-      courtId: ['', Validators.required],
+      courtId: [null],
+      unitId: [null],
       roleCode: ['', Validators.required]
     });
 
-    // Filter roles when court is selected
-    this.postingForm.get('courtId')?.valueChanges.subscribe(courtId => {
-      if (courtId) {
-        this.filterRolesByCourt(courtId);
+    // Load administrative units
+    this.loadUnits();
+
+    // Load all roles (no filtering as per documentation)
+    this.availableRoles = this.data.roles || [];
+
+    // Watch posting type changes to update validation
+    this.postingForm.get('postingType')?.valueChanges.subscribe(type => {
+      if (type === 'COURT') {
+        // Court-based: require courtId, clear unitId
+        this.postingForm.get('courtId')?.setValidators([Validators.required]);
+        this.postingForm.get('unitId')?.clearValidators();
+        this.postingForm.get('unitId')?.setValue(null);
       } else {
-        this.availableRoles = [];
-        this.postingForm.patchValue({ roleCode: '' });
+        // Unit-based: require unitId, clear courtId
+        this.postingForm.get('unitId')?.setValidators([Validators.required]);
+        this.postingForm.get('courtId')?.clearValidators();
+        this.postingForm.get('courtId')?.setValue(null);
       }
+      this.postingForm.get('courtId')?.updateValueAndValidity();
+      this.postingForm.get('unitId')?.updateValueAndValidity();
     });
   }
 
   /**
-   * Filter roles based on selected court level
+   * Load administrative units
    */
-  filterRolesByCourt(courtId: number): void {
-    const selectedCourt = this.data.courts.find((court: any) => court.id === courtId);
-    if (!selectedCourt) {
-      this.availableRoles = [];
-      return;
-    }
-
-    const courtLevel = selectedCourt.courtLevel;
-
-    // Map court levels to their respective officer roles
-    const levelRoleMap: any = {
-      'STATE': 'STATE_ADMIN',
-      'DISTRICT': 'DISTRICT_OFFICER',
-      'SUB_DIVISION': 'SUB_DIVISION_OFFICER',
-      'CIRCLE': 'CIRCLE_OFFICER'
-    };
-
-    const officerRoleCode = levelRoleMap[courtLevel];
-
-    // Filter roles: respective officer role + DEALING_ASSISTANT (available at all levels)
-    this.availableRoles = this.data.roles.filter((role: any) =>
-      role.roleCode === officerRoleCode || role.roleCode === 'DEALING_ASSISTANT'
-    );
-
-    // Reset role selection when court changes
-    this.postingForm.patchValue({ roleCode: '' });
+  loadUnits(): void {
+    this.adminService.getActiveAdminUnits().subscribe({
+      next: (response) => {
+        const apiResponse = response?.success !== undefined ? response : { success: true, data: response };
+        if (apiResponse.success) {
+          this.units = apiResponse.data || [];
+        }
+      },
+      error: (error) => {
+        console.error('Failed to load units:', error);
+        this.units = [];
+      }
+    });
   }
 
   onCancel(): void {
@@ -362,16 +423,30 @@ export class PostingDialogComponent {
    * Get icon for role
    */
   getRoleIcon(roleCode: string): string {
-    if (roleCode === 'DEALING_ASSISTANT') {
-      return 'support_agent';
-    }
-    return 'badge';
+    const roleIcons: any = {
+      'DEALING_ASSISTANT': 'support_agent',
+      'PATWARI': 'person',
+      'KANUNGO': 'person',
+      'TEHSILDAR': 'badge',
+      'READER': 'description'
+    };
+    return roleIcons[roleCode] || 'badge';
   }
 
   onSave(): void {
     if (this.postingForm.valid) {
       this.isLoading = true;
-      this.adminService.assignOfficerToPost(this.postingForm.value)
+      const formValue = this.postingForm.value;
+      
+      // Prepare payload based on posting type
+      const payload: any = {
+        officerId: formValue.officerId,
+        roleCode: formValue.roleCode,
+        courtId: formValue.postingType === 'COURT' ? formValue.courtId : null,
+        unitId: formValue.postingType === 'UNIT' ? formValue.unitId : null
+      };
+
+      this.adminService.assignOfficerToPost(payload)
         .pipe(catchError(error => {
           this.isLoading = false;
           this.snackBar.open(error.error?.message || 'Failed to assign officer', 'Close', { duration: 3000 });
@@ -382,7 +457,12 @@ export class PostingDialogComponent {
             this.isLoading = false;
             const apiResponse = response?.success !== undefined ? response : { success: true };
             if (apiResponse.success) {
-              this.snackBar.open('Officer assigned successfully', 'Close', { duration: 3000 });
+              const postingUserid = apiResponse.data?.postingUserid || 'N/A';
+              this.snackBar.open(
+                `Officer assigned successfully! UserID: ${postingUserid}`, 
+                'Close', 
+                { duration: 5000 }
+              );
               this.dialogRef.close(true);
             }
           },

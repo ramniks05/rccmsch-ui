@@ -8,7 +8,7 @@
       </h1>
 
       <!-- Officer Details - Inline (below welcome message) -->
-      <div class="officer-details-inline" *ngIf="officerName || roleName || administrativeUnit">
+      <div class="officer-details-inline" *ngIf="officerName || roleName || administrativeUnit || courtName">
         <span *ngIf="officerName" class="detail-item">
           <span class="detail-value">{{ officerName }}</span>
         </span>
@@ -16,7 +16,21 @@
           <span class="detail-value">{{ roleName }}</span>
           <span class="detail-code" *ngIf="roleCode">{{ roleCode }}</span>
         </span>
-        <span *ngIf="administrativeUnit" class="detail-item">
+        <!-- Court-based posting info -->
+        <span *ngIf="postingType === 'COURT_BASED' && courtName" class="detail-item">
+          <mat-icon class="detail-icon">account_balance</mat-icon>
+          <span class="detail-value">{{ courtName }}</span>
+          <span class="detail-badge">Court-Based</span>
+        </span>
+        <!-- Unit-based posting info -->
+        <span *ngIf="postingType === 'UNIT_BASED' && administrativeUnit" class="detail-item">
+          <mat-icon class="detail-icon">location_city</mat-icon>
+          <span class="detail-value">{{ administrativeUnit }}</span>
+          <span class="detail-level" *ngIf="unitLevel">{{ unitLevel }}</span>
+          <span class="detail-badge">Unit-Based</span>
+        </span>
+        <!-- Common unit info (for court-based, shows unit of court) -->
+        <span *ngIf="postingType === 'COURT_BASED' && administrativeUnit" class="detail-item">
           <span class="detail-value">{{ administrativeUnit }}</span>
           <span class="detail-level" *ngIf="unitLevel">{{ unitLevel }}</span>
         </span>
@@ -25,6 +39,9 @@
         </span>
         <span *ngIf="stateName" class="detail-item">
           <span class="detail-value">{{ stateName }}</span>
+        </span>
+        <span *ngIf="postingUserid" class="detail-item">
+          <span class="detail-code">UserID: {{ postingUserid }}</span>
         </span>
       </div>
 

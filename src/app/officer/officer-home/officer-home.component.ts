@@ -26,6 +26,9 @@ export class OfficerHomeComponent implements OnInit {
   hierarchy: any = null;
   districtName: string = '';
   stateName: string = '';
+  postingType: 'COURT_BASED' | 'UNIT_BASED' | null = null;
+  courtName: string = '';
+  courtCode: string = '';
 
   /** Actions required for dashboard */
   actionsRequiredCount = 0;
@@ -80,6 +83,7 @@ export class OfficerHomeComponent implements OnInit {
 
   /**
    * Load officer details from stored data (includes posting from login response)
+   * Handles both court-based and unit-based postings
    */
   loadOfficerDetails(): void {
     if (!this.officerData) {
@@ -94,6 +98,11 @@ export class OfficerHomeComponent implements OnInit {
     // Extract posting information from login response
     const posting = this.officerData.posting;
     if (posting) {
+      // Determine posting type
+      this.postingType = posting.postingType || 
+                        (posting.courtId ? 'COURT_BASED' : 'UNIT_BASED') ||
+                        (this.officerData.postingType || null);
+
       // Role information
       if (posting.roleName) {
         this.roleName = posting.roleName;
@@ -102,13 +111,35 @@ export class OfficerHomeComponent implements OnInit {
         this.roleCode = posting.roleCode;
       }
 
-      // Administrative unit information
-      if (posting.unitName) {
-        this.administrativeUnit = posting.unitName;
+      // Court information (for court-based postings)
+      if (this.postingType === 'COURT_BASED') {
+        if (posting.courtName) {
+          this.courtName = posting.courtName;
+        }
+        if (posting.courtCode) {
+          this.courtCode = posting.courtCode;
+        }
+        // Administrative unit from court
+        if (posting.unitName) {
+          this.administrativeUnit = posting.unitName;
+        }
+      } else {
+        // Unit information (for unit-based postings)
+        if (posting.unitName) {
+          this.administrativeUnit = posting.unitName;
+        }
+        if (posting.unitLevel) {
+          this.unitLevel = posting.unitLevel;
+        }
+        if (posting.unitCode) {
+          // Can store unit code if needed
+        }
       }
+
+      // Administrative unit level (common for both)
       if (posting.hierarchy?.unitLevel) {
         this.unitLevel = posting.hierarchy.unitLevel;
-      } else if (posting.unitLevel) {
+      } else if (posting.unitLevel && !this.unitLevel) {
         this.unitLevel = posting.unitLevel;
       }
 

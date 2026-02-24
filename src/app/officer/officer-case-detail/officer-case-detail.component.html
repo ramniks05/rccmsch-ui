@@ -218,11 +218,20 @@
           <mat-spinner diameter="30"></mat-spinner>
           <span>Loading actions...</span>
         </div>
-        <div *ngIf="!loadingTransitions && transitions.length === 0" class="no-actions">
+        <div *ngIf="!loadingTransitions && transitionError" class="error-message">
+          <mat-icon color="warn">error</mat-icon>
+          <p>{{ transitionError }}</p>
+          <button mat-button (click)="loadAvailableTransitions()" class="retry-btn">
+            <mat-icon>refresh</mat-icon>
+            Retry
+          </button>
+        </div>
+        <div *ngIf="!loadingTransitions && !transitionError && transitions.length === 0" class="no-actions">
           <mat-icon>info</mat-icon>
           <p>No actions available at this time</p>
+          <small>All required actions for this case have been completed, or no actions are available in the current workflow state.</small>
         </div>
-        <div *ngIf="!loadingTransitions && transitions.length > 0" class="action-buttons">
+        <div *ngIf="!loadingTransitions && !transitionError && transitions.length > 0" class="action-buttons">
           <button
             *ngFor="let transition of transitions"
             mat-raised-button

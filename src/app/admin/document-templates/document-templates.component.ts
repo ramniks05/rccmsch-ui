@@ -58,17 +58,38 @@ export class DocumentTemplatesComponent implements OnInit {
   ) {}
 
   /**
-   * Get template HTML content as string (never undefined)
+   * Get template Word text content as string (never undefined)
+   * Content is stored as HTML for rich formatting support
    */
   get templateHtmlContent(): string {
     return this.templateForm.templateHtml || '';
   }
 
   /**
-   * Set template HTML content
+   * Set template Word text content
+   * Content is stored as HTML for rich formatting support
    */
   set templateHtmlContent(value: string) {
     this.templateForm.templateHtml = value;
+  }
+
+  /**
+   * Check if Word text content has meaningful text (not just whitespace or empty)
+   * Extracts text from HTML if needed and validates actual content exists
+   */
+  private hasMeaningfulContent(content: string): boolean {
+    if (!content) return false;
+    
+    // If content contains HTML tags, extract text content
+    if (content.includes('<')) {
+      const tmp = document.createElement('DIV');
+      tmp.innerHTML = content;
+      const textContent = tmp.textContent || tmp.innerText || '';
+      return textContent.trim().length > 0;
+    }
+    
+    // For plain text, just check if trimmed content has length
+    return content.trim().length > 0;
   }
 
   ngOnInit(): void {
@@ -257,8 +278,16 @@ export class DocumentTemplatesComponent implements OnInit {
       return;
     }
 
-    if (!this.templateForm.templateName || !this.templateForm.templateHtml) {
-      alert('Template name and HTML content are required');
+    // Validate template name
+    if (!this.templateForm.templateName || !this.templateForm.templateName.trim()) {
+      alert('Template name is required');
+      return;
+    }
+
+    // Validate template content - check for meaningful Word text content
+    const content = this.templateForm.templateHtml || '';
+    if (!this.hasMeaningfulContent(content)) {
+      alert('Template name and Word text content are required. Please enter some content in the template.');
       return;
     }
 
@@ -439,8 +468,8 @@ export class DocumentTemplatesComponent implements OnInit {
   }
 
   /**
-   * Convert HTML to Word-compatible blob
-   * This creates a .docx file from HTML content
+   * Convert Word text (stored as HTML) to Word-compatible blob
+   * This creates a .docx file from Word text content
    */
   private htmlToWordBlob(html: string): Blob {
     // Wrap HTML in proper Word XML structure

@@ -4,6 +4,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { WorkflowConfigService, WorkflowTransition, WorkflowState, WorkflowPermission } from '../../services/workflow-config.service';
 import { WorkflowPermissionDialogComponent } from '../workflow-permission-dialog/workflow-permission-dialog.component';
+import { AdminService } from '../../admin.service';
 
 @Component({
   selector: 'app-workflow-permissions',
@@ -20,28 +21,67 @@ export class WorkflowPermissionsComponent implements OnInit, OnChanges {
   
   permissions: WorkflowPermission[] = [];
   isLoading = false;
-
-  roleCodes = [
-    'CITIZEN',
-    'DEALING_ASSISTANT',
-    'CIRCLE_MANDOL',
-    'CIRCLE_OFFICER',
-    'SUB_DIVISION_OFFICER',
-    'DISTRICT_OFFICER',
-    'STATE_ADMIN',
-    'SUPER_ADMIN'
-  ];
+  roleCodes: string[] = [];
+  loadingRoles = false;
 
   constructor(
     private workflowService: WorkflowConfigService,
+    private adminService: AdminService,
     private dialog: MatDialog,
     private snackBar: MatSnackBar
   ) {}
 
   ngOnInit(): void {
+    this.loadRoles();
     if (this.transition?.id) {
       this.loadPermissions();
     }
+  }
+
+  /**
+   * Load all roles from API
+   */
+  loadRoles(): void {
+    this.loadingRoles = true;
+    this.adminService.getAllRoles().subscribe({
+      next: (response) => {
+        this.loadingRoles = false;
+        const apiResponse = response?.success !== undefined ? response : { success: true, data: response };
+        if (apiResponse.success && apiResponse.data) {
+          // Extract role codes from API response
+          this.roleCodes = apiResponse.data.map((role: any) => role.roleCode || role.code).filter((code: string) => code);
+        } else {
+          // Fallback to default roles if API fails
+          this.roleCodes = [
+            'CITIZEN',
+            'DEALING_ASSISTANT',
+            'CIRCLE_MANDOL',
+            'CIRCLE_OFFICER',
+            'SUB_DIVISION_OFFICER',
+            'DISTRICT_OFFICER',
+            'STATE_ADMIN',
+            'SUPER_ADMIN',
+            'ADJACENT'
+          ];
+        }
+      },
+      error: (error) => {
+        this.loadingRoles = false;
+        console.error('Failed to load roles:', error);
+        // Fallback to default roles including ADJACENT
+        this.roleCodes = [
+          'CITIZEN',
+          'DEALING_ASSISTANT',
+          'CIRCLE_MANDOL',
+          'CIRCLE_OFFICER',
+          'SUB_DIVISION_OFFICER',
+          'DISTRICT_OFFICER',
+          'STATE_ADMIN',
+          'SUPER_ADMIN',
+          'ADJACENT'
+        ];
+      }
+    });
   }
 
   ngOnChanges(changes: SimpleChanges): void {

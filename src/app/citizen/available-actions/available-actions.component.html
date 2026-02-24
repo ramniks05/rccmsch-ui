@@ -42,10 +42,13 @@
       <button
         mat-raised-button
         color="primary"
-        [disabled]="!t.canExecute"
+        [disabled]="!t.canExecute || executingTransition === t.transitionCode"
+        (click)="executeTransition(t)"
         class="execute-btn"
       >
-        Execute
+        <mat-spinner *ngIf="executingTransition === t.transitionCode" diameter="20" class="button-spinner"></mat-spinner>
+        <span *ngIf="executingTransition !== t.transitionCode">Execute</span>
+        <span *ngIf="executingTransition === t.transitionCode">Executing...</span>
       </button>
     </div>
   </div>

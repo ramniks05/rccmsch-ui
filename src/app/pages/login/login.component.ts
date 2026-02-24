@@ -153,7 +153,9 @@ export class LoginComponent {
     }
     const value = control.value.trim();
 
-    // Officer UserID pattern: ROLE_CODE@COURT_CODE (e.g., SDC@DC_COURT_IMPHAL_EAST)
+    // Officer UserID pattern: 
+    // - Court-based: ROLE_CODE@COURT_CODE (e.g., TEHSILDAR@CHD_TEHSILDAR_COURT)
+    // - Unit-based: ROLE_CODE@LGD_CODE (e.g., PATWARI@400101)
     const officerUserIdPattern = /^[A-Z_]+@[A-Z0-9_]+$/;
     if (officerUserIdPattern.test(value)) {
       return null;
@@ -385,7 +387,26 @@ export class LoginComponent {
   private handleOtpError(error: any): void {
     console.error('Send OTP error:', error);
 
-    if (error.error) {
+    // Handle specific error cases first
+    if (error.status === 0 || error?.statusText === 'Unknown Error') {
+      this.otpErrorMessage = 'Network error: Could not connect to server. Please check your connection and try again.';
+    } else if (error.status === 400) {
+      // Check for specific validation errors
+      if (error.error?.message) {
+        this.otpErrorMessage = error.error.message;
+      } else {
+        this.otpErrorMessage = 'Invalid mobile number or user type. Please check and try again.';
+      }
+    } else if (error.status === 403) {
+      this.otpErrorMessage = 'Account not active or access denied. Please contact support.';
+    } else if (error.status === 404) {
+      this.otpErrorMessage = 'Mobile number not registered. Please register first or check your mobile number.';
+    } else if (error.status === 429) {
+      this.otpErrorMessage = 'Too many OTP requests. Please wait a few minutes before requesting again.';
+    } else if (error.status >= 500) {
+      this.otpErrorMessage = 'Server error occurred. Please try again later.';
+    } else if (error.error) {
+      // Check for error message in response
       if (error.error.message) {
         this.otpErrorMessage = error.error.message;
       } else if (error.error.error) {
@@ -393,17 +414,6 @@ export class LoginComponent {
       } else {
         this.otpErrorMessage = 'Failed to send OTP. Please try again.';
       }
-    } else if (error.status === 0) {
-      this.otpErrorMessage =
-        'Unable to connect to server. Please check your connection.';
-    } else if (error.status === 404) {
-      this.otpErrorMessage =
-        'Mobile number not registered. Please register first.';
-    } else if (error.status === 429) {
-      this.otpErrorMessage =
-        'Too many OTP requests. Please wait before requesting again.';
-    } else if (error.status === 400) {
-      this.otpErrorMessage = 'Invalid mobile number or user type.';
     } else {
       this.otpErrorMessage = 'Failed to send OTP. Please try again later.';
     }
@@ -697,31 +707,43 @@ export class LoginComponent {
   private handleLoginError(error: any): void {
     console.error('Login error:', error);
 
-    if (error.error) {
+    // Handle specific error cases first
+    if (error.status === 0 || error?.statusText === 'Unknown Error') {
+      this.loginErrorMessage = 'Network error: Could not connect to server. Please check your connection and try again.';
+    } else if (error.status === 401) {
+      this.loginErrorMessage = 'Invalid OTP or CAPTCHA. Please verify and try again.';
+      // Clear OTP field and refresh CAPTCHA
+      this.mobileLoginForm.patchValue({ otp: '', captcha: '' });
+      this.refreshCaptcha();
+    } else if (error.status === 400) {
+      // Check for specific validation errors
+      if (error.error?.message) {
+        this.loginErrorMessage = error.error.message;
+      } else if (error.error?.errors && Array.isArray(error.error.errors)) {
+        const validationErrors = error.error.errors.map((e: any) => e.message || e.defaultMessage).join(', ');
+        this.loginErrorMessage = `Validation error: ${validationErrors}`;
+      } else {
+        this.loginErrorMessage = 'Invalid data. Please check all fields and try again.';
+      }
+    } else if (error.status === 403) {
+      this.loginErrorMessage = 'Account not active or access denied. Please contact support.';
+    } else if (error.status === 404) {
+      this.loginErrorMessage = 'User not found. Please register first or check your mobile number.';
+    } else if (error.status === 429) {
+      this.loginErrorMessage = 'Too many login attempts. Please wait a few minutes before trying again.';
+    } else if (error.status >= 500) {
+      this.loginErrorMessage = 'Server error occurred. Please try again later.';
+    } else if (error.error) {
+      // Check for error message in response
       if (error.error.message) {
         this.loginErrorMessage = error.error.message;
       } else if (error.error.error) {
         this.loginErrorMessage = error.error.error;
       } else {
-        this.loginErrorMessage =
-          'Login failed. Please check your credentials and try again.';
+        this.loginErrorMessage = 'Login failed. Please check your credentials and try again.';
       }
-    } else if (error.status === 0) {
-      this.loginErrorMessage =
-        'Unable to connect to server. Please check your connection.';
-    } else if (error.status === 401) {
-      this.loginErrorMessage = 'Invalid OTP or CAPTCHA. Please try again.';
-      // Clear OTP field and refresh CAPTCHA
-      this.mobileLoginForm.patchValue({ otp: '', captcha: '' });
-      this.refreshCaptcha();
-    } else if (error.status === 400) {
-      this.loginErrorMessage =
-        'Invalid data. Please check all fields and try again.';
-    } else if (error.status === 404) {
-      this.loginErrorMessage = 'User not found. Please register first.';
     } else {
-      this.loginErrorMessage =
-        'An error occurred during login. Please try again later.';
+      this.loginErrorMessage = 'An error occurred during login. Please try again later.';
     }
 
     // Clear error message after 5 seconds
@@ -876,6 +898,7 @@ export class LoginComponent {
 
   /**
    * Handle successful officer (operator) login
+   * Supports both court-based and unit-based postings
    */
   private handleOfficerLoginSuccess(response: any): void {
     console.log('Officer login successful:', response);
@@ -898,11 +921,15 @@ export class LoginComponent {
       }
 
       // Store complete officer data including posting information
+      const posting = responseData?.posting || null;
+      const postingType = posting?.postingType || (posting?.courtId ? 'COURT_BASED' : 'UNIT_BASED');
+      
       const adminData = {
         userId: responseData?.userId,
         email: responseData?.email,
         mobileNumber: responseData?.mobileNumber,
-        posting: responseData?.posting || null,
+        posting: posting,
+        postingType: postingType,
       };
       localStorage.setItem('adminUserData', JSON.stringify(adminData));
       this.authService.sendData(adminData);
@@ -910,7 +937,8 @@ export class LoginComponent {
       this.passwordLoginSuccessMessage =
         apiResponse.message || 'Login successful! Redirecting...';
 
-      // Redirect to officer dashboard
+      // Redirect to officer dashboard (same for both posting types)
+      // The dashboard will handle displaying appropriate content based on posting type
       setTimeout(() => {
         this.router.navigate(['/officer/home']);
       }, 1500);
@@ -929,38 +957,51 @@ export class LoginComponent {
   private handleOfficerLoginError(error: any): void {
     console.error('Officer login error:', error);
 
-    if (error.error) {
+    // Check for password reset requirement first
+    if (error.error?.message?.includes('Password reset required')) {
+      const userid =
+        this.lastOfficerUserId ||
+        this.passwordLoginForm.get('username')?.value;
+      if (userid) {
+        this.router.navigate(['/officer/reset-password'], {
+          queryParams: { userid },
+        });
+      }
+      this.passwordLoginErrorMessage =
+        'Password reset required. Redirecting to reset password page...';
+      return;
+    }
+
+    // Handle specific error cases
+    if (error.status === 0 || error?.statusText === 'Unknown Error') {
+      this.passwordLoginErrorMessage = 'Network error: Could not connect to server. Please check your connection and try again.';
+    } else if (error.status === 401) {
+      this.passwordLoginErrorMessage = error.error?.message || 'Invalid UserID or password. Please verify and try again.';
+    } else if (error.status === 400) {
+      if (error.error?.message) {
+        this.passwordLoginErrorMessage = error.error.message;
+      } else {
+        this.passwordLoginErrorMessage = 'Invalid data. Please check your UserID and password format.';
+      }
+    } else if (error.status === 403) {
+      this.passwordLoginErrorMessage = 'Account not active or access denied. Please contact support.';
+    } else if (error.status === 404) {
+      this.passwordLoginErrorMessage = 'UserID not found. Please check your UserID or contact support.';
+    } else if (error.status === 429) {
+      this.passwordLoginErrorMessage = 'Too many login attempts. Please wait a few minutes before trying again.';
+    } else if (error.status >= 500) {
+      this.passwordLoginErrorMessage = 'Server error occurred. Please try again later.';
+    } else if (error.error) {
+      // Check for error message in response
       if (error.error.message) {
-        // If password reset is required, redirect to officer reset password page
-        if (error.error.message.includes('Password reset required')) {
-          const userid =
-            this.lastOfficerUserId ||
-            this.passwordLoginForm.get('username')?.value;
-          if (userid) {
-            this.router.navigate(['/officer/reset-password'], {
-              queryParams: { userid },
-            });
-          }
-          this.passwordLoginErrorMessage =
-            'Password reset required. Redirecting to reset password page...';
-        } else {
-          this.passwordLoginErrorMessage = error.error.message;
-        }
+        this.passwordLoginErrorMessage = error.error.message;
       } else if (error.error.error) {
         this.passwordLoginErrorMessage = error.error.error;
       } else {
-        this.passwordLoginErrorMessage =
-          'Login failed. Please check your UserID and password.';
+        this.passwordLoginErrorMessage = 'Login failed. Please check your UserID and password.';
       }
-    } else if (error.status === 0) {
-      this.passwordLoginErrorMessage =
-        'Unable to connect to server. Please check your connection.';
-    } else if (error.status === 401) {
-      this.passwordLoginErrorMessage =
-        error.error?.message || 'Invalid UserID or password. Please try again.';
     } else {
-      this.passwordLoginErrorMessage =
-        'An error occurred during login. Please try again later.';
+      this.passwordLoginErrorMessage = 'An error occurred during login. Please try again later.';
     }
 
     // Clear error message after 5 seconds
@@ -975,35 +1016,43 @@ export class LoginComponent {
   private handlePasswordLoginError(error: any): void {
     console.error('Password login error:', error);
 
-    if (error.error) {
+    // Handle specific error cases first
+    if (error.status === 0 || error?.statusText === 'Unknown Error') {
+      this.passwordLoginErrorMessage = 'Network error: Could not connect to server. Please check your connection and try again.';
+    } else if (error.status === 401) {
+      this.passwordLoginErrorMessage = 'Invalid username, password, or CAPTCHA. Please verify and try again.';
+      // Clear password and CAPTCHA fields, refresh CAPTCHA
+      this.passwordLoginForm.patchValue({ password: '', captcha: '' });
+      this.refreshPasswordCaptcha();
+    } else if (error.status === 400) {
+      // Check for specific validation errors
+      if (error.error?.message) {
+        this.passwordLoginErrorMessage = error.error.message;
+      } else if (error.error?.errors && Array.isArray(error.error.errors)) {
+        const validationErrors = error.error.errors.map((e: any) => e.message || e.defaultMessage).join(', ');
+        this.passwordLoginErrorMessage = `Validation error: ${validationErrors}`;
+      } else {
+        this.passwordLoginErrorMessage = 'Invalid data. Please check all fields and try again.';
+      }
+    } else if (error.status === 403) {
+      this.passwordLoginErrorMessage = 'Account not active or not verified. Please contact support.';
+    } else if (error.status === 404) {
+      this.passwordLoginErrorMessage = 'User not found. Please register first or check your credentials.';
+    } else if (error.status === 429) {
+      this.passwordLoginErrorMessage = 'Too many login attempts. Please wait a few minutes before trying again.';
+    } else if (error.status >= 500) {
+      this.passwordLoginErrorMessage = 'Server error occurred. Please try again later.';
+    } else if (error.error) {
+      // Check for error message in response
       if (error.error.message) {
         this.passwordLoginErrorMessage = error.error.message;
       } else if (error.error.error) {
         this.passwordLoginErrorMessage = error.error.error;
       } else {
-        this.passwordLoginErrorMessage =
-          'Login failed. Please check your credentials and try again.';
+        this.passwordLoginErrorMessage = 'Login failed. Please check your credentials and try again.';
       }
-    } else if (error.status === 0) {
-      this.passwordLoginErrorMessage =
-        'Unable to connect to server. Please check your connection.';
-    } else if (error.status === 401) {
-      this.passwordLoginErrorMessage =
-        'Invalid username, password, or CAPTCHA. Please try again.';
-      // Clear password and CAPTCHA fields, refresh CAPTCHA
-      this.passwordLoginForm.patchValue({ password: '', captcha: '' });
-      this.refreshPasswordCaptcha();
-    } else if (error.status === 400) {
-      this.passwordLoginErrorMessage =
-        'Invalid data. Please check all fields and try again.';
-    } else if (error.status === 403) {
-      this.passwordLoginErrorMessage =
-        'Account not active or not verified. Please contact support.';
-    } else if (error.status === 404) {
-      this.passwordLoginErrorMessage = 'User not found. Please register first.';
     } else {
-      this.passwordLoginErrorMessage =
-        'An error occurred during login. Please try again later.';
+      this.passwordLoginErrorMessage = 'An error occurred during login. Please try again later.';
     }
 
     // Clear error message after 5 seconds

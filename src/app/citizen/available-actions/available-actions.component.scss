@@ -113,7 +113,12 @@
     padding-left: 20px;
   }
 
-  .execute-btn {
+  .button-spinner {
+  display: inline-block;
+  margin-right: 8px;
+}
+
+.execute-btn {
     flex-shrink: 0;
   }
 }
