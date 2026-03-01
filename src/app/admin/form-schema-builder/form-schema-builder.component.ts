@@ -26,6 +26,12 @@ export interface FormFieldDefinition {
   placeholder?: string;
   helpText?: string;
   fieldGroup?: string; // Group code (e.g., "deed_details", "applicant_info") - references FormFieldGroup.groupCode
+  /** External API or internal data source – JSON string e.g. {"type":"API","apiConfigKey":"chd-revenue","dataEndpoint":"/path","valueField":"id","labelField":"name"} */
+  dataSource?: string | null;
+  /** When options depend on another field (e.g. district), this is that field's fieldName */
+  dependsOnField?: string | null;
+  /** When dependsOnField is set, query param name to send parent value (e.g. districtId) */
+  dataSourceParams?: string | null; // JSON e.g. {"parentValueQueryParam":"districtId"} or legacy params
   // Note: groupLabel and groupDisplayOrder are now managed in master field groups table (FormFieldGroup)
   conditionalLogic?: string;
   version?: number; // For conflict prevention
@@ -248,9 +254,18 @@ export class FormSchemaBuilderComponent implements OnInit, OnDestroy {
         helpText: field.helpText,
         defaultValue: field.defaultValue,
         fieldOptions: field.fieldOptions,
-        validationRules: field.validationRules
+        validationRules: field.validationRules,
+        dataSource: (field as any).dataSource ?? null,
+        dependsOnField: (field as any).dependsOnField ?? null,
+        dataSourceParams: (field as any).dataSourceParams ?? null,
+        // include on-change config so dialog can show/edit it
+        onChangeApi: (field as any).onChangeApi ?? (field as any).valueChangeApi ?? null,
+        onChangeResponseMapping: (field as any).onChangeResponseMapping ?? (field as any).responseFieldMapping ?? null
       } : null;
 
+      const existingFieldNames = (this.formSchema?.fields || [])
+        .map((f: FormFieldDefinition) => f.fieldName)
+        .filter((name: string) => name !== (originalField?.fieldName || ''));
       const dialogRef = this.dialog.open(FormFieldDialogComponent, {
         width: '700px',
         disableClose: false,
@@ -260,6 +275,7 @@ export class FormSchemaBuilderComponent implements OnInit, OnDestroy {
           nextDisplayOrder: this.getNextDisplayOrder(),
           caseTypeId: this.caseTypeId,
           fieldGroups: this.fieldGroups || [],
+          existingFieldNames,
           adminService: this.adminService
         }
       });
@@ -331,7 +347,7 @@ export class FormSchemaBuilderComponent implements OnInit, OnDestroy {
     // Prepare field data for API
     // Form schemas are now linked to Case Type
     const fieldData: any = {
-      caseTypeId: this.caseTypeId, // Backend expects caseTypeId
+      caseTypeId: this.caseTypeId,
       fieldName: field.fieldName,
       fieldLabel: field.fieldLabel,
       fieldType: field.fieldType,
@@ -342,8 +358,13 @@ export class FormSchemaBuilderComponent implements OnInit, OnDestroy {
       placeholder: field.placeholder || null,
       helpText: field.helpText || null,
       fieldGroup: field.fieldGroup || null,
-      // Note: groupLabel and groupDisplayOrder are now managed in master field groups table
       fieldOptions: field.fieldOptions || null,
+      dataSource: (field as any).dataSource ?? null,
+      dependsOnField: (field as any).dependsOnField ?? null,
+      dataSourceParams: (field as any).dataSourceParams ?? null,
+      // New: on-change external API config and response mapping (optional)
+      onChangeApi: (field as any).onChangeApi ?? (field as any).valueChangeApi ?? null,
+      onChangeResponseMapping: (field as any).onChangeResponseMapping ?? (field as any).responseFieldMapping ?? null,
       conditionalLogic: null,
       validationRules: field.validationRules || null
     };
@@ -441,8 +462,13 @@ export class FormSchemaBuilderComponent implements OnInit, OnDestroy {
         placeholder: field.placeholder || null,
         helpText: field.helpText || null,
         fieldGroup: field.fieldGroup || null,
-      // Note: groupLabel and groupDisplayOrder are now managed in master field groups table
         fieldOptions: field.fieldOptions || null,
+        dataSource: (field as any).dataSource ?? null,
+        dependsOnField: (field as any).dependsOnField ?? null,
+        dataSourceParams: (field as any).dataSourceParams ?? null,
+        // New: on-change external API config and response mapping (optional)
+        onChangeApi: (field as any).onChangeApi ?? (field as any).valueChangeApi ?? null,
+        onChangeResponseMapping: (field as any).onChangeResponseMapping ?? (field as any).responseFieldMapping ?? null,
         validationRules: field.validationRules || null
       };
 
@@ -482,12 +508,21 @@ export class FormSchemaBuilderComponent implements OnInit, OnDestroy {
           next: (response) => {
             this.loading = false;
             const apiResponse = response?.success !== undefined ? response : { success: true, data: response };
-            if (apiResponse.success && apiResponse.data && this.formSchema && this.formSchema.fields) {
-              // Update the field with response data (includes new version)
-              this.formSchema.fields[index] = apiResponse.data;
-            } else if (this.formSchema && this.formSchema.fields) {
-              // Fallback: update locally
-              this.formSchema.fields[index] = field;
+            if (this.formSchema && this.formSchema.fields) {
+              if (apiResponse.success && apiResponse.data) {
+                // Merge: prefer values from API, but keep onChange config if backend didn't echo it
+                const updatedFromApi: any = apiResponse.data;
+                const merged: any = {
+                  ...oldField,
+                  ...updatedFromApi
+                };
+                merged.onChangeApi = updatedFromApi.onChangeApi ?? (field as any).onChangeApi ?? (oldField as any).onChangeApi ?? null;
+                merged.onChangeResponseMapping = updatedFromApi.onChangeResponseMapping ?? (field as any).onChangeResponseMapping ?? (oldField as any).onChangeResponseMapping ?? null;
+                this.formSchema.fields[index] = merged;
+              } else {
+                // Fallback: update locally
+                this.formSchema.fields[index] = field as any;
+              }
             }
             this.fieldsChanged = true;
             this.sortFields();
@@ -1475,11 +1510,81 @@ export class FormSchemaBuilderComponent implements OnInit, OnDestroy {
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="full-width" *ngIf="needsOptions()">
+          <mat-label>Options source</mat-label>
+          <mat-select formControlName="optionsSource">
+            <mat-option value="static">Static (JSON array)</mat-option>
+            <mat-option value="api">External API</mat-option>
+          </mat-select>
+          <mat-hint>Where dropdown/radio options come from</mat-hint>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width" *ngIf="needsOptions() && isStaticOptions()">
           <mat-label>Options (JSON Array)</mat-label>
-          <textarea matInput formControlName="fieldOptions" rows="4" placeholder='Enter JSON array format'></textarea>
-          <mat-hint>For SELECT/RADIO: [{{ '{' }}"value": "val1", "label": "Label 1"{{ '}' }}]</mat-hint>
+          <textarea matInput formControlName="fieldOptions" rows="4" placeholder='[{"value":"val1","label":"Label 1"}]'></textarea>
+          <mat-hint>Static list: [{{ '{' }}"value": "val1", "label": "Label 1"{{ '}' }}] or nvcode/villagename</mat-hint>
           <mat-error *ngIf="fieldForm.get('fieldOptions')?.hasError('invalidJson')">Invalid JSON format</mat-error>
         </mat-form-field>
+
+        <div class="api-datasource-section" *ngIf="needsOptions() && isApiOptions()">
+          <h4 class="section-title">External API</h4>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>API config key</mat-label>
+            <input matInput formControlName="apiConfigKey" placeholder="e.g. chd-revenue">
+            <mat-hint>Must match key in app.external-apis.apis (e.g. chd-revenue)</mat-hint>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Data endpoint path</mat-label>
+            <input matInput formControlName="dataEndpoint" placeholder="e.g. /rccmsapi/YourDataPath">
+            <mat-hint>Path relative to API base URL</mat-hint>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Value field (stored)</mat-label>
+            <input matInput formControlName="valueField" placeholder="e.g. id, nvcode, code">
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Label field (display)</mat-label>
+            <input matInput formControlName="labelField" placeholder="e.g. name, villagename">
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Query params (optional JSON)</mat-label>
+            <textarea matInput formControlName="queryParamsJson" rows="2" placeholder='{"param1":"value1"}'></textarea>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Depends on field</mat-label>
+            <mat-select formControlName="dependsOnField">
+              <mat-option [value]="null">— None —</mat-option>
+              <mat-option *ngFor="let fn of data.existingFieldNames || []" [value]="fn">{{ fn }}</mat-option>
+            </mat-select>
+            <mat-hint>Reload options when this parent field value changes (e.g. district)</mat-hint>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width" *ngIf="fieldForm.get('dependsOnField')?.value">
+            <mat-label>Parent value query param name *</mat-label>
+            <input matInput formControlName="parentValueQueryParam" placeholder="e.g. Nvcode (CHD Revenue), districtId, parentId">
+            <mat-hint>Required when depends on field is set. Sent as query param when calling external API (e.g. Nvcode for GetMustkhas_Rccms)</mat-hint>
+            <mat-error *ngIf="fieldForm.get('parentValueQueryParam')?.hasError('required')">Required when using &quot;Depends on field&quot;</mat-error>
+          </mat-form-field>
+          <h4 class="section-title">On Change API (optional)</h4>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>On change API config (JSON)</mat-label>
+            <textarea
+              matInput
+              formControlName="onChangeApiJson"
+              rows="3"
+              placeholder='{"type":"API","apiConfigKey":"chd-revenue","dataEndpoint":"/rccmsapi/GetOwnerDetailsByMustKhas","selectedValueParamName":"MUST","additionalParams":[{"field":"select_village","paramName":"NVCODE"}]}'
+            ></textarea>
+            <mat-hint>Call external API when this dropdown value changes (see EXTERNAL_API_CONFIG.md).</mat-hint>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>On change response mapping (JSON)</mat-label>
+            <textarea
+              matInput
+              formControlName="onChangeResponseMappingJson"
+              rows="3"
+              placeholder='{"ownerName":"owner_name","block":"block","father":"father","khewat":"khewat","hissa":"hissa","typeOfLand":"type_of_land"}'
+            ></textarea>
+            <mat-hint>Map API response keys to form field names (e.g. ownerName → applicant_name).</mat-hint>
+          </mat-form-field>
+        </div>
 
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Placeholder</mat-label>
@@ -1544,6 +1649,17 @@ export class FormSchemaBuilderComponent implements OnInit, OnDestroy {
       gap: 24px;
       margin-top: 8px;
     }
+    .api-datasource-section {
+      border: 1px solid rgba(0,0,0,.12);
+      border-radius: 8px;
+      padding: 16px;
+      margin: 8px 0;
+      background: rgba(0,0,0,.02);
+    }
+    .api-datasource-section .section-title {
+      margin: 0 0 12px 0;
+      font-size: 14px;
+    }
   `]
 })
 export class FormFieldDialogComponent {
@@ -1559,19 +1675,30 @@ export class FormFieldDialogComponent {
   ) {
     this.fieldGroups = data.fieldGroups || [];
     const field = data.field || {};
-    
+    const optionsSource = this.getInitialOptionsSource(field);
+    const apiConfig = this.parseDataSourceApi(field.dataSource);
+
     // Initialize form first
     this.fieldForm = this.fb.group({
       fieldName: [field.fieldName || '', [Validators.required, Validators.pattern(/^[a-zA-Z0-9_]+$/)]],
       fieldLabel: [field.fieldLabel || '', Validators.required],
       fieldType: [field.fieldType || 'TEXT', Validators.required],
+      optionsSource: [optionsSource],
       fieldOptions: [field.fieldOptions || ''],
+      apiConfigKey: [apiConfig.apiConfigKey || ''],
+      dataEndpoint: [apiConfig.dataEndpoint || ''],
+      valueField: [apiConfig.valueField || 'id'],
+      labelField: [apiConfig.labelField || 'name'],
+      queryParamsJson: [apiConfig.queryParamsJson || ''],
+      dependsOnField: [field.dependsOnField || null],
+      parentValueQueryParam: [this.getParentValueQueryParam(field) || ''],
+      onChangeApiJson: [field.onChangeApi || field.valueChangeApi || ''],
+      onChangeResponseMappingJson: [field.onChangeResponseMapping || field.responseFieldMapping || ''],
       placeholder: [field.placeholder || ''],
       helpText: [field.helpText || ''],
       defaultValue: [field.defaultValue || ''],
       displayOrder: [field.displayOrder || data.nextDisplayOrder || 1, [Validators.required, Validators.min(1)]],
       fieldGroup: [field.fieldGroup || null],
-      // Note: groupLabel and groupDisplayOrder are now managed in master field groups table
       isRequired: [field.isRequired !== undefined ? field.isRequired : false],
       isActive: [field.isActive !== undefined ? field.isActive : true]
     });
@@ -1598,11 +1725,78 @@ export class FormFieldDialogComponent {
     this.fieldForm.get('fieldOptions')?.valueChanges.subscribe(() => {
       this.validateOptions();
     });
+    // When "Depends on field" is set, require "Parent value query param name" (used by backend as query param e.g. Nvcode)
+    const updateParentParamRequired = () => {
+      const dependsOn = this.fieldForm.get('dependsOnField')?.value;
+      const control = this.fieldForm.get('parentValueQueryParam');
+      if (control) {
+        if (dependsOn != null && dependsOn !== '') {
+          control.setValidators(Validators.required);
+        } else {
+          control.setValidators(null);
+        }
+        control.updateValueAndValidity();
+      }
+    };
+    updateParentParamRequired();
+    this.fieldForm.get('dependsOnField')?.valueChanges.subscribe(() => updateParentParamRequired());
   }
 
   needsOptions(): boolean {
     const fieldType = this.fieldForm.get('fieldType')?.value;
     return fieldType === 'SELECT' || fieldType === 'RADIO';
+  }
+
+  isStaticOptions(): boolean {
+    return this.fieldForm.get('optionsSource')?.value === 'static';
+  }
+
+  isApiOptions(): boolean {
+    return this.fieldForm.get('optionsSource')?.value === 'api';
+  }
+
+  private getInitialOptionsSource(field: any): 'static' | 'api' {
+    if (field.dataSource) {
+      try {
+        const ds = typeof field.dataSource === 'string' ? JSON.parse(field.dataSource) : field.dataSource;
+        if (ds && ds.type === 'API') return 'api';
+      } catch (_) {}
+    }
+    return 'static';
+  }
+
+  private parseDataSourceApi(dataSource: string | null | undefined): {
+    apiConfigKey: string;
+    dataEndpoint: string;
+    valueField: string;
+    labelField: string;
+    queryParamsJson: string;
+  } {
+    const empty = { apiConfigKey: '', dataEndpoint: '', valueField: 'id', labelField: 'name', queryParamsJson: '' };
+    if (!dataSource) return empty;
+    try {
+      const ds = typeof dataSource === 'string' ? JSON.parse(dataSource) : dataSource;
+      if (!ds || ds.type !== 'API') return empty;
+      return {
+        apiConfigKey: ds.apiConfigKey || '',
+        dataEndpoint: ds.dataEndpoint || '',
+        valueField: ds.valueField || 'id',
+        labelField: ds.labelField || 'name',
+        queryParamsJson: ds.queryParams ? JSON.stringify(ds.queryParams, null, 0) : ''
+      };
+    } catch (_) {
+      return empty;
+    }
+  }
+
+  private getParentValueQueryParam(field: any): string {
+    if (!field.dataSourceParams) return '';
+    try {
+      const p = typeof field.dataSourceParams === 'string' ? JSON.parse(field.dataSourceParams) : field.dataSourceParams;
+      return p?.parentValueQueryParam || '';
+    } catch (_) {
+      return '';
+    }
   }
 
   /**
@@ -1665,9 +1859,14 @@ export class FormFieldDialogComponent {
 
   validateOptions(): void {
     const fieldType = this.fieldForm.get('fieldType')?.value;
+    const optionsSource = this.fieldForm.get('optionsSource')?.value;
     const options = this.fieldForm.get('fieldOptions')?.value;
-    
-    if ((fieldType === 'SELECT' || fieldType === 'RADIO') && options) {
+    if (fieldType !== 'SELECT' && fieldType !== 'RADIO') return;
+    if (optionsSource === 'api') {
+      this.fieldForm.get('fieldOptions')?.setErrors(null);
+      return;
+    }
+    if (options) {
       try {
         JSON.parse(options);
         this.fieldForm.get('fieldOptions')?.setErrors(null);
@@ -1682,9 +1881,86 @@ export class FormFieldDialogComponent {
   }
 
   onSave(): void {
-    if (this.fieldForm.valid) {
-      this.dialogRef.close(this.fieldForm.value);
+    const raw = this.fieldForm.value;
+    const fieldType = raw.fieldType;
+    const optionsSource = raw.optionsSource;
+
+    if (fieldType === 'SELECT' || fieldType === 'RADIO') {
+      if (optionsSource === 'api') {
+        const apiConfigKey = (raw.apiConfigKey || '').trim();
+        const dataEndpoint = (raw.dataEndpoint || '').trim();
+        if (!apiConfigKey || !dataEndpoint) {
+          this.snackBar.open('API config key and Data endpoint are required for External API options.', 'Close', { duration: 4000 });
+          return;
+        }
+      } else if (optionsSource === 'static' && raw.fieldOptions) {
+        try {
+          JSON.parse(raw.fieldOptions);
+        } catch (e) {
+          this.fieldForm.get('fieldOptions')?.setErrors({ invalidJson: true });
+          return;
+        }
+      }
     }
+
+    const result: any = {
+      fieldName: raw.fieldName,
+      fieldLabel: raw.fieldLabel,
+      fieldType: raw.fieldType,
+      placeholder: raw.placeholder,
+      helpText: raw.helpText,
+      defaultValue: raw.defaultValue,
+      displayOrder: raw.displayOrder,
+      fieldGroup: raw.fieldGroup,
+      isRequired: raw.isRequired,
+      isActive: raw.isActive
+    };
+
+    // Optional: onChange API (dropdown change → call external API and fill other fields)
+    const onChangeApiJson = (raw.onChangeApiJson || '').trim();
+    const onChangeResponseMappingJson = (raw.onChangeResponseMappingJson || '').trim();
+    result.onChangeApi = onChangeApiJson || null;
+    result.onChangeResponseMapping = onChangeResponseMappingJson || null;
+
+    if (fieldType === 'SELECT' || fieldType === 'RADIO') {
+      if (optionsSource === 'static') {
+        result.fieldOptions = raw.fieldOptions || null;
+        result.dataSource = null;
+        result.dependsOnField = null;
+        result.dataSourceParams = null;
+      } else if (optionsSource === 'api') {
+        result.fieldOptions = null;
+        const queryParams = (() => {
+          const j = (raw.queryParamsJson || '').trim();
+          if (!j) return undefined;
+          try {
+            return JSON.parse(j);
+          } catch (_) {
+            return undefined;
+          }
+        })();
+        result.dataSource = JSON.stringify({
+          type: 'API',
+          apiConfigKey: (raw.apiConfigKey || '').trim(),
+          dataEndpoint: (raw.dataEndpoint || '').trim(),
+          valueField: (raw.valueField || 'id').trim() || 'id',
+          labelField: (raw.labelField || 'name').trim() || 'name',
+          ...(queryParams && Object.keys(queryParams).length ? { queryParams } : {})
+        });
+        result.dependsOnField = raw.dependsOnField || null;
+        const parentParam = (raw.parentValueQueryParam || '').trim();
+        result.dataSourceParams = raw.dependsOnField && parentParam
+          ? JSON.stringify({ parentValueQueryParam: parentParam })
+          : null;
+      }
+    } else {
+      result.fieldOptions = null;
+      result.dataSource = null;
+      result.dependsOnField = null;
+      result.dataSourceParams = null;
+    }
+
+    this.dialogRef.close(result);
   }
 }
 

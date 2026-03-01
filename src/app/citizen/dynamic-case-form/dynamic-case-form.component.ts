@@ -39,6 +39,10 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
   preGroupedFields: Array<{ groupCode: string; groupLabel: string; groupDisplayOrder: number; fields: any[] }> = []; // Pre-grouped fields from API
   groupedFields: Array<{ groupCode: string; groupLabel: string; groupDisplayOrder: number; fields: any[] }> = []; // Cached grouped fields for template
   dataSourceOptions: Map<string, any[]> = new Map(); // Cache for dataSource options
+  /** Cache for normalized static fieldOptions (value/label) to avoid re-parsing on every change detection */
+  private fieldOptionsCache = new Map<string, { value: string; label: string }[]>();
+  /** Debounce timer per field to avoid duplicate external API calls when multiple parents trigger reload */
+  private loadDataSourceDebounce = new Map<string, ReturnType<typeof setTimeout>>();
   citizenUnitId: number | null = null; // From registration data
 
   constructor(
@@ -81,6 +85,8 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.loadDataSourceDebounce.forEach(t => clearTimeout(t));
+    this.loadDataSourceDebounce.clear();
     // Clean up subscription to prevent memory leaks
     if (this.schemaSubscription) {
       console.log('Cleaning up schema subscription on component destroy');
@@ -276,6 +282,9 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
             ({ ...f, fieldType: this.normalizeFieldType(f.fieldType), isHidden: false });
           const byDisplayOrder = (a: any, b: any) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0);
 
+          this.fieldOptionsCache.clear();
+          this.dataSourceOptions.clear();
+
           if (data.groups && Array.isArray(data.groups) && data.groups.length > 0) {
             console.log('Processing groups structure:', data.groups.length, 'groups');
             this.preGroupedFields = data.groups
@@ -344,8 +353,8 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
 
           // Initialize conditional fields - hide only if dependency condition is not met
           this.fields.forEach(field => {
-            if (field.dependsOnField) {
-              // Initially hide dependent fields; they'll be shown when parent value matches condition
+            if (this.getParentFieldNames(field).length > 0) {
+              // Initially hide dependent fields; they'll be shown when parent value(s) match
               field.isHidden = true;
             } else {
               // Ensure non-dependent fields are visible
@@ -431,19 +440,148 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Load options for a field with dataSource
+   * Whether field.dataSource is external API config (JSON with type "API").
+   */
+  private isExternalApiDataSource(dataSource: any): boolean {
+    if (dataSource == null || typeof dataSource !== 'string') return false;
+    const s = dataSource.trim();
+    if (!s.startsWith('{')) return false;
+    try {
+      const parsed = JSON.parse(s);
+      return parsed && String(parsed.type).toUpperCase() === 'API';
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Build runtime params for external API. Key comes from dataSourceParams.parentValueQueryParam
+   * (e.g. "Nvcode" for CHD Revenue GetMustkhas_Rccms). For two-level dependency (e.g. GetOwnerDetailsByMustKhas
+   * with MUST + NVCODE), use dataSourceParams.parentDependencies instead.
+   * Backend must forward these as query params.
+   */
+  private getExternalApiRuntimeParams(field: any): Record<string, string | number> {
+    const params: Record<string, string | number> = {};
+    if (!this.form) return params;
+
+    // Multi-param dependency (e.g. MUST + NVCODE for GetOwnerDetailsByMustKhas)
+    let parentDependencies: Array<{ field: string; paramName: string }> | null = null;
+    if (field.dataSourceParams) {
+      try {
+        const p = typeof field.dataSourceParams === 'string'
+          ? JSON.parse(field.dataSourceParams) : field.dataSourceParams;
+        if (p && Array.isArray(p.parentDependencies) && p.parentDependencies.length > 0) {
+          parentDependencies = p.parentDependencies;
+        }
+      } catch (_) {}
+    }
+
+    if (parentDependencies) {
+      for (const dep of parentDependencies) {
+        const parentValue = this.form.get(dep.field)?.value;
+        if (parentValue == null || parentValue === '') return {}; // require all parents
+        params[dep.paramName] = parentValue;
+      }
+      return params;
+    }
+
+    // Single parent (dependsOnField + parentValueQueryParam)
+    if (!field.dependsOnField) return params;
+    const parentValue = this.form.get(field.dependsOnField)?.value;
+    if (parentValue == null || parentValue === '') return params;
+    let paramName = 'Nvcode'; // CHD Revenue APIs expect Nvcode; override via dataSourceParams.parentValueQueryParam
+    if (field.dataSourceParams) {
+      try {
+        const p = typeof field.dataSourceParams === 'string'
+          ? JSON.parse(field.dataSourceParams) : field.dataSourceParams;
+        if (p && typeof p.parentValueQueryParam === 'string' && p.parentValueQueryParam.trim()) {
+          paramName = p.parentValueQueryParam.trim();
+        }
+      } catch (_) {}
+    }
+    params[paramName] = parentValue;
+    return params;
+  }
+
+  /** Parent field names that affect this field (for reload/visibility). */
+  private getParentFieldNames(field: any): string[] {
+    let parentDependencies: Array<{ field: string; paramName: string }> | null = null;
+    if (field.dataSourceParams) {
+      try {
+        const p = typeof field.dataSourceParams === 'string'
+          ? JSON.parse(field.dataSourceParams) : field.dataSourceParams;
+        if (p && Array.isArray(p.parentDependencies) && p.parentDependencies.length > 0) {
+          parentDependencies = p.parentDependencies;
+        }
+      } catch (_) {}
+    }
+    if (parentDependencies) return parentDependencies.map(d => d.field);
+    if (field.dependsOnField) return [field.dependsOnField];
+    return [];
+  }
+
+  /**
+   * Load options for a field with dataSource (internal GET or external API POST).
    */
   loadFieldDataSource(field: any): void {
     if (!field.dataSource) return;
 
-    const params: Record<string, string | number> = {};
-
-    // Build params from dataSourceParams
-    if (field.dataSourceParams) {
-      Object.assign(params, field.dataSourceParams);
+    // External API: POST to /external-api with body
+    if (this.isExternalApiDataSource(field.dataSource)) {
+      const parentNames = this.getParentFieldNames(field);
+      const runtimeParams = this.getExternalApiRuntimeParams(field);
+      // Don't call API when we have parent deps but any value is missing
+      if (parentNames.length > 0 && Object.keys(runtimeParams).length === 0) {
+        field.fieldOptions = null;
+        this.cdr.markForCheck();
+        return;
+      }
+      // Debounce so two parent valueChanges in quick succession trigger only one API call
+      const key = field.fieldName;
+      const existing = this.loadDataSourceDebounce.get(key);
+      if (existing) clearTimeout(existing);
+      const timer = setTimeout(() => {
+        this.loadDataSourceDebounce.delete(key);
+        const params = this.getExternalApiRuntimeParams(field);
+        if (parentNames.length > 0 && Object.keys(params).length === 0) {
+          field.fieldOptions = null;
+          this.cdr.markForCheck();
+          return;
+        }
+        this.caseService.getExternalApiDataSource(field.dataSource, params).subscribe({
+        next: (response) => {
+          if (response.success && Array.isArray(response.data)) {
+            const options = response.data.map((item: any) => ({
+              value: item.value != null ? item.value : item.id,
+              label: item.label != null ? item.label : item.name || String(item.value)
+            }));
+            field.fieldOptions = JSON.stringify(options);
+            const cacheKey = `${field.dataSource}_${JSON.stringify(params)}`;
+            this.dataSourceOptions.set(cacheKey, options);
+            this.cdr.markForCheck();
+          }
+        },
+        error: (error) => {
+          console.error(`Error loading external API dataSource for field ${field.fieldName}:`, error);
+          this.cdr.markForCheck();
+        }
+      });
+      }, 150);
+      this.loadDataSourceDebounce.set(key, timer);
+      return;
     }
 
-    // Handle special cases
+    // Internal data source: GET /form-data-sources/{dataSource}
+    const params: Record<string, string | number> = {};
+    if (field.dataSourceParams) {
+      try {
+        const p = typeof field.dataSourceParams === 'string'
+          ? JSON.parse(field.dataSourceParams) : field.dataSourceParams;
+        if (p && typeof p === 'object') Object.assign(params, p);
+      } catch (_) {
+        Object.assign(params, field.dataSourceParams);
+      }
+    }
     if (field.dataSource === 'admin-units' && this.citizenUnitId && !params['parentId']) {
       // Could use citizen's unit hierarchy
     }
@@ -451,43 +589,27 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
     this.caseService.getFormDataSource(field.dataSource, params).subscribe({
       next: (response) => {
         if (response.success && response.data) {
-          // Convert API response to fieldOptions format
           const options = response.data.map((item: any) => {
-            // Handle different data source formats
             if (field.dataSource === 'admin-units') {
-              return {
-                value: item.unitId || item.id,
-                label: item.unitName || item.name
-              };
-            } else if (field.dataSource === 'courts') {
-              return {
-                value: item.id,
-                label: item.courtName || item.name
-              };
-            } else if (field.dataSource === 'acts') {
-              return {
-                value: item.id,
-                label: item.name || item.actName
-              };
-            } else {
-              return {
-                value: item.id,
-                label: item.name || item.label
-              };
+              return { value: item.unitId || item.id, label: item.unitName || item.name };
             }
+            if (field.dataSource === 'courts') {
+              return { value: item.id, label: item.courtName || item.name };
+            }
+            if (field.dataSource === 'acts') {
+              return { value: item.id, label: item.name || item.actName };
+            }
+            return { value: item.id, label: item.name || item.label };
           });
-
-          // Store in field for template access
           field.fieldOptions = JSON.stringify(options);
-
-          // Cache for future use
           const cacheKey = `${field.dataSource}_${JSON.stringify(params)}`;
           this.dataSourceOptions.set(cacheKey, options);
-          // Do NOT rebuild form — form controls already exist; we only updated fieldOptions for dropdown
+          this.cdr.markForCheck();
         }
       },
       error: (error) => {
         console.error(`Error loading dataSource for field ${field.fieldName}:`, error);
+        this.cdr.markForCheck();
       }
     });
   }
@@ -497,27 +619,46 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
    * When a field value changes, show/hide dependent fields
    */
   onFieldValueChange(fieldName: string, value: any): void {
-    // Find fields that depend on this field
-    const dependentFields = this.fields.filter(f =>
-      f.dependsOnField === fieldName
-    );
+    // If this field has onChangeApi config (dropdown -> call API and fill textboxes), run it first
+    const changedField = this.fields.find(f => f.fieldName === fieldName);
+    if (changedField && this.getOnChangeApiConfig(changedField)) {
+      if (value != null && value !== '') {
+        this.loadOnChangeApiAndPatchFields(changedField, value);
+      } else {
+        // Clear mapped fields when dropdown is cleared
+        const mapping = this.getOnChangeResponseMapping(changedField);
+        if (this.form && Object.keys(mapping).length > 0) {
+          Object.values(mapping).forEach(formFieldName => {
+            const control = this.form.get(formFieldName);
+            if (control) control.setValue(null, { emitEvent: false });
+          });
+          this.cdr.markForCheck();
+        }
+      }
+    }
+
+    // Find fields that depend on this field (single parent or any parent in parentDependencies)
+    const dependentFields = this.fields.filter(f => {
+      if (f.dependsOnField === fieldName) return true;
+      const parentNames = this.getParentFieldNames(f);
+      return parentNames.includes(fieldName);
+    });
 
     dependentFields.forEach(depField => {
-      const shouldShow = this.checkDependencyCondition(
-        depField.dependencyCondition,
-        value
-      );
+      const parentNames = this.getParentFieldNames(depField);
+      const firstParent = parentNames[0];
+      const shouldShow = firstParent
+        ? this.checkDependencyCondition(
+            depField.dependencyCondition,
+            this.form?.get(firstParent)?.value ?? value
+          )
+        : true;
 
       if (shouldShow) {
-        // Show field and load its dataSource if needed
         depField.isHidden = false;
-        if (depField.dataSource && !depField.fieldOptions) {
-          // Update dataSourceParams with parent value
-          const params: Record<string, string | number> = { ...(depField.dataSourceParams || {}) };
-          if (depField.dataSource === 'admin-units' && depField.dataSourceParams?.level) {
-            params['parentId'] = value;
-          }
-          depField.dataSourceParams = params;
+        if (depField.dataSource) {
+          // Reload options when parent value changes (so dependent dropdown gets new list)
+          depField.fieldOptions = null;
           this.loadFieldDataSource(depField);
         }
       } else {
@@ -547,6 +688,112 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
     }
 
     return true;
+  }
+
+  /**
+   * Get onChange API config from field (dropdown: on selection change call API and fill other fields).
+   * Supports additionalParams to send other form field values (e.g. NVCODE from village dropdown).
+   */
+  private getOnChangeApiConfig(field: any): {
+    dataSource: string;
+    selectedValueParamName: string;
+    additionalParams?: Array<{ field: string; paramName: string }>;
+  } | null {
+    const raw = field.onChangeApi || field.valueChangeApi;
+    if (!raw) return null;
+    try {
+      const config = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      if (!config || config.type !== 'API' || !config.apiConfigKey || !config.dataEndpoint) return null;
+      const paramName = (config.selectedValueParamName || config.paramName || 'id').trim();
+      const dataSource = typeof raw === 'string' ? raw : JSON.stringify(config);
+      const additionalParams = Array.isArray(config.additionalParams) ? config.additionalParams : undefined;
+      return { dataSource, selectedValueParamName: paramName, additionalParams };
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Parse response-to-field mapping from field.onChangeResponseMapping (JSON string or object).
+   * Keys = response property names (or dot path), values = form field names to patch.
+   */
+  private getOnChangeResponseMapping(field: any): Record<string, string> {
+    const raw = field.onChangeResponseMapping || field.responseFieldMapping;
+    if (!raw) return {};
+    try {
+      const map = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      return map && typeof map === 'object' ? map : {};
+    } catch {
+      return {};
+    }
+  }
+
+  /**
+   * Get a nested value from an object by dot path (e.g. "owner.address.line1").
+   */
+  private getValueByPath(obj: any, path: string): any {
+    if (obj == null || !path) return undefined;
+    const parts = path.trim().split('.');
+    let current = obj;
+    for (const p of parts) {
+      if (current == null || typeof current !== 'object') return undefined;
+      current = current[p];
+    }
+    return current;
+  }
+
+  /**
+   * When a dropdown selection changes and the field has onChangeApi config, call the external API
+   * with the selected value and patch mapped form fields from the response.
+   */
+  loadOnChangeApiAndPatchFields(field: any, selectedValue: any): void {
+    const config = this.getOnChangeApiConfig(field);
+    const mapping = this.getOnChangeResponseMapping(field);
+    if (!config || !this.form || Object.keys(mapping).length === 0) return;
+
+    const runtimeParams: Record<string, string | number> = {
+      [config.selectedValueParamName]: selectedValue
+    };
+    // Add params from other form fields (e.g. NVCODE from village for GetOwnerDetailsByMustKhas)
+    if (config.additionalParams && config.additionalParams.length > 0) {
+      for (const ap of config.additionalParams) {
+        const val = this.form.get(ap.field)?.value;
+        if (val != null && val !== '') runtimeParams[ap.paramName] = val;
+      }
+    }
+    // If API needs both MUST and NVCODE, skip call when a required param is missing
+    if (config.additionalParams?.length && Object.keys(runtimeParams).length < 1 + config.additionalParams.length) {
+      Object.keys(mapping).forEach(formFieldName => {
+        const control = this.form.get(formFieldName);
+        if (control) control.setValue(null, { emitEvent: false });
+      });
+      this.cdr.markForCheck();
+      return;
+    }
+
+    this.caseService.getExternalApiDataSource(config.dataSource, runtimeParams).subscribe({
+      next: (response) => {
+        if (!response.success || response.data == null) return;
+        // Backend may return data as array (e.g. [item]) or single object
+        let data: any = response.data;
+        if (Array.isArray(data) && data.length > 0) data = data[0];
+        else if (Array.isArray(data)) return;
+
+        Object.entries(mapping).forEach(([responseKey, formFieldName]) => {
+          const control = this.form.get(formFieldName);
+          if (!control) return;
+          const value = this.getValueByPath(data, responseKey);
+          if (value !== undefined && value !== null) {
+            control.setValue(value, { emitEvent: false });
+          }
+        });
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error(`OnChange API for field ${field.fieldName}:`, err);
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   /**
@@ -614,6 +861,8 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
     this.selectedCaseType = null;
     this.courtLevel = '';
     this.courtTypes = [];
+    this.fieldOptionsCache.clear();
+    this.dataSourceOptions.clear();
 
     if (caseTypeId) {
       // Find and store the selected case type object
@@ -761,14 +1010,21 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
           } else if (parsed.length === 0) {
             issues.push(`Field ${field.fieldName}: fieldOptions array is empty`);
           } else {
-            // Validate option structure
+            // Validate option structure (accept value/label, nvcode/villagename, id/name, code/name)
             parsed.forEach((opt: any, idx: number) => {
               if (!opt || typeof opt !== 'object') {
                 issues.push(`Field ${field.fieldName}: Option ${idx} is not an object`);
-              } else if (opt.value === undefined || opt.value === null) {
-                issues.push(`Field ${field.fieldName}: Option ${idx} missing value`);
-              } else if (!opt.label) {
-                issues.push(`Field ${field.fieldName}: Option ${idx} missing label`);
+              } else {
+                const hasValue = opt.value !== undefined && opt.value !== null
+                  || opt.nvcode !== undefined && opt.nvcode !== null
+                  || opt.id !== undefined && opt.id !== null
+                  || opt.code !== undefined && opt.code !== null;
+                const hasLabel = opt.label != null || opt.villagename != null || opt.name != null;
+                if (!hasValue) {
+                  issues.push(`Field ${field.fieldName}: Option ${idx} missing value`);
+                } else if (!hasLabel) {
+                  issues.push(`Field ${field.fieldName}: Option ${idx} missing label`);
+                }
               }
             });
           }
@@ -813,53 +1069,83 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Get options for a field (handles both static fieldOptions and dynamic dataSource)
+   * Normalize option object to { value, label } format.
+   * API may send value/label, nvcode/villagename, id/name, code/name, etc.
    */
-  getFieldOptions(field: any): any[] {
-    // If field has static options (fieldOptions JSON string)
-    if (field.fieldOptions) {
+  private normalizeOption(opt: any): { value: string; label: string } | null {
+    if (!opt || typeof opt !== 'object') return null;
+    let value: string | undefined;
+    let label: string | undefined;
+    if (opt.value !== undefined && opt.value !== null) {
+      value = String(opt.value);
+      label = opt.label != null ? String(opt.label) : value;
+    } else if (opt.nvcode !== undefined && opt.nvcode !== null) {
+      value = String(opt.nvcode);
+      label = opt.villagename != null ? String(opt.villagename) : value;
+    } else if (opt.id !== undefined && opt.id !== null) {
+      value = String(opt.id);
+      label = opt.name != null ? String(opt.name) : value;
+    } else if (opt.code !== undefined && opt.code !== null) {
+      value = String(opt.code);
+      label = opt.name != null ? String(opt.name) : value;
+    } else {
+      return null;
+    }
+    return { value, label };
+  }
+
+  /**
+   * Get options for a field (handles both static fieldOptions and dynamic dataSource).
+   * Caches normalized static options to avoid re-parsing on every change detection (stops dropdown "roaming").
+   */
+  getFieldOptions(field: any): { value: string; label: string }[] {
+    if (!field) return [];
+
+    // If field has static options (fieldOptions JSON string), parse and cache
+    if (field.fieldOptions != null && field.fieldOptions !== '') {
+      const cacheKey = `static_${field.id ?? field.fieldName}`;
+      const cached = this.fieldOptionsCache.get(cacheKey);
+      if (cached) return cached;
+
       try {
         let parsed: any;
-        if (typeof field.fieldOptions === 'string') {
-          // Try parsing as JSON
-          parsed = JSON.parse(field.fieldOptions);
+        const raw = field.fieldOptions;
+        if (typeof raw === 'string') {
+          const trimmed = raw.trim();
+          parsed = trimmed ? JSON.parse(trimmed) : [];
+        } else if (Array.isArray(raw)) {
+          parsed = raw;
         } else {
-          // Already an object/array
-          parsed = field.fieldOptions;
+          parsed = [];
         }
 
         if (Array.isArray(parsed)) {
-          // Validate options structure
-          const validOptions = parsed.filter((opt: any) => {
-            if (!opt || typeof opt !== 'object') {
-              console.warn(`Invalid option in field ${field.fieldName}:`, opt);
-              return false;
-            }
-            if (opt.value === undefined || opt.value === null) {
-              console.warn(`Option missing value in field ${field.fieldName}:`, opt);
-              return false;
-            }
-            return true;
-          });
-          return validOptions;
-        } else {
-          console.warn(`fieldOptions for ${field.fieldName} is not an array:`, parsed);
+          const normalized: { value: string; label: string }[] = [];
+          for (const opt of parsed) {
+            const n = this.normalizeOption(opt);
+            if (n) normalized.push(n);
+          }
+          this.fieldOptionsCache.set(cacheKey, normalized);
+          return normalized;
         }
       } catch (e) {
         console.error(`Error parsing fieldOptions JSON for field ${field.fieldName}:`, e);
-        console.error('Raw fieldOptions:', field.fieldOptions);
+        console.error('Raw fieldOptions (first 200 chars):', String(field.fieldOptions).slice(0, 200));
       }
     }
 
     // If field has dataSource, check if options are already loaded
-    if (field.dataSource && this.dataSourceOptions.has(field.dataSource)) {
-      const options = this.dataSourceOptions.get(field.dataSource);
-      if (Array.isArray(options)) {
-        return options;
+    if (field.dataSource) {
+      const runtimeParams = this.isExternalApiDataSource(field.dataSource)
+        ? this.getExternalApiRuntimeParams(field)
+        : (field.dataSourceParams || {});
+      const cacheKey = `${field.dataSource}_${JSON.stringify(runtimeParams)}`;
+      if (this.dataSourceOptions.has(cacheKey)) {
+        const options = this.dataSourceOptions.get(cacheKey);
+        if (Array.isArray(options)) return options;
       }
     }
 
-    // Return empty array if no options available
     return [];
   }
 
@@ -868,11 +1154,17 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
    */
   isFieldVisible(field: any): boolean {
     if (field.isHidden === true) return false;
-    if (!field.dependsOnField) return true;
+    const parentNames = this.getParentFieldNames(field);
+    if (parentNames.length === 0) return true;
 
-    const parentField = this.fields.find(f => f.fieldName === field.dependsOnField);
-    if (!parentField || !this.form) return true;
-
+    if (!this.form) return true;
+    // For multi-parent (e.g. parentDependencies), all parents must have a value
+    for (const p of parentNames) {
+      const parentValue = this.form.get(p)?.value;
+      if (parentValue == null || parentValue === '') return false;
+    }
+    const parentField = this.fields.find(f => f.fieldName === parentNames[0]);
+    if (!parentField) return true;
     const parentValue = this.form.get(parentField.fieldName)?.value;
     return this.checkDependencyCondition(field.dependencyCondition, parentValue);
   }
@@ -931,12 +1223,7 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
     console.log('Building form with fields:', this.fields.length, 'visible fields:', this.fields.filter(f => !f.isHidden).length);
 
     this.fields.forEach((field) => {
-      // Skip hidden fields (they'll be added when dependency condition is met)
-      if (field.isHidden) {
-        console.log('Skipping hidden field:', field.fieldName, 'dependsOn:', field.dependsOnField);
-        return;
-      }
-
+      // Add a control for every field so dependent fields have a control when they become visible
       const validators = [];
 
       if (field.isRequired) {
@@ -998,14 +1285,18 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
       } else if (ft === 'CHECKBOX') {
         initialValue = initialValue === 'true' || initialValue === true || initialValue === '1' || initialValue === 1;
       } else if (ft === 'RADIO' || ft === 'SELECT') {
-        // For radio/select, ensure value matches one of the options
+        // For radio/select, ensure value matches one of the options (supports value/label or nvcode/villagename etc.)
         if (initialValue != null && field.fieldOptions) {
           try {
             const options = typeof field.fieldOptions === 'string'
               ? JSON.parse(field.fieldOptions)
               : field.fieldOptions;
-            if (Array.isArray(options) && !options.some((opt: any) => opt.value === initialValue)) {
-              initialValue = null; // Invalid option value
+            if (Array.isArray(options)) {
+              const matches = (opt: any) => {
+                const v = opt?.value ?? opt?.nvcode ?? opt?.id ?? opt?.code;
+                return v != null && String(v) === String(initialValue);
+              };
+              if (!options.some(matches)) initialValue = null; // Invalid option value
             }
           } catch (e) {
             // Invalid JSON, keep initialValue as is
@@ -1021,22 +1312,35 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
     console.log('Form controls created:', Object.keys(group).length, 'controls:', Object.keys(group));
 
     // Subscribe to field value changes for conditional fields
-    Object.keys(this.form.controls).forEach(fieldName => {
-      const field = this.fields.find(f => f.fieldName === fieldName);
-      if (field && field.dependsOnField) {
-        // This field depends on another - listen to parent field changes
-        const parentField = this.fields.find(f => f.fieldName === field.dependsOnField);
-        if (parentField && this.form.get(parentField.fieldName)) {
-          // Check initial value and show/hide dependent field
-          const parentValue = this.form.get(parentField.fieldName)?.value;
-          if (parentValue) {
-            this.onFieldValueChange(parentField.fieldName, parentValue);
-          }
-
-          // Listen to future changes
-          this.form.get(parentField.fieldName)?.valueChanges.subscribe(value => {
-            this.onFieldValueChange(parentField.fieldName, value);
-          });
+    const seenParentSubs = new Set<string>(); // avoid duplicate subscriptions per control
+    this.fields.forEach(f => {
+      const parentNames = this.getParentFieldNames(f);
+      parentNames.forEach(parentFieldName => {
+        const subKey = parentFieldName;
+        if (seenParentSubs.has(subKey)) return;
+        seenParentSubs.add(subKey);
+        const parentControl = this.form.get(parentFieldName);
+        if (!parentControl) return;
+        parentControl.valueChanges.subscribe(value => {
+          this.onFieldValueChange(parentFieldName, value);
+        });
+      });
+    });
+    // Initial load for dependent fields: run once per field when all parents have values (avoids double API call)
+    this.fields.forEach(f => {
+      const parentNames = this.getParentFieldNames(f);
+      if (parentNames.length === 0) return;
+      const allPresent = parentNames.every(
+        p => this.form.get(p)?.value != null && this.form.get(p)?.value !== ''
+      );
+      if (allPresent && f.dataSource) {
+        this.loadFieldDataSource(f);
+      } else {
+        // Show/hide based on first parent so visibility is correct
+        const firstParent = parentNames[0];
+        const parentValue = this.form.get(firstParent)?.value;
+        if (parentValue != null && parentValue !== '') {
+          this.onFieldValueChange(firstParent, parentValue);
         }
       }
     });

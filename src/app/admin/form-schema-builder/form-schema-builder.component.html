@@ -258,6 +258,14 @@
                   <mat-icon>list</mat-icon>
                   <span>Options: {{ getFieldOptionsDisplay(item.field) }}</span>
                 </div>
+                <div class="detail-item" *ngIf="item.field.dataSource">
+                  <mat-icon>api</mat-icon>
+                  <span>Data source: External API</span>
+                </div>
+                <div class="detail-item" *ngIf="item.field.dependsOnField">
+                  <mat-icon>link</mat-icon>
+                  <span>Depends on: {{ item.field.dependsOnField }}</span>
+                </div>
               </div>
             </div>
           </mat-card-content>

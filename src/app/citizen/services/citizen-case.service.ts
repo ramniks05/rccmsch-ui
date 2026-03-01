@@ -150,7 +150,11 @@ export interface CitizenActionsRequiredData {
   providedIn: 'root'
 })
 export class CitizenCaseService {
-  private apiUrl = environment.apiUrl;
+  /** Base URL for backend API (e.g. http://localhost:8080/api). No trailing slash. */
+  private apiUrl = environment.apiUrl.replace(/\/+$/, '');
+
+  /** Path for external-API data source (backend proxy). Backend calls revenue.chd.gov.in. */
+  private static readonly EXTERNAL_API_DATASOURCE_PATH = 'public/form-data-sources/external-api';
 
   constructor(
     private http: HttpClient,
@@ -284,7 +288,36 @@ export class CitizenCaseService {
         url += `?${queryString}`;
       }
     }
+    console.log('[Form Data Source] GET', url);
     return this.http.get<ApiResponse<any[]>>(url);
+  }
+
+  /**
+   * POST /api/public/form-data-sources/external-api — External API data source (token-authenticated).
+   * Use when field.dataSource is a JSON string with type "API" (e.g. chd-revenue).
+   * Backend handles login, token cache, and calls the external API; returns [{ value, label }].
+   *
+   * @param dataSourceJson The full dataSource JSON string from the field
+   * @param runtimeParams Optional query params (e.g. { Nvcode: "00007" } for depends-on parent value)
+   */
+  getExternalApiDataSource(
+    dataSourceJson: string,
+    runtimeParams?: Record<string, string | number>
+  ): Observable<ApiResponse<any[]>> {
+    const body: { dataSource: string; runtimeParams?: Record<string, string> } = {
+      dataSource: dataSourceJson
+    };
+    if (runtimeParams && Object.keys(runtimeParams).length > 0) {
+      body.runtimeParams = {};
+      Object.entries(runtimeParams).forEach(([k, v]) => {
+        if (v != null && v !== undefined) {
+          body.runtimeParams![k] = String(v);
+        }
+      });
+    }
+    const url = `${this.apiUrl}/${CitizenCaseService.EXTERNAL_API_DATASOURCE_PATH}`;
+    console.log('[External API] POST', url, body);
+    return this.http.post<ApiResponse<any[]>>(url, body);
   }
 
   // ==================== Form Validation API ====================
