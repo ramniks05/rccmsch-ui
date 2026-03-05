@@ -41,6 +41,11 @@ const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
+    path: 'reports',
+    loadChildren: () => import('./reports/reports.module').then(m => m.ReportsModule),
+    data: { breadcrumb: 'Reports' }
+  },
+  {
     path: '**',
     redirectTo: '/home'
   }

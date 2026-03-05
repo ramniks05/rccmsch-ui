@@ -1,0 +1,284 @@
+<div class="admin-page-container">
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <mat-icon>assessment</mat-icon>
+        Reports & Analytics
+      </h1>
+      <p class="page-subtitle">Overview of court cases and hearing statistics</p>
+    </div>
+    <div class="header-actions">
+      <button mat-raised-button class="export-btn" (click)="exportReport()">
+        <mat-icon>file_download</mat-icon>
+        Export Report
+      </button>
+      <button mat-raised-button class="back-btn" routerLink="/admin/home">
+        <mat-icon>arrow_back</mat-icon>
+        Back to Dashboard
+      </button>
+    </div>
+  </div>
+
+  <div class="page-content">
+
+    <!-- Error Message -->
+    <div *ngIf="errorMessage" class="alert alert-error">
+      <mat-icon>error</mat-icon>
+      <span>{{ errorMessage }}</span>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="summary-grid">
+      <div class="summary-card card-total">
+        <div class="card-icon-wrap">
+          <mat-icon>folder_open</mat-icon>
+        </div>
+        <div class="card-body">
+          <span class="card-value">{{ summary.totalCases }}</span>
+          <span class="card-label">Total Cases</span>
+        </div>
+      </div>
+
+      <div class="summary-card card-active">
+        <div class="card-icon-wrap">
+          <mat-icon>pending_actions</mat-icon>
+        </div>
+        <div class="card-body">
+          <span class="card-value">{{ summary.activeCases }}</span>
+          <span class="card-label">Active Cases</span>
+        </div>
+      </div>
+
+      <div class="summary-card card-disposed">
+        <div class="card-icon-wrap">
+          <mat-icon>task_alt</mat-icon>
+        </div>
+        <div class="card-body">
+          <span class="card-value">{{ summary.disposedCases }}</span>
+          <span class="card-label">Disposed</span>
+        </div>
+      </div>
+
+      <div class="summary-card card-pending">
+        <div class="card-icon-wrap">
+          <mat-icon>hourglass_empty</mat-icon>
+        </div>
+        <div class="card-body">
+          <span class="card-value">{{ summary.pendingCases }}</span>
+          <span class="card-label">Pending</span>
+        </div>
+      </div>
+
+      <div class="summary-card card-today">
+        <div class="card-icon-wrap">
+          <mat-icon>event_available</mat-icon>
+        </div>
+        <div class="card-body">
+          <span class="card-value">{{ summary.hearingsToday }}</span>
+          <span class="card-label">Hearings Today</span>
+        </div>
+      </div>
+
+      <div class="summary-card card-new">
+        <div class="card-icon-wrap">
+          <mat-icon>fiber_new</mat-icon>
+        </div>
+        <div class="card-body">
+          <span class="card-value">{{ summary.newThisMonth }}</span>
+          <span class="card-label">New This Month</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div *ngIf="isLoading" class="loading-container">
+      <mat-spinner diameter="50"></mat-spinner>
+      <p>Loading reports...</p>
+    </div>
+
+    <!-- Table Container -->
+    <div *ngIf="!isLoading" class="table-container">
+
+      <!-- Filters Row -->
+      <div class="table-header">
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>Search cases</mat-label>
+          <input matInput (keyup)="applyFilter($event)" placeholder="Case number, title, party...">
+          <mat-icon matPrefix>search</mat-icon>
+        </mat-form-field>
+
+        <div class="filter-group">
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Status</mat-label>
+            <mat-select [(ngModel)]="selectedStatus" (selectionChange)="applyStatusFilter()">
+              <mat-option value="">All Statuses</mat-option>
+              <mat-option *ngFor="let s of statusOptions" [value]="s">{{ s }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Court Level</mat-label>
+            <mat-select [(ngModel)]="selectedCourtLevel" (selectionChange)="applyStatusFilter()">
+              <mat-option value="">All Levels</mat-option>
+              <mat-option *ngFor="let l of courtLevelOptions" [value]="l">{{ l }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <button mat-stroked-button (click)="clearFilters()" class="clear-btn">
+            <mat-icon>filter_alt_off</mat-icon>
+            Clear
+          </button>
+        </div>
+      </div>
+
+      <!-- Data Table -->
+      <div class="table-wrapper">
+        <table mat-table [dataSource]="dataSource" matSort class="data-table">
+
+          <!-- ID Column -->
+          <ng-container matColumnDef="id">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+              <mat-icon class="header-icon">tag</mat-icon> ID
+            </th>
+            <td mat-cell *matCellDef="let c">
+              <div class="cell-content">
+                <mat-icon class="cell-icon">fingerprint</mat-icon>
+                <span>{{ c.id }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Case Number Column -->
+          <ng-container matColumnDef="caseNumber">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+              <mat-icon class="header-icon">confirmation_number</mat-icon> Case No.
+            </th>
+            <td mat-cell *matCellDef="let c">
+              <div class="cell-content">
+                <mat-icon class="cell-icon">qr_code</mat-icon>
+                <span class="code-text">{{ c.caseNumber }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Case Title Column -->
+          <ng-container matColumnDef="caseTitle">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+              <mat-icon class="header-icon">description</mat-icon> Case Title
+            </th>
+            <td mat-cell *matCellDef="let c">
+              <div class="cell-content">
+                <mat-icon class="cell-icon">gavel</mat-icon>
+                <span class="name-text">{{ c.caseTitle }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Court Name Column -->
+          <ng-container matColumnDef="courtName">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+              <mat-icon class="header-icon">account_balance</mat-icon> Court
+            </th>
+            <td mat-cell *matCellDef="let c">
+              <div class="cell-content">
+                <mat-icon class="cell-icon">location_city</mat-icon>
+                <span>{{ c.courtName }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Court Level Column -->
+          <ng-container matColumnDef="courtLevel">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+              <mat-icon class="header-icon">layers</mat-icon> Level
+            </th>
+            <td mat-cell *matCellDef="let c">
+              <span [class]="'level-badge ' + getLevelClass(c.courtLevel)">
+                {{ c.courtLevel }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Filing Date Column -->
+          <ng-container matColumnDef="filingDate">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+              <mat-icon class="header-icon">calendar_today</mat-icon> Filed On
+            </th>
+            <td mat-cell *matCellDef="let c">
+              <div class="cell-content">
+                <mat-icon class="cell-icon">event</mat-icon>
+                <span>{{ c.filingDate | date: 'dd MMM yyyy' }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Status Column -->
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+              <mat-icon class="header-icon">toggle_on</mat-icon> Status
+            </th>
+            <td mat-cell *matCellDef="let c">
+              <span [class]="'status-badge ' + getStatusClass(c.status)">
+                <mat-icon class="status-icon">
+                  {{ c.status === 'DISPOSED' ? 'check_circle' : c.status === 'HEARING' ? 'record_voice_over' : 'schedule' }}
+                </mat-icon>
+                {{ c.status }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Next Hearing Column -->
+          <ng-container matColumnDef="nextHearingDate">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+              <mat-icon class="header-icon">event_available</mat-icon> Next Hearing
+            </th>
+            <td mat-cell *matCellDef="let c">
+              <div class="cell-content">
+                <mat-icon class="cell-icon" [class.hearing-soon]="c.nextHearingDate">event_note</mat-icon>
+                <span *ngIf="c.nextHearingDate">{{ c.nextHearingDate | date: 'dd MMM yyyy' }}</span>
+                <span *ngIf="!c.nextHearingDate" class="no-data-text">—</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>
+              <mat-icon class="header-icon">settings</mat-icon> Actions
+            </th>
+            <td mat-cell *matCellDef="let c">
+              <div class="action-buttons-cell">
+                <button mat-icon-button color="primary" (click)="viewCase(c)" matTooltip="View Case Details" class="action-btn-view">
+                  <mat-icon>visibility</mat-icon>
+                </button>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+          <!-- No data row -->
+          <tr class="mat-row" *matNoDataRow>
+            <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+              <div class="no-data">
+                <mat-icon>inbox</mat-icon>
+                <p>No cases found matching your filters</p>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- Paginator -->
+      <mat-paginator
+        [pageSizeOptions]="[5, 10, 20, 50]"
+        [pageSize]="10"
+        showFirstLastButtons>
+      </mat-paginator>
+    </div>
+
+  </div>
+</div>

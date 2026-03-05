@@ -128,6 +128,7 @@ export class IndexComponent implements OnInit {
   progressPercentage: number = 75;
   progressStrokeDasharray: number = 440;
   progressStrokeDashoffset: number = 440;
+  caseSummary: any;
 
   constructor(
     private router: Router,
@@ -151,6 +152,22 @@ export class IndexComponent implements OnInit {
     });
     this.getWhatsNewData();
     this.getDocumentsAvailableList();
+    this.getCaseSummary();
+  }
+
+  getCaseSummary(): void {
+    this.advancedSettingsService.getCaseSummary().subscribe({
+      next: (res) => {
+        this.caseSummary = res.data ?? [];
+      },
+      error: (err) => {
+        console.error('Error fetching case summary:', err);
+        this.snack.open('Failed to load case summary', 'Close', {
+          duration: 3000,
+          panelClass: ['error-snackbar'],
+        });
+      },
+    });
   }
 
   getWhatsNewData(): void {

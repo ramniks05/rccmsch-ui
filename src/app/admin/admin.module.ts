@@ -38,6 +38,7 @@ import { AdminLayoutComponent } from './admin-layout/admin-layout.component';
 import { WhatsNewComponent } from './whats-new/whats-new.component';
 import { AdvancedSettingsComponent } from './advanced-settings/advanced-settings.component';
 import { DocumentsAvailableComponent } from './documents-available/documents-available.component';
+import { ReportsHomeComponent } from '../reports/reports-home/reports-home.component';
 
 /**
  * Routes for Admin Module
@@ -152,7 +153,11 @@ const routes: Routes = [
         component: CalendarComponent,
         data: { breadcrumb: 'Calendar' }
       },
-
+      {
+        path: 'reports/home',
+        component: ReportsHomeComponent,
+        data: { breadcrumb: 'Reports' }
+      },
       // default after login
       {
         path: '',

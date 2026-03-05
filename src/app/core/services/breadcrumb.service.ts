@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import { ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs/operators';
 
 export interface Breadcrumb {
@@ -11,18 +11,24 @@ export interface Breadcrumb {
 export class BreadcrumbService {
   breadcrumbs: Breadcrumb[] = [];
 
-  constructor(private router: Router, private route: ActivatedRoute) {
+  constructor(private router: Router) {
+    this.breadcrumbs = this.buildBreadCrumb(
+      this.router.routerState.snapshot.root,
+    );
+
     this.router.events
-      .pipe(filter(event => event instanceof NavigationEnd))
+      .pipe(filter((event) => event instanceof NavigationEnd))
       .subscribe(() => {
-        this.breadcrumbs = this.buildBreadCrumb(this.route.root);
+        this.breadcrumbs = this.buildBreadCrumb(
+          this.router.routerState.snapshot.root,
+        );
       });
   }
 
   private buildBreadCrumb(
-    route: ActivatedRoute,
+    route: ActivatedRouteSnapshot,
     url: string = '',
-    breadcrumbs: Breadcrumb[] = []
+    breadcrumbs: Breadcrumb[] = [],
   ): Breadcrumb[] {
     const children = route.children;
 
@@ -31,26 +37,23 @@ export class BreadcrumbService {
     }
 
     for (const child of children) {
-      const routeURL = child.snapshot.url
-        .map(segment => segment.path)
-        .join('/');
+      const routeURL = child.url.map((segment) => segment.path).join('/');
 
-      // build URL only if path exists
       if (routeURL) {
         url += `/${routeURL}`;
       }
 
-      const label = child.snapshot.data['breadcrumb'];
+      const label = child.data?.['breadcrumb'];
 
       if (
         label &&
-        (breadcrumbs.length === 0 ||
+        (!breadcrumbs.length ||
           breadcrumbs[breadcrumbs.length - 1].label !== label)
       ) {
         breadcrumbs.push({ label, url });
       }
 
-      return this.buildBreadCrumb(child, url, breadcrumbs);
+      this.buildBreadCrumb(child, url, breadcrumbs);
     }
 
     return breadcrumbs;

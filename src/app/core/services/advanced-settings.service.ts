@@ -168,4 +168,10 @@ export class AdvancedSettingsService {
       { headers: this.getAuthHeaders() },
     );
   }
+
+  getCaseSummary(): Observable<ApiResponse<any[]>> {
+    return this.http.get<ApiResponse<any[]>>(
+      `${this.apiUrl}/dashboard/case-summary`
+    );
+  }
 }

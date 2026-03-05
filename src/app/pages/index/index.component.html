@@ -5,11 +5,7 @@
       <!-- LEFT : Government / Department Branding -->
       <div class="col-lg-5 col-md-5 col-sm-12 branding">
         <div class="branding-wrap">
-          <img
-            class="gov-logo"
-            [src]="data.stateConfig.logoUrl"
-            alt="State Logo"
-          />
+          <img class="gov-logo" [src]="settings!.logoUrl" alt="State Logo" />
           <div class="branding-text">
             <h2>{{ settings!.logoHeader }}</h2>
             <h3 *ngIf="settings!.stateName">
@@ -242,10 +238,8 @@
     <!-- System Overview Section -->
     <div class="system-overview-container">
       <div class="row">
-        <!-- LEFT COLUMN - Data Visualization (col-4) -->
-        <div class="col-lg-4 col-md-12 mb-4 mb-lg-0">
+        <!-- <div class="col-lg-4 col-md-12 mb-4 mb-lg-0">
           <div class="data-viz-section full-height-section">
-            <!-- Circular Progress Chart -->
             <div class="viz-card animate-fade-in flex-grow-card">
               <h3 class="viz-title">System Health & Progress</h3>
 
@@ -306,7 +300,6 @@
               </div>
             </div>
 
-            <!-- Quick Stats -->
             <div class="viz-card animate-fade-in-delay">
               <h3 class="viz-title">Key Metrics</h3>
 
@@ -320,13 +313,11 @@
               </div>
             </div>
           </div>
-        </div>
+        </div> -->
 
-        <!-- RIGHT COLUMN - Modern Cards (col-8) -->
-        <div class="col-lg-8 col-md-12">
+        <!-- <div class="col-lg-8 col-md-12">
           <div class="full-height-section">
             <div class="stats-grid">
-              <!-- Stat Cards -->
               <div
                 *ngFor="let card of statsCards; let i = index"
                 class="stat-card {{ card.colorClass }} animate-card"
@@ -356,6 +347,104 @@
                     View Details <i class="fas fa-arrow-right"></i>
                   </a>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div> -->
+
+        <div class="col-lg-12 col-md-12">
+          <div class="stats-grid">
+            <!-- Total Cases -->
+            <div class="stat-card card-blue animate-card">
+              <div class="stat-header">
+                <div class="stat-icon">
+                  <i class="fas fa-folder-open"></i>
+                </div>
+                <h5 class="stat-title">Total Cases</h5>
+              </div>
+
+              <div class="stat-value">{{ caseSummary?.totalCases }}</div>
+
+              <div class="stat-footer">
+                <span class="stat-detail">All registered cases</span>
+                <a
+                  href="javascript:void(0)"
+                  class="stat-link"
+                  (click)="viewDetails('Total Cases')"
+                >
+                  View Details <i class="fas fa-arrow-right"></i>
+                </a>
+              </div>
+            </div>
+
+            <!-- Pending Cases -->
+            <div class="stat-card card-orange animate-card">
+              <div class="stat-header">
+                <div class="stat-icon">
+                  <i class="fas fa-hourglass-half"></i>
+                </div>
+                <h5 class="stat-title">Pending Cases</h5>
+              </div>
+
+              <div class="stat-value">{{ caseSummary?.pendingCases }}</div>
+
+              <div class="stat-footer">
+                <span class="stat-detail">Awaiting resolution</span>
+                <a
+                  href="javascript:void(0)"
+                  class="stat-link"
+                  (click)="viewDetails('Pending Cases')"
+                >
+                  View Details <i class="fas fa-arrow-right"></i>
+                </a>
+              </div>
+            </div>
+
+            <!-- Disposed Cases -->
+            <div class="stat-card card-green animate-card">
+              <div class="stat-header">
+                <div class="stat-icon">
+                  <i class="fas fa-check-circle"></i>
+                </div>
+                <h5 class="stat-title">Disposed Cases</h5>
+              </div>
+
+              <div class="stat-value">{{ caseSummary?.disposedCases }}</div>
+
+              <div class="stat-footer">
+                <span class="stat-detail">Successfully closed cases</span>
+                <a
+                  href="javascript:void(0)"
+                  class="stat-link"
+                  (click)="viewDetails('Disposed Cases')"
+                >
+                  View Details <i class="fas fa-arrow-right"></i>
+                </a>
+              </div>
+            </div>
+
+            <!-- Hearing Scheduled -->
+            <div class="stat-card card-purple animate-card">
+              <div class="stat-header">
+                <div class="stat-icon">
+                  <i class="fas fa-calendar-check"></i>
+                </div>
+                <h5 class="stat-title">Hearing Scheduled</h5>
+              </div>
+
+              <div class="stat-value">
+                {{ caseSummary?.hearingScheduledCount }}
+              </div>
+
+              <div class="stat-footer">
+                <span class="stat-detail">Upcoming hearings</span>
+                <a
+                  href="javascript:void(0)"
+                  class="stat-link"
+                  (click)="viewDetails('Hearing Scheduled')"
+                >
+                  View Details <i class="fas fa-arrow-right"></i>
+                </a>
               </div>
             </div>
           </div>
