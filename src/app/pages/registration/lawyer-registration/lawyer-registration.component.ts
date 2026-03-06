@@ -17,7 +17,7 @@ import { throwError } from 'rxjs';
 })
 export class LawyerRegistrationComponent {
   @ViewChild(DynamicRegistrationFormComponent) dynamicForm!: DynamicRegistrationFormComponent;
-  
+
   registrationForm: FormGroup | null = null;
   otpVerificationForm: FormGroup;
   submitted = false;
@@ -57,7 +57,7 @@ export class LawyerRegistrationComponent {
     this.submitted = true;
     this.errorMessage = '';
     this.successMessage = '';
-    
+
     // Get form data from dynamic form if not provided
     if (!formData && this.dynamicForm?.registrationForm) {
       if (!this.dynamicForm.registrationForm.valid) {
@@ -69,27 +69,27 @@ export class LawyerRegistrationComponent {
       }
       formData = this.dynamicForm.registrationForm.value;
     }
-    
+
     if (!formData) {
       return;
     }
-    
+
     if (formData) {
       // Format date fields if present
       const registrationData: any = { ...formData };
-      
+
       // Format dateOfBirth if it exists
       if (registrationData.dateOfBirth) {
         registrationData.dateOfBirth = this.formatDateForAPI(registrationData.dateOfBirth);
       }
-      
+
       // Format gender if it exists
       if (registrationData.gender) {
         registrationData.gender = registrationData.gender.toUpperCase();
       }
 
       this.isLoading = true;
-      
+
       // Use lawyer registration API
       this.apiService.lawyerRegister(registrationData)
         .pipe(
@@ -117,12 +117,12 @@ export class LawyerRegistrationComponent {
    */
   private formatDateForAPI(date: Date | string): string {
     if (!date) return '';
-    
+
     const dateObj = typeof date === 'string' ? new Date(date) : date;
     const year = dateObj.getFullYear();
     const month = String(dateObj.getMonth() + 1).padStart(2, '0');
     const day = String(dateObj.getDate()).padStart(2, '0');
-    
+
     return `${year}-${month}-${day}`;
   }
 
@@ -133,25 +133,25 @@ export class LawyerRegistrationComponent {
     // Handle new API response structure { success, message, data }
     const apiResponse = response?.success !== undefined ? response : { success: true, data: response };
     const responseData = apiResponse.success ? apiResponse.data : response;
-    
+
     const lawyerId = responseData?.citizenId || responseData?.userId || responseData?.lawyerId;
-    const mobileNumber = this.dynamicForm?.registrationForm?.get('mobileNumber')?.value || 
+    const mobileNumber = this.dynamicForm?.registrationForm?.get('mobileNumber')?.value ||
                          this.dynamicForm?.registrationForm?.get('mobile')?.value || '';
     const otpCode = responseData?.otpCode;
-    
+
     // Store OTP code for development display
     this.otpCode = otpCode || null;
-    
+
     // Log OTP code for testing (as per API documentation)
     if (otpCode) {
       console.log('OTP Code (for testing):', otpCode);
     }
-    
+
     this.registrationUserId = lawyerId;
     this.registrationMobileNumber = mobileNumber;
     this.showOtpVerification = true;
     this.successMessage = apiResponse.message || 'Registration successful! OTP has been sent to your mobile number. Please enter the OTP below to activate your account.';
-    
+
     // Scroll to OTP verification section
     setTimeout(() => {
       const otpSection = document.querySelector('.otp-verification-section');
@@ -166,20 +166,20 @@ export class LawyerRegistrationComponent {
    */
   private handleRegistrationError(error: any): void {
     console.error('Registration error:', error);
-    
+
     // Clear previous error messages
     this.errorMessage = '';
-    
+
     if (!this.dynamicForm?.registrationForm) {
       this.errorMessage = 'Form not initialized. Please refresh the page.';
       return;
     }
-    
+
     // Handle 409 Conflict - Duplicate resource
     if (error.status === 409) {
       const errorMessage = error.error?.message || error.error?.error || '';
       let specificMessage = 'Email, mobile number, or Aadhar number already exists. Please use different credentials.';
-      
+
       // Try to identify which field is duplicated
       const messageLower = errorMessage.toLowerCase();
       if (messageLower.includes('email')) {
@@ -191,7 +191,7 @@ export class LawyerRegistrationComponent {
         }
       } else if (messageLower.includes('mobile')) {
         specificMessage = 'This mobile number is already registered. Please use a different mobile number.';
-        const mobileControl = this.dynamicForm.registrationForm.get('mobileNumber') || 
+        const mobileControl = this.dynamicForm.registrationForm.get('mobileNumber') ||
                              this.dynamicForm.registrationForm.get('mobile');
         if (mobileControl) {
           mobileControl.setErrors({ serverError: 'Mobile number already exists' });
@@ -206,11 +206,11 @@ export class LawyerRegistrationComponent {
           aadharControl.markAsTouched();
         }
       }
-      
+
       this.errorMessage = specificMessage;
       return;
     }
-    
+
     // Handle 400 Bad Request - Validation errors
     if (error.status === 400) {
       if (error.error?.errors && Array.isArray(error.error.errors)) {
@@ -232,7 +232,7 @@ export class LawyerRegistrationComponent {
       }
       return;
     }
-    
+
     // Handle other errors
     if (error.error) {
       if (error.error.message) {
@@ -254,7 +254,7 @@ export class LawyerRegistrationComponent {
   onVerifyOtp(): void {
     if (this.otpVerificationForm.valid && this.registrationMobileNumber) {
       const otp = this.otpVerificationForm.get('otp')?.value;
-      
+
       this.isVerifyingOtp = true;
       this.otpErrorMessage = '';
       this.otpSuccessMessage = '';
@@ -288,13 +288,13 @@ export class LawyerRegistrationComponent {
    */
   private handleOtpVerificationSuccess(response: any): void {
     console.log('OTP verification successful:', response);
-    
+
     // Handle new API response structure { success, message, data }
     const apiResponse = response?.success !== undefined ? response : { success: true, data: response };
     const message = apiResponse.message || 'Mobile number verified successfully! Your account has been activated. Redirecting to login...';
-    
+
     this.otpSuccessMessage = message;
-    
+
     // Redirect to login page after 2 seconds
     setTimeout(() => {
       this.router.navigate(['/home'], {
@@ -311,7 +311,7 @@ export class LawyerRegistrationComponent {
    */
   private handleOtpVerificationError(error: any): void {
     console.error('OTP verification error:', error);
-    
+
     if (error.error) {
       if (error.error.message) {
         this.otpErrorMessage = error.error.message;
@@ -329,7 +329,7 @@ export class LawyerRegistrationComponent {
     } else {
       this.otpErrorMessage = 'An error occurred during OTP verification. Please try again later.';
     }
-    
+
     // Clear error message after 5 seconds
     setTimeout(() => {
       this.otpErrorMessage = '';
@@ -354,14 +354,14 @@ export class LawyerRegistrationComponent {
             // Handle new API response structure { success, message, data }
             const apiResponse = response?.success !== undefined ? response : { success: true, data: response };
             const otpCode = apiResponse.data?.otpCode;
-            
+
             // Store OTP code for development display
             this.otpCode = otpCode || null;
-            
+
             if (otpCode) {
               console.log('OTP Code (for testing):', otpCode);
             }
-            
+
             this.otpSuccessMessage = apiResponse.message || 'OTP has been resent to your mobile number.';
             this.otpVerificationForm.patchValue({ otp: '' });
             setTimeout(() => {
@@ -388,8 +388,12 @@ export class LawyerRegistrationComponent {
     this.registrationMobileNumber = '';
     this.registrationUserId = null;
     this.otpCode = null;
-    if (this.dynamicForm) {
-      this.dynamicForm.resetForm();
+    if (this.dynamicForm?.registrationForm) {
+      this.dynamicForm.registrationForm.reset();
+
+      Object.keys(this.dynamicForm.registrationForm.controls).forEach((key) => {
+        this.dynamicForm.registrationForm.get(key)?.setErrors(null);
+      });
     }
     this.otpVerificationForm.reset();
   }

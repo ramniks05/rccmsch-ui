@@ -172,7 +172,7 @@
                 required
               >
                 <option value="" disabled>Select a category…</option>
-                <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+                <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.value }}</option>
               </select>
               <span class="form-error" *ngIf="categoryInput.invalid && categoryInput.touched">
                 Please select a category.

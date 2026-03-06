@@ -12,6 +12,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { AdvancedSettingsService } from 'src/app/core/services/advanced-settings.service';
 
 export interface ContactStatItem {
   value: string;
@@ -72,10 +73,10 @@ export class ContactComponent implements OnInit, AfterViewInit {
   };
 
   readonly stats: ContactStatItem[] = [
-    { value: '< 24h',   label: 'Response Time',       icon: 'clock'   },
-    { value: '9–5 PM',  label: 'Support Hours',        icon: 'support' },
-    { value: '3',       label: 'Office Locations',     icon: 'pin'     },
-    { value: '100%',    label: 'Queries Acknowledged', icon: 'check'   },
+    { value: '< 24h', label: 'Response Time', icon: 'clock' },
+    { value: '9–5 PM', label: 'Support Hours', icon: 'support' },
+    { value: '3', label: 'Office Locations', icon: 'pin' },
+    { value: '100%', label: 'Queries Acknowledged', icon: 'check' },
   ];
 
   readonly channels: ContactChannel[] = [
@@ -136,7 +137,11 @@ export class ContactComponent implements OnInit, AfterViewInit {
     },
     {
       name: 'NIC Help Centre',
-      address: ['CGO Complex, Block No. 4', 'Sector 26', 'Chandigarh – 160 026'],
+      address: [
+        'CGO Complex, Block No. 4',
+        'Sector 26',
+        'Chandigarh – 160 026',
+      ],
       hours: 'Mon – Fri: 9:30 AM – 6:00 PM',
       phone: '+91-172-2623-050',
       initials: 'NIC',
@@ -144,15 +149,15 @@ export class ContactComponent implements OnInit, AfterViewInit {
     },
   ];
 
-  readonly categories: string[] = [
-    'Case Filing Issue',
-    'Account / Registration',
-    'Document Upload Problem',
-    'Hearing / Cause List',
-    'Payment & Court Fees',
-    'Technical / Portal Error',
-    'Order / Certified Copy',
-    'Other',
+  readonly categories: { id: number; value: string }[] = [
+    { id: 1, value: 'Case Filing Issue' },
+    { id: 2, value: 'Account / Registration' },
+    { id: 3, value: 'Document Upload Problem' },
+    { id: 4, value: 'Hearing / Cause List' },
+    { id: 5, value: 'Payment & Court Fees' },
+    { id: 6, value: 'Technical / Portal Error' },
+    { id: 7, value: 'Order / Certified Copy' },
+    { id: 8, value: 'Other' },
   ];
 
   // ── SVG icon map (no ngSwitch) ────────────────────────
@@ -181,6 +186,7 @@ export class ContactComponent implements OnInit, AfterViewInit {
   constructor(
     public cdr: ChangeDetectorRef,
     private sanitizer: DomSanitizer,
+    private advancedSettingsService: AdvancedSettingsService,
   ) {}
 
   ngOnInit(): void {}
@@ -195,7 +201,7 @@ export class ContactComponent implements OnInit, AfterViewInit {
           }
         });
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
     this.animatedEls.forEach((el) => this.observer.observe(el.nativeElement));
   }
@@ -204,18 +210,41 @@ export class ContactComponent implements OnInit, AfterViewInit {
     if (!this.isFormValid()) return;
     this.formStatus = 'submitting';
     this.cdr.markForCheck();
+    const data = {
+      fullName: this.form.name,
+      email: this.form.email,
+      mobile: this.form.phone,
+      subject: this.form.subject,
+      queryCategory: Number(this.form.category),
+      message: this.form.message,
+    };
 
+    this.advancedSettingsService.sendContactMessage(data).subscribe({
+      next: (res) => {
+        this.formStatus = 'success';
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.formStatus = 'error';
+        this.cdr.markForCheck();
+      },
+    });
 
     setTimeout(() => {
       this.formStatus = 'success';
-      console.log(this.formStatus);
-
       this.cdr.markForCheck();
     }, 1500);
   }
 
   resetForm(): void {
-    this.form = { name: '', email: '', phone: '', subject: '', category: '', message: '' };
+    this.form = {
+      name: '',
+      email: '',
+      phone: '',
+      subject: '',
+      category: '',
+      message: '',
+    };
     this.formStatus = 'idle';
     this.cdr.markForCheck();
   }

@@ -174,4 +174,11 @@ export class AdvancedSettingsService {
       `${this.apiUrl}/dashboard/case-summary`
     );
   }
+
+  sendContactMessage(payload: any): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${this.apiUrl}/contactUs/submit`,
+      payload
+    );
+  }
 }
