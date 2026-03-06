@@ -126,20 +126,39 @@
 <nav class="main-nav">
   <div class="container-fluid">
     <ul class="nav-list">
-      <li class="active">
-        <a href="#"><mat-icon>home</mat-icon> Home</a>
+      <li routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        <a routerLink="/home">
+          <mat-icon>home</mat-icon>
+          Home
+        </a>
       </li>
-      <li>
-        <a href="#"><mat-icon>info</mat-icon> About</a>
+
+      <li routerLinkActive="active">
+        <a routerLink="./about">
+          <mat-icon>info</mat-icon>
+          About
+        </a>
       </li>
-      <li>
-        <a href="#"><mat-icon>description</mat-icon> Documents</a>
+
+      <li routerLinkActive="active">
+        <a routerLink="./documents">
+          <mat-icon>description</mat-icon>
+          Documents
+        </a>
       </li>
-      <li>
-        <a href="#"><mat-icon>help</mat-icon> FAQ</a>
+
+      <li routerLinkActive="active">
+        <a routerLink="./faq">
+          <mat-icon>help</mat-icon>
+          FAQ
+        </a>
       </li>
-      <li>
-        <a href="#"><mat-icon>call</mat-icon> Contact Us</a>
+
+      <li routerLinkActive="active">
+        <a routerLink="./contact">
+          <mat-icon>call</mat-icon>
+          Contact Us
+        </a>
       </li>
     </ul>
   </div>
@@ -238,8 +257,7 @@
           <!-- FOOTER -->
           <div class="whats-new-footer">
             <a
-              href="/Home/AllNotification"
-              target="_blank"
+              routerLink="./whats-new"
               class="view-all-btn"
             >
               <span>View All Updates</span>
@@ -572,7 +590,7 @@
 
           <!-- FOOTER -->
           <div class="docs-footer">
-            <a href="#" class="view-all-docs">
+            <a routerLink="./documents" class="view-all-docs">
               <span>Browse All Documents</span>
               <mat-icon>arrow_forward</mat-icon>
             </a>

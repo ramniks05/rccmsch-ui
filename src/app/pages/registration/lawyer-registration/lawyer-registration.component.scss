@@ -1,433 +1,492 @@
+// ============================================================
+// Lawyer Registration Page — Modernized SCSS
+// Accent: deep indigo/purple, consistent with legal tone
+// ============================================================
+
+// -- Lawyer accent palette --
+$lawyer-primary:     #4a3580;
+$lawyer-primary-mid: #5e45a0;
+$lawyer-primary-lt:  #ede9f8;
+$lawyer-border:      #d8d0ee;
+$lawyer-text-dark:   #1e1640;
+$lawyer-text-mid:    #5a4e80;
+$lawyer-text-muted:  #8a80aa;
+
+// -- Page Shell --
 .registration-page-container {
   min-height: calc(100vh - 128px);
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 40px 20px;
+  background: linear-gradient(160deg, #f2f0fa 0%, #e6e0f5 50%, #d8cff0 100%);
+  padding: 48px 20px 64px;
   display: flex;
   flex-direction: column;
+  align-items: center;
   width: 100%;
   box-sizing: border-box;
 }
 
+// -- Header --
 .registration-header {
-  max-width: 1200px;
   width: 100%;
-  margin: 0 auto 32px auto;
+  max-width: 880px;
   text-align: center;
-  padding: 20px;
-  color: white;
+  margin-bottom: 28px;
+
+  .header-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba($lawyer-primary, 0.1);
+    color: $lawyer-primary;
+    border: 1px solid rgba($lawyer-primary, 0.22);
+    border-radius: 100px;
+    padding: 6px 16px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+  }
+
+  h1 {
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: $lawyer-text-dark;
+    margin: 0 0 10px 0;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  .header-subtitle {
+    color: $lawyer-text-mid;
+    font-size: 1rem;
+    margin: 0 0 20px 0;
+    line-height: 1.6;
+  }
+
+  .back-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: $lawyer-primary;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 8px;
+    padding: 6px 14px;
+    transition: background 0.2s ease;
+
+    mat-icon { font-size: 18px; width: 18px; height: 18px; }
+
+    &:hover { background: rgba($lawyer-primary, 0.08); }
+  }
 }
 
-.registration-header h1 {
-  font-size: 2rem;
-  font-weight: 500;
-  color: white;
-  margin-bottom: 8px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+// -- User Type Switch --
+.user-type-selection {
+  width: 100%;
+  max-width: 880px;
+  margin-bottom: 24px;
+
+  .user-type-inner {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: #fff;
+    border: 1px solid $lawyer-border;
+    border-radius: 12px;
+    padding: 16px 24px;
+    box-shadow: 0 1px 4px rgba($lawyer-primary, 0.07);
+  }
+
+  .type-icon {
+    color: $lawyer-primary;
+    opacity: 0.45;
+    font-size: 22px;
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+  }
+
+  .switch-registration-text {
+    margin: 0;
+    font-size: 0.9rem;
+    color: $lawyer-text-mid;
+    line-height: 1.5;
+
+    strong { color: $lawyer-text-dark; }
+
+    .citizen-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-left: 8px;
+      color: $lawyer-primary;
+      font-weight: 600;
+      text-decoration: none;
+      border-bottom: 1px dashed rgba($lawyer-primary, 0.4);
+      transition: all 0.2s ease;
+
+      mat-icon { font-size: 16px; width: 16px; height: 16px; }
+
+      &:hover {
+        color: darken($lawyer-primary, 10%);
+        border-bottom-style: solid;
+      }
+    }
+  }
 }
 
-.header-subtitle {
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 1rem;
-  margin-bottom: 16px;
+// -- Main Card --
+.registration-container {
+  width: 100%;
+  max-width: 880px;
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid $lawyer-border;
+  box-shadow:
+    0 4px 6px rgba($lawyer-primary, 0.05),
+    0 12px 40px rgba($lawyer-primary, 0.1);
+  padding: 40px 48px;
+  box-sizing: border-box;
 }
 
-.back-button {
+// -- Alerts --
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 20px;
+  margin-bottom: 28px;
+  border-radius: 10px;
+  font-size: 0.925rem;
+  line-height: 1.5;
+
+  .alert-icon-wrap {
+    flex-shrink: 0;
+    mat-icon { font-size: 22px; width: 22px; height: 22px; }
+  }
+
+  .alert-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    strong { font-weight: 600; display: block; }
+    span { opacity: 0.9; }
+  }
+
+  &.alert-success {
+    background: #f0faf4;
+    border: 1px solid #b3dfc4;
+    color: #1e6b3e;
+    .alert-icon-wrap mat-icon { color: #28a745; }
+  }
+
+  &.alert-error {
+    background: #fff5f5;
+    border: 1px solid #f5c2c7;
+    color: #842029;
+    .alert-icon-wrap mat-icon { color: #dc3545; }
+  }
+}
+
+// -- Form Actions --
+.form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-top: 28px;
+  margin-top: 8px;
+  border-top: 1px solid #eeeaf8;
+
+  .form-note {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: $lawyer-text-muted;
+    font-style: italic;
+    margin: 0;
+
+    mat-icon { font-size: 15px; width: 15px; height: 15px; opacity: 0.7; }
+    .asterisk { color: #dc3545; font-style: normal; font-weight: 700; }
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+}
+
+.cancel-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 8px !important;
+  padding: 8px 20px !important;
+  font-size: 0.9rem !important;
+  color: $lawyer-text-mid !important;
+  border-color: $lawyer-border !important;
+  transition: all 0.2s ease;
+
+  &:hover:not([disabled]) {
+    background: #f5f2fd !important;
+    border-color: #b0a0d0 !important;
+  }
+
+  mat-icon { font-size: 18px; width: 18px; height: 18px; }
+}
+
+.submit-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: white;
-  margin-top: 8px;
-}
+  border-radius: 8px !important;
+  padding: 10px 28px !important;
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.01em;
+  min-width: 180px;
+  background-color: $lawyer-primary !important;
+  color: #fff !important;
+  box-shadow: 0 4px 14px rgba($lawyer-primary, 0.3) !important;
+  transition: all 0.2s ease !important;
 
-.back-button:hover {
-  background-color: rgba(255, 255, 255, 0.2);
-}
-
-.registration-container {
-  max-width: 1200px;
-  width: 100%;
-  margin: 0 auto;
-  padding: 32px 40px;
-  background-color: var(--surface);
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.registration-form {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.form-section {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  padding: 28px 32px;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
-  width: 100%;
-}
-
-.section-title {
-  font-size: 1.25rem;
-  font-weight: 500;
-  color: #764ba2;
-  margin: 0 0 12px 0;
-  padding-bottom: 8px;
-  border-bottom: 2px solid #764ba2;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  
-  mat-icon {
-    font-size: 24px;
-    width: 24px;
-    height: 24px;
+  &:hover:not([disabled]) {
+    background-color: $lawyer-primary-mid !important;
+    box-shadow: 0 6px 20px rgba($lawyer-primary, 0.4) !important;
+    transform: translateY(-1px);
   }
-}
 
-.form-row {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 24px;
-  width: 100%;
-}
-
-.form-field {
-  width: 100%;
-}
-
-.full-width {
-  width: 100%;
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 16px;
-  padding: 24px 0 16px 0;
-  margin-top: 8px;
-}
-
-.cancel-btn,
-.submit-btn {
-  min-width: 120px;
-  padding: 10px 24px;
-  font-size: 16px;
-}
-
-.submit-btn {
-  font-weight: 500;
-  min-width: 140px;
-  background-color: #764ba2 !important;
-  color: white !important;
-  
-  .button-spinner {
-    display: inline-block;
-    margin-right: 8px;
-  }
-}
-
-.form-note {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  text-align: center;
-  margin: 0;
-  font-style: italic;
-}
-
-// Alert Messages
-.alert {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px 20px;
-  margin-bottom: 24px;
-  border-radius: 8px;
-  font-size: 1rem;
-  
-  mat-icon {
-    font-size: 24px;
-    width: 24px;
-    height: 24px;
-  }
-}
-
-.alert-success {
-  background-color: #d4edda;
-  color: #155724;
-  border: 1px solid #c3e6cb;
-  
-  mat-icon {
-    color: #28a745;
-  }
-}
-
-.alert-error {
-  background-color: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
-  
-  mat-icon {
-    color: #dc3545;
-  }
-}
-
-// Loading State
-.registration-form.loading {
-  opacity: 0.7;
-  pointer-events: none;
+  mat-icon { font-size: 18px; width: 18px; height: 18px; }
 }
 
 .button-spinner {
   display: inline-block;
-  margin-right: 8px;
+  ::ng-deep circle { stroke: white !important; }
 }
 
-.submit-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-width: 140px;
-}
-
-// OTP Verification Section
+// -- OTP Section --
 .otp-verification-section {
-  margin-top: 32px;
-  animation: fadeIn 0.5s ease-in;
+  animation: slideUp 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .otp-verification-card {
-  max-width: 600px;
+  max-width: 560px;
   margin: 0 auto;
-  padding: 24px;
-  background-color: var(--surface);
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: #f8f6fd;
+  border: 1px solid $lawyer-border;
+  border-radius: 14px;
+  padding: 36px 40px;
+
+  .otp-card-header {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 28px;
+
+    .otp-icon-circle {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, $lawyer-primary, $lawyer-primary-mid);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 4px 14px rgba($lawyer-primary, 0.32);
+
+      mat-icon {
+        color: #fff;
+        font-size: 26px;
+        width: 26px;
+        height: 26px;
+      }
+    }
+
+    .otp-card-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: $lawyer-text-dark;
+      margin: 0 0 4px 0;
+      letter-spacing: -0.01em;
+    }
+
+    .otp-card-sub {
+      font-size: 0.875rem;
+      color: $lawyer-text-muted;
+      margin: 0;
+    }
+  }
+
+  .otp-instruction {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: $lawyer-primary-lt;
+    border: 1px solid $lawyer-border;
+    border-left: 4px solid $lawyer-primary;
+    border-radius: 8px;
+    padding: 16px 18px;
+    margin-bottom: 24px;
+
+    mat-icon {
+      color: $lawyer-primary;
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+
+    p {
+      font-size: 0.9rem;
+      color: $lawyer-text-mid;
+      margin: 0;
+      line-height: 1.6;
+      strong { color: $lawyer-primary; font-weight: 700; }
+    }
+  }
 }
 
-.otp-verification-title {
+// -- Dev OTP --
+.dev-otp-display {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
-  font-size: 1.5rem;
-  font-weight: 500;
-  color: #764ba2;
-  margin-bottom: 8px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  background: #fffbea;
+  border: 1px solid #f0d060;
+  border-radius: 8px;
+  animation: slideUp 0.3s ease;
 
-  mat-icon {
-    font-size: 28px;
-    width: 28px;
-    height: 28px;
-    color: #764ba2;
+  .dev-otp-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: #7a5c00;
+    font-weight: 500;
+
+    mat-icon { font-size: 18px; width: 18px; height: 18px; color: #c48f00; }
+  }
+
+  .otp-code {
+    font-family: 'Courier New', monospace;
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: 6px;
+    color: #7a5c00;
+    background: #fff;
+    border: 1.5px solid #f0d060;
+    border-radius: 6px;
+    padding: 6px 16px;
   }
 }
 
-.otp-instruction {
-  font-size: 1rem;
-  line-height: 1.6;
-  color: #333;
-  margin-bottom: 24px;
-  padding: 16px;
-  background-color: #f0f7ff;
-  border-left: 4px solid #764ba2;
-  border-radius: 4px;
-
-  strong {
-    color: #764ba2;
-    font-weight: 600;
-  }
-}
-
+// -- OTP Form --
 .otp-verification-form {
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
+.otp-input-field {
+  ::ng-deep .mat-mdc-input-element {
+    font-size: 1.5rem;
+    letter-spacing: 8px;
+    font-weight: 700;
+    text-align: center;
+  }
+}
+
 .otp-actions {
   display: flex;
-  gap: 16px;
-  margin-top: 8px;
+  gap: 12px;
 
   .verify-btn,
   .resend-btn {
     flex: 1;
-    padding: 12px 24px;
-    font-size: 16px;
-    font-weight: 500;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    min-height: 48px;
+    padding: 10px 20px !important;
+    font-size: 0.9rem !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+    min-height: 46px;
 
-    .button-spinner {
-      display: inline-block;
-      margin-right: 4px;
-    }
+    mat-icon { font-size: 18px; width: 18px; height: 18px; }
   }
 
   .verify-btn {
-    background-color: #764ba2 !important;
-    color: white !important;
+    background-color: $lawyer-primary !important;
+    color: #fff !important;
+    box-shadow: 0 4px 12px rgba($lawyer-primary, 0.28) !important;
+    transition: all 0.2s ease !important;
+
+    &:hover:not([disabled]) {
+      background-color: $lawyer-primary-mid !important;
+      box-shadow: 0 6px 18px rgba($lawyer-primary, 0.38) !important;
+      transform: translateY(-1px);
+    }
   }
 
   .resend-btn {
-    border-color: #764ba2;
-    color: #764ba2;
-  }
+    border-color: $lawyer-border !important;
+    color: $lawyer-primary !important;
+    transition: all 0.2s ease !important;
 
-  .resend-btn:hover {
-    background-color: rgba(118, 75, 162, 0.1);
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-// Development OTP Display
-.dev-otp-display {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px 20px;
-  margin-bottom: 20px;
-  background-color: #fff3cd;
-  border: 2px solid #ffc107;
-  border-radius: 8px;
-  border-left: 4px solid #ffc107;
-  animation: fadeIn 0.3s ease-in;
-
-  mat-icon {
-    color: #856404;
-    font-size: 24px;
-    width: 24px;
-    height: 24px;
-    flex-shrink: 0;
-  }
-
-  .dev-otp-content {
-    flex: 1;
-    color: #856404;
-    font-size: 0.95rem;
-    line-height: 1.5;
-
-    strong {
-      font-weight: 600;
-      display: block;
-      margin-bottom: 4px;
-    }
-
-    .otp-code {
-      display: inline-block;
-      padding: 8px 16px;
-      margin-top: 8px;
-      background-color: #fff;
-      border: 2px solid #ffc107;
-      border-radius: 6px;
-      font-size: 1.25rem;
-      font-weight: 700;
-      font-family: 'Courier New', monospace;
-      letter-spacing: 2px;
-      color: #856404;
-      text-align: center;
-      min-width: 120px;
+    &:hover:not([disabled]) {
+      background: $lawyer-primary-lt !important;
+      border-color: $lawyer-primary !important;
     }
   }
 }
 
-
-// Material Form Field Customization
-::ng-deep .mat-mdc-form-field {
-  margin-bottom: 8px;
-  width: 100%;
-  box-sizing: border-box;
+// -- Animation --
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-::ng-deep .mat-mdc-text-field-wrapper {
-  background-color: white;
-  width: 100%;
-}
+// -- Material overrides --
+::ng-deep .mat-mdc-form-field { width: 100%; }
+::ng-deep .mat-mdc-text-field-wrapper { background-color: white; }
 
-::ng-deep .mat-mdc-form-field-subscript-wrapper {
-  box-sizing: border-box;
-}
-
-// Ensure form fields take full width uniformly
-mat-form-field.form-field,
-mat-form-field.full-width {
-  width: 100%;
-  display: block;
-  box-sizing: border-box;
-}
-
-// Responsive Design
-@media (max-width: 1024px) {
-  .registration-container {
-    max-width: 95%;
-    padding: 28px 32px;
-  }
+// -- Responsive --
+@media (max-width: 960px) {
+  .registration-container { padding: 32px 32px; }
 }
 
 @media (max-width: 768px) {
-  .registration-container {
-    padding: 24px 20px;
-  }
-
-  .form-section {
-    padding: 20px 24px;
-  }
-
-  .form-row {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
+  .registration-header h1 { font-size: 1.75rem; }
+  .registration-container { padding: 24px 20px; }
 
   .form-actions {
     flex-direction: column;
+    align-items: stretch;
+    .action-buttons { flex-direction: column-reverse; }
   }
 
-  .cancel-btn,
-  .submit-btn {
-    width: 100%;
-  }
+  .cancel-btn, .submit-btn { width: 100%; justify-content: center; }
+  .otp-verification-card { padding: 28px 24px; }
+  .otp-actions { flex-direction: column; }
 }
 
 @media (max-width: 480px) {
-  .registration-page-container {
-    padding: 20px 10px;
-  }
-
-  .registration-container {
-    padding: 20px 16px;
-  }
-
-  .registration-header {
-    padding: 16px;
-  }
-
-  .form-section {
-    padding: 16px;
-    gap: 16px;
-  }
-
-  .section-title {
-    font-size: 1.1rem;
-  }
-
-  .form-row {
-    gap: 16px;
-  }
+  .registration-page-container { padding: 24px 12px 48px; }
+  .registration-header .header-badge { font-size: 0.7rem; }
+  .user-type-selection .user-type-inner { padding: 14px 16px; }
+  .otp-verification-card { padding: 24px 18px; }
 }

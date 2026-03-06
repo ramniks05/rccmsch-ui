@@ -1,4 +1,4 @@
-<div class="hearing-calendar-card">
+<div class="hearing-calendar-card" [ngClass]="customClass">
   <!-- HEADER -->
   <div class="card-header">
     <div class="header-left">
@@ -58,9 +58,9 @@
               matTooltipClass="custom-tooltip"
             >
               <span class="day-number">{{ day }}</span>
-              <span class="hearing-indicator" *ngIf="getHearing(day)">
-                <mat-icon>circle</mat-icon>
-              </span>
+              <span class="hearing-count" *ngIf="getHearing(day)?.count">
+  {{ getHearing(day)?.count }}
+</span>
             </div>
           </td>
         </tr>
@@ -81,8 +81,8 @@
   </div>
 
   <!-- FOOTER -->
-  <div class="card-footer">
-    <a href="#" class="view-all-link">
+  <div class="card-footer" *ngIf="showButton">
+    <a routerLink="./hearing-calendar" class="view-all-link">
       <span>View Complete Calendar</span>
       <mat-icon>arrow_forward</mat-icon>
     </a>

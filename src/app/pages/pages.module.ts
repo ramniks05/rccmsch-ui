@@ -9,6 +9,11 @@ import { SharedModule } from '../shared/shared.module';
 import { LoginPageComponent } from './login-page/login-page.component';
 import { CauseListComponent } from './cause-list/cause-list.component';
 import { HearingCalendarComponent } from './hearing-calendar/hearing-calendar.component';
+import { AboutComponent } from './about/about.component';
+import { FaqComponent } from './faq/faq.component';
+import { ContactComponent } from './contact/contact.component';
+import { DocumentsComponent } from './documents/documents.component';
+import { WhatsNewComponent } from './whats-new/whats-new.component';
 
 /**
  * Routes for Pages Module
@@ -34,6 +39,41 @@ const routes: Routes = [
     path: 'index',
     component: IndexComponent,
     data: { breadcrumb: 'Index' }
+  },
+  {
+    path: 'about',
+    component: AboutComponent,
+    data: { breadcrumb: 'About' }
+  },
+  {
+    path: 'faq',
+    component: FaqComponent,
+    data: { breadcrumb: 'FAQ' }
+  },
+  {
+    path: 'contact',
+    component: ContactComponent,
+    data: { breadcrumb: 'Contact Us' }
+  },
+  {
+    path: 'documents',
+    component: DocumentsComponent,
+    data: { breadcrumb: 'Documents' }
+  },
+  {
+    path: 'cause-list',
+    component: CauseListComponent,
+    data: { breadcrumb: 'Cause List' }
+  },
+  {
+    path: 'hearing-calendar',
+    component: HearingCalendarComponent,
+    data: { breadcrumb: 'Hearing Calendar' }
+  },
+  {
+    path: 'whats-new',
+    component: WhatsNewComponent,
+    data: { breadcrumb: 'What\'s New' }
   }
 ];
 
@@ -48,7 +88,8 @@ const routes: Routes = [
     IndexComponent,
     LoginPageComponent,
     CauseListComponent,
-    HearingCalendarComponent
+    HearingCalendarComponent,
+    AboutComponent,
   ],
   imports: [
     RouterModule.forChild(routes),

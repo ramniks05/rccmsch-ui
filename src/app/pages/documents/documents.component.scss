@@ -1,0 +1,311 @@
+// ── Host ─────────────────────────────────────────────
+:host {
+  --blue:       #1a5cb8;
+  --blue-dark:  #1a2e5a;
+  --blue-light: #e8f0fc;
+  --red-light:  rgba(192, 57, 43, 0.10);
+  --red:        #c0392b;
+  --green:      #0d8a4e;
+  --text-main:  #1a2e5a;
+  --text-muted: #6b7ea4;
+  --border:     #e4eaf5;
+  --surface:    #ffffff;
+  --off-white:  #f5f7fc;
+  --shadow:     0 4px 24px rgba(10, 20, 60, 0.10);
+  --t:          0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+  display: block;
+  font-family: 'DM Sans', 'Segoe UI', sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+// ── Card shell ────────────────────────────────────────
+.documents-card {
+  margin: 2% 6%;
+  min-height: 500px;
+  background: var(--surface);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+}
+
+// ── Header ────────────────────────────────────────────
+.docs-header {
+  background: linear-gradient(90deg, #1a3a6e 0%, var(--blue) 100%);
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  .header-icon {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 22px;
+    width: 22px;
+    height: 22px;
+  }
+
+  .header-title {
+    flex: 1;
+    font-size: 17px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0;
+    letter-spacing: 0.2px;
+  }
+}
+
+.docs-count {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  min-width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+
+  &--skeleton {
+    width: 28px;
+    background: rgba(255, 255, 255, 0.12);
+    animation: pulse-opacity 1.2s ease-in-out infinite;
+  }
+}
+
+// ── List container ────────────────────────────────────
+.docs-list {
+  flex: 1;
+  padding: 12px 12px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 120px;
+}
+
+// ── Single doc row ────────────────────────────────────
+.doc-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  text-decoration: none;
+  color: inherit;
+  transition: background var(--t), box-shadow var(--t), border-color var(--t);
+
+  &:hover {
+    background: #f0f5ff;
+    border-color: #c5d8ff;
+    box-shadow: 0 2px 8px rgba(26, 92, 184, 0.08);
+
+    .download-icon {
+      color: var(--blue);
+      transform: translateY(1px);
+    }
+
+    .doc-title { color: var(--blue); }
+  }
+
+  // Skeleton variant
+  &--skeleton {
+    pointer-events: none;
+    border-color: transparent;
+    background: var(--off-white);
+  }
+}
+
+// ── File icon wrapper ─────────────────────────────────
+.doc-icon-wrapper {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  // Blue tint — generic / doc / image files (matches screenshot left item)
+  &.icon-wrap--doc {
+    background: var(--blue-light);
+    .doc-icon { color: var(--blue); }
+  }
+
+  // Red tint — PDF files (matches screenshot right item)
+  &.icon-wrap--pdf {
+    background: var(--red-light);
+    .doc-icon { color: var(--red); }
+  }
+}
+
+.doc-icon {
+  font-size: 22px;
+  width: 22px;
+  height: 22px;
+}
+
+// ── Text content ──────────────────────────────────────
+.doc-content { flex: 1; min-width: 0; }
+
+.doc-title {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 5px;
+  transition: color var(--t);
+}
+
+.doc-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.doc-date {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+// ── File-type badge (JPG / PDF pill) ──────────────────
+// Matches screenshot exactly — JPG in red tint, PDF in red tint
+.doc-type-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+
+  &.badge--pdf     { background: rgba(192, 57, 43, 0.12); color: #c0392b; }
+  &.badge--doc     { background: rgba(26, 92, 184, 0.12);  color: var(--blue); }
+  &.badge--img     { background: rgba(192, 57, 43, 0.12);  color: #c0392b; }  // JPG uses same red as screenshot
+  &.badge--xls     { background: rgba(13, 138, 78, 0.12);  color: var(--green); }
+  &.badge--default { background: rgba(107, 126, 164, 0.12); color: var(--text-muted); }
+}
+
+// ── Download icon ─────────────────────────────────────
+.download-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--blue);
+  opacity: 0.7;
+  transition: color var(--t), transform var(--t), opacity var(--t);
+
+  ::ng-deep svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+// ── State messages (error / empty) ───────────────────
+.state-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 28px 16px;
+  font-size: 13.5px;
+  color: var(--text-muted);
+
+  mat-icon { font-size: 20px; width: 20px; height: 20px; opacity: 0.6; }
+
+  &--error {
+    color: var(--red);
+    mat-icon { color: var(--red); opacity: 1; }
+  }
+}
+
+.retry-btn {
+  background: none;
+  border: 1px solid var(--red);
+  color: var(--red);
+  border-radius: 5px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background var(--t);
+  &:hover { background: rgba(192, 57, 43, 0.06); }
+}
+
+// ── Skeleton lines ────────────────────────────────────
+.skeleton-box {
+  background: linear-gradient(90deg, #e4eaf5 25%, #f0f4fb 50%, #e4eaf5 75%) !important;
+  background-size: 200% 100% !important;
+  animation: shimmer 1.4s infinite;
+}
+
+.skeleton-line {
+  border-radius: 4px;
+  background: linear-gradient(90deg, #e4eaf5 25%, #f0f4fb 50%, #e4eaf5 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+}
+.skeleton-title { height: 14px; width: 55%; margin-bottom: 8px; }
+.skeleton-meta  { height: 11px; width: 32%; }
+
+// ── Footer ────────────────────────────────────────────
+.docs-footer {
+  padding: 16px 20px 20px;
+  display: flex;
+  justify-content: center;
+  border-top: 1px solid var(--border);
+  background: var(--off-white);
+  margin-top: 8px;
+}
+
+// "Browse All Documents →" button — matches screenshot exactly
+.view-all-docs {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 28px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #1a3a6e, var(--blue));
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 3px 12px rgba(26, 92, 184, 0.28);
+  transition: transform var(--t), box-shadow var(--t);
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    transition: transform var(--t);
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(26, 92, 184, 0.4);
+    mat-icon { transform: translateX(3px); }
+  }
+}
+
+// ── Animations ────────────────────────────────────────
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes pulse-opacity {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 0.8; }
+}

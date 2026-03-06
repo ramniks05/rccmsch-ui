@@ -1,0 +1,210 @@
+<!-- ═══════════════════════════════════════════
+     RCCMS — About Page
+     ═══════════════════════════════════════════ -->
+
+<!-- ── Hero ───────────────────────────────────── -->
+<section class="hero">
+  <div class="hero__geo" aria-hidden="true">
+    <span class="geo geo--circle"></span>
+    <span class="geo geo--ring"></span>
+    <span class="geo geo--bar bar-1"></span>
+    <span class="geo geo--bar bar-2"></span>
+  </div>
+
+  <div class="hero__inner">
+    <div class="hero__eyebrow">
+      <span class="eyebrow-dot"></span>
+      Government of Chandigarh &nbsp;·&nbsp; Digital India
+    </div>
+
+    <h1 class="hero__title">
+      About&nbsp;<em>RCCMS</em>
+    </h1>
+
+    <p class="hero__desc">
+      The Revenue Court Case Management System is the authoritative digital
+      platform for all revenue court proceedings in the Union Territory of
+      Chandigarh — bringing transparency, speed, and accountability to
+      land-record and tenancy dispute resolution.
+    </p>
+
+    <div class="hero__actions">
+      <a routerLink="/" class="btn btn--primary">← Back to Home</a>
+      <a class="btn btn--ghost" (click)="scrollToVision()">Explore Vision</a>
+    </div>
+  </div>
+
+  <div class="hero__badge" aria-hidden="true">
+    <div class="badge-seal">RCCMS</div>
+    <span class="badge-label">Est. 2019</span>
+  </div>
+</section>
+
+<!-- ── Stats Band ──────────────────────────────── -->
+<section class="stats-band">
+  <div class="stats-band__inner">
+    <div
+      *ngFor="let stat of stats; trackBy: trackByIndex; let i = index"
+      class="stat-card"
+      #animateOnScroll
+      [style.animation-delay]="(i * 0.1) + 's'"
+    >
+      <div class="stat-card__icon">
+        <ng-container [ngSwitch]="stat.icon">
+          <svg *ngSwitchCase="'folder'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          <svg *ngSwitchCase="'building'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M8 3v18M16 3v18M2 9h20M2 15h20"/></svg>
+          <svg *ngSwitchCase="'chart'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg>
+          <svg *ngSwitchCase="'calendar'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </ng-container>
+      </div>
+      <div class="stat-card__value">{{ stat.value }}</div>
+      <div class="stat-card__label">{{ stat.label }}</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── About Body ──────────────────────────────── -->
+<section class="about-body">
+  <div class="about-body__inner">
+
+    <!-- Overview -->
+    <div class="overview" #animateOnScroll>
+      <div class="section-label">Overview</div>
+      <h2 class="section-title">What is RCCMS?</h2>
+      <div class="overview__grid">
+        <div class="overview__text">
+          <p>
+            The <strong>Revenue Court Case Management System (RCCMS)</strong> is a
+            Government of India initiative under the <em>Digital India</em> programme,
+            developed and deployed by the Administration of Union Territory,
+            Chandigarh to modernise the administration of revenue courts.
+          </p>
+          <p>
+            Revenue courts adjudicate disputes arising from land records, tenancy
+            agreements, agricultural holdings, and related matters. Prior to RCCMS,
+            these proceedings were entirely paper-based — resulting in long delays,
+            lost records, and limited public access to case information.
+          </p>
+          <p>
+            RCCMS replaces these legacy processes with a unified digital platform
+            covering case registration, e-filing, automated cause-list generation,
+            digital order publication, and real-time status tracking for citizens
+            and legal practitioners alike.
+          </p>
+        </div>
+        <div class="overview__aside">
+          <div class="aside-card">
+            <div class="aside-card__header">Quick Facts</div>
+            <ul class="aside-list">
+              <li><span class="aside-key">Jurisdiction</span><span class="aside-val">UT Chandigarh</span></li>
+              <li><span class="aside-key">Courts Covered</span><span class="aside-val">38</span></li>
+              <li><span class="aside-key">Platform Type</span><span class="aside-val">Web + Mobile</span></li>
+              <li><span class="aside-key">Launched</span><span class="aside-val">2019 (Pilot)</span></li>
+              <li><span class="aside-key">Full Rollout</span><span class="aside-val">2022</span></li>
+              <li><span class="aside-key">Ministry</span><span class="aside-val">MeitY / NIC</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vision & Mission -->
+    <div id="vision" class="vision-section" #animateOnScroll>
+      <div class="section-label">Mandate</div>
+      <h2 class="section-title">Vision &amp; Mission</h2>
+
+      <div class="vision-statement">
+        <blockquote>
+          "To create a transparent, efficient, and citizen-centric revenue court
+          ecosystem that leverages technology to deliver timely justice and build
+          trust in the administration of land and tenancy law."
+        </blockquote>
+      </div>
+
+      <div class="pillars-grid">
+        <div
+          *ngFor="let p of pillars; trackBy: trackByIndex; let i = index"
+          class="pillar-card"
+          #animateOnScroll
+          [style.--accent]="p.color"
+          [style.animation-delay]="(i * 0.1) + 's'"
+        >
+          <div class="pillar-card__icon-wrap">
+            <ng-container [ngSwitch]="p.icon">
+              <svg *ngSwitchCase="'transparency'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <svg *ngSwitchCase="'speed'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              <svg *ngSwitchCase="'access'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              <svg *ngSwitchCase="'accountability'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </ng-container>
+          </div>
+          <h3 class="pillar-card__title">{{ p.title }}</h3>
+          <p class="pillar-card__desc">{{ p.description }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="timeline-section" #animateOnScroll>
+      <div class="section-label">Journey</div>
+      <h2 class="section-title">Milestones</h2>
+
+      <div class="timeline">
+        <div
+          *ngFor="let ev of timeline; trackBy: trackByIndex; let i = index; let last = last"
+          class="timeline__item"
+          [class.timeline__item--last]="last"
+          #animateOnScroll
+          [style.animation-delay]="(i * 0.12) + 's'"
+        >
+          <div class="timeline__left">
+            <div class="timeline__year">{{ ev.year }}</div>
+          </div>
+          <div class="timeline__connector">
+            <div class="timeline__dot"></div>
+            <div class="timeline__line" *ngIf="!last"></div>
+          </div>
+          <div class="timeline__right">
+            <h4 class="timeline__title">{{ ev.title }}</h4>
+            <p class="timeline__desc">{{ ev.description }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Leadership -->
+    <div class="leadership-section" #animateOnScroll>
+      <div class="section-label">Governance</div>
+      <h2 class="section-title">Leadership</h2>
+      <div class="leaders-grid">
+        <div
+          *ngFor="let leader of leaders; trackBy: trackByIndex; let i = index"
+          class="leader-card"
+          [style.--accent]="leader.accentColor"
+          [style.animation-delay]="(i * 0.1) + 's'"
+          #animateOnScroll
+        >
+          <div class="leader-card__avatar">{{ leader.initials }}</div>
+          <div class="leader-card__info">
+            <div class="leader-card__name">{{ leader.name }}</div>
+            <div class="leader-card__role">{{ leader.designation }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── CTA Footer Strip ────────────────────────── -->
+<section class="cta-strip">
+  <div class="cta-strip__inner">
+    <div class="cta-strip__text">
+      <h3>Ready to file a case or track proceedings?</h3>
+      <p>Access the full system dashboard with your registered account.</p>
+    </div>
+    <div class="cta-strip__actions">
+      <button class="btn btn--white" (click)="goToLogin()">Login to Portal</button>
+      <button class="btn btn--outline-white" (click)="goToRegistration()">Register Now</button>
+    </div>
+  </div>
+</section>

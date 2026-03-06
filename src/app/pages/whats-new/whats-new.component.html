@@ -1,0 +1,52 @@
+<div class="whats-new-card" [ngClass]="customClass">
+  <!-- HEADER -->
+  <div class="whats-new-header">
+    <div class="header-content">
+      <mat-icon class="header-icon">campaign</mat-icon>
+      <h3 class="header-title">What's New</h3>
+    </div>
+    <span class="live-badge">
+      <span class="pulse-dot"></span>
+      Live
+    </span>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="whats-new-body">
+    <div class="news-list">
+      <div class="marquee-container">
+        <div class="marquee-inner">
+          <div
+            class="news-item"
+            *ngFor="let item of whatsNewList; let i = index"
+          >
+            <div class="news-index">{{ i + 1 }}</div>
+            <div class="news-content">
+              <div class="news-date">
+                <mat-icon>description</mat-icon>
+                {{ item.publishedDate | date: "dd MMM yyyy" }}
+              </div>
+              <div class="news-title">{{ item.title }}</div>
+            </div>
+            <a
+              class="news-link"
+              [href]="item.pdfUrl"
+              target="_blank"
+              matTooltip="View Document"
+            >
+              <mat-icon>picture_as_pdf</mat-icon>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="whats-new-footer" *ngIf="showButton">
+    <a href="/Home/AllNotification" target="_blank" class="view-all-btn">
+      <span>View All Updates</span>
+      <mat-icon>open_in_new</mat-icon>
+    </a>
+  </div>
+</div>

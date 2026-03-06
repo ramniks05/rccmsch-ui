@@ -4,6 +4,7 @@ import { MatPaginator } from '@angular/material/paginator';
 import { CommonService } from 'src/app/core/services/common-service';
 import { AdminService } from 'src/app/admin/admin.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { Router } from '@angular/router';
 
 export interface CauseList {
   id: number;
@@ -13,27 +14,35 @@ export interface CauseList {
   hearingDate: string;
 }
 
-
 @Component({
   selector: 'app-cause-list',
   templateUrl: './cause-list.component.html',
-  styleUrls: ['./cause-list.component.scss']
+  styleUrls: ['./cause-list.component.scss'],
 })
 export class CauseListComponent implements OnInit {
-
   displayedColumns = ['index', 'court', 'cases', 'date'];
   dataSource = new MatTableDataSource<CauseList>([]);
   courts: any[] = [];
   selectedCourt: any;
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
+  showButton: boolean = true;
+  customClass: any = '';
 
   constructor(
     private service: CommonService,
     private adminService: AdminService,
-    private snack: MatSnackBar) {}
+    private router: Router,
+    private snack: MatSnackBar,
+  ) {}
 
   ngOnInit(): void {
+    this.selectedCourt = '';
+    const url = this.router.url;
+    this.customClass = url === '/home/cause-list' ? 'cause-list-style' : '';
+    if (url === '/home/cause-list') {
+      this.showButton = false;
+    }
     this.loadDefaultCauseList();
     this.loadCourts();
   }
@@ -43,7 +52,7 @@ export class CauseListComponent implements OnInit {
   }
 
   loadDefaultCauseList(): void {
-    this.service.getLatestCauseList(this.selectedCourt).subscribe(res => {
+    this.service.getLatestCauseList(this.selectedCourt).subscribe((res) => {
       this.dataSource.data = res;
     });
   }
@@ -74,7 +83,7 @@ export class CauseListComponent implements OnInit {
   //   });
   // }
 
-  onCourtChange(e:any): void {
+  onCourtChange(e: any): void {
     if (this.selectedCourt === '' && e.target.value != '') {
       this.selectedCourt = null;
     }

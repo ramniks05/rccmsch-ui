@@ -1,158 +1,121 @@
 <!-- Loading State -->
 <div *ngIf="loading" class="loading-container">
-  <mat-spinner diameter="50"></mat-spinner>
-  <p>Loading registration form...</p>
+  <div class="loading-inner">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Loading registration form...</p>
+  </div>
 </div>
 
 <!-- Error State -->
 <div *ngIf="error && !loading" class="error-container">
-  <mat-icon>error</mat-icon>
-  <span>{{ error }}</span>
+  <div class="error-icon-wrap"><mat-icon>cloud_off</mat-icon></div>
+  <div class="error-body">
+    <strong>Unable to load form</strong>
+    <span>{{ error }}</span>
+  </div>
 </div>
 
 <!-- Dynamic Form -->
-<form 
-  *ngIf="registrationForm && !loading && !error" 
-  [formGroup]="registrationForm" 
-  (ngSubmit)="onSubmit()" 
+<form
+  *ngIf="registrationForm && !loading && !error"
+  [formGroup]="registrationForm"
+  (ngSubmit)="onSubmit()"
   class="dynamic-registration-form">
-  
-  <!-- Group fields by fieldGroup if available -->
+
+  <!-- Grouped sections -->
   <ng-container *ngIf="groupedFields | keyvalue as groups">
     <ng-container *ngFor="let group of groups">
       <div *ngIf="group.key !== 'default'" class="form-section">
-        <h3 class="section-title">{{ getGroupLabel(group.key) }}</h3>
-        
+        <div class="section-header">
+          <h3 class="section-title">{{ getGroupLabel(group.key) | titlecase }}</h3>
+          <span class="section-count">{{ group.value.length }} field{{ group.value.length !== 1 ? 's' : '' }}</span>
+        </div>
+
         <div class="fields-container">
-          <div 
-            *ngFor="let field of group.value" 
+          <div
+            *ngFor="let field of group.value"
             class="field-wrapper"
-            [class.required-field]="field.isRequired">
-            
+            [class.required-field]="field.isRequired"
+            [class.full-span]="field.fieldType === 'TEXTAREA'">
+
             <ng-container [ngSwitch]="field.fieldType">
-              
-              <!-- TEXT Input -->
+
+              <!-- TEXT -->
               <mat-form-field appearance="outline" *ngSwitchCase="'TEXT'" class="form-field">
-                <mat-label>{{ field.fieldLabel }} <span *ngIf="field.isRequired">*</span></mat-label>
-                <input 
-                  matInput 
-                  [formControlName]="field.fieldName"
-                  [placeholder]="field.placeholder || ''">
+                <mat-label>{{ field.fieldLabel }}<span *ngIf="field.isRequired" class="req-star"> *</span></mat-label>
+                <input matInput [formControlName]="field.fieldName" [placeholder]="field.placeholder || ''">
                 <mat-icon matPrefix>text_fields</mat-icon>
-                <mat-error *ngIf="hasFieldError(field.fieldName)">
-                  {{ getFieldError(field.fieldName) }}
-                </mat-error>
+                <mat-error *ngIf="hasFieldError(field.fieldName)">{{ getFieldError(field.fieldName) }}</mat-error>
                 <mat-hint *ngIf="field.helpText">{{ field.helpText }}</mat-hint>
               </mat-form-field>
 
-              <!-- EMAIL Input -->
+              <!-- EMAIL -->
               <mat-form-field appearance="outline" *ngSwitchCase="'EMAIL'" class="form-field">
-                <mat-label>{{ field.fieldLabel }} <span *ngIf="field.isRequired">*</span></mat-label>
-                <input 
-                  matInput 
-                  type="email"
-                  [formControlName]="field.fieldName"
-                  [placeholder]="field.placeholder || ''">
-                <mat-icon matPrefix>email</mat-icon>
-                <mat-error *ngIf="hasFieldError(field.fieldName)">
-                  {{ getFieldError(field.fieldName) }}
-                </mat-error>
+                <mat-label>{{ field.fieldLabel }}<span *ngIf="field.isRequired" class="req-star"> *</span></mat-label>
+                <input matInput type="email" [formControlName]="field.fieldName" [placeholder]="field.placeholder || ''">
+                <mat-icon matPrefix>alternate_email</mat-icon>
+                <mat-error *ngIf="hasFieldError(field.fieldName)">{{ getFieldError(field.fieldName) }}</mat-error>
                 <mat-hint *ngIf="field.helpText">{{ field.helpText }}</mat-hint>
               </mat-form-field>
 
-              <!-- PHONE Input -->
+              <!-- PHONE -->
               <mat-form-field appearance="outline" *ngSwitchCase="'PHONE'" class="form-field">
-                <mat-label>{{ field.fieldLabel }} <span *ngIf="field.isRequired">*</span></mat-label>
-                <input 
-                  matInput 
-                  type="tel"
-                  [formControlName]="field.fieldName"
-                  [placeholder]="field.placeholder || ''"
-                  maxlength="10">
-                <mat-icon matPrefix>phone</mat-icon>
-                <mat-error *ngIf="hasFieldError(field.fieldName)">
-                  {{ getFieldError(field.fieldName) }}
-                </mat-error>
+                <mat-label>{{ field.fieldLabel }}<span *ngIf="field.isRequired" class="req-star"> *</span></mat-label>
+                <input matInput type="tel" [formControlName]="field.fieldName" [placeholder]="field.placeholder || ''" maxlength="10">
+                <mat-icon matPrefix>phone_iphone</mat-icon>
+                <mat-error *ngIf="hasFieldError(field.fieldName)">{{ getFieldError(field.fieldName) }}</mat-error>
                 <mat-hint *ngIf="field.helpText">{{ field.helpText }}</mat-hint>
               </mat-form-field>
 
-              <!-- NUMBER Input -->
+              <!-- NUMBER -->
               <mat-form-field appearance="outline" *ngSwitchCase="'NUMBER'" class="form-field">
-                <mat-label>{{ field.fieldLabel }} <span *ngIf="field.isRequired">*</span></mat-label>
-                <input 
-                  matInput 
-                  type="number"
-                  [formControlName]="field.fieldName"
-                  [placeholder]="field.placeholder || ''">
-                <mat-icon matPrefix>numbers</mat-icon>
-                <mat-error *ngIf="hasFieldError(field.fieldName)">
-                  {{ getFieldError(field.fieldName) }}
-                </mat-error>
+                <mat-label>{{ field.fieldLabel }}<span *ngIf="field.isRequired" class="req-star"> *</span></mat-label>
+                <input matInput type="number" [formControlName]="field.fieldName" [placeholder]="field.placeholder || ''">
+                <mat-icon matPrefix>tag</mat-icon>
+                <mat-error *ngIf="hasFieldError(field.fieldName)">{{ getFieldError(field.fieldName) }}</mat-error>
                 <mat-hint *ngIf="field.helpText">{{ field.helpText }}</mat-hint>
               </mat-form-field>
 
-              <!-- DATE Input -->
+              <!-- DATE -->
               <mat-form-field appearance="outline" *ngSwitchCase="'DATE'" class="form-field">
-                <mat-label>{{ field.fieldLabel }} <span *ngIf="field.isRequired">*</span></mat-label>
-                <input 
-                  matInput 
-                  [matDatepicker]="picker"
-                  [formControlName]="field.fieldName"
-                  [placeholder]="field.placeholder || ''">
+                <mat-label>{{ field.fieldLabel }}<span *ngIf="field.isRequired" class="req-star"> *</span></mat-label>
+                <input matInput [matDatepicker]="picker" [formControlName]="field.fieldName" [placeholder]="field.placeholder || ''">
                 <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
                 <mat-datepicker #picker></mat-datepicker>
-                <mat-icon matPrefix>calendar_today</mat-icon>
-                <mat-error *ngIf="hasFieldError(field.fieldName)">
-                  {{ getFieldError(field.fieldName) }}
-                </mat-error>
+                <mat-icon matPrefix>event</mat-icon>
+                <mat-error *ngIf="hasFieldError(field.fieldName)">{{ getFieldError(field.fieldName) }}</mat-error>
                 <mat-hint *ngIf="field.helpText">{{ field.helpText }}</mat-hint>
               </mat-form-field>
 
               <!-- TEXTAREA -->
-              <mat-form-field appearance="outline" *ngSwitchCase="'TEXTAREA'" class="form-field full-width">
-                <mat-label>{{ field.fieldLabel }} <span *ngIf="field.isRequired">*</span></mat-label>
-                <textarea 
-                  matInput 
-                  rows="3"
-                  [formControlName]="field.fieldName"
-                  [placeholder]="field.placeholder || ''"></textarea>
+              <mat-form-field appearance="outline" *ngSwitchCase="'TEXTAREA'" class="form-field">
+                <mat-label>{{ field.fieldLabel }}<span *ngIf="field.isRequired" class="req-star"> *</span></mat-label>
+                <textarea matInput rows="3" [formControlName]="field.fieldName" [placeholder]="field.placeholder || ''"></textarea>
                 <mat-icon matPrefix>notes</mat-icon>
-                <mat-error *ngIf="hasFieldError(field.fieldName)">
-                  {{ getFieldError(field.fieldName) }}
-                </mat-error>
+                <mat-error *ngIf="hasFieldError(field.fieldName)">{{ getFieldError(field.fieldName) }}</mat-error>
                 <mat-hint *ngIf="field.helpText">{{ field.helpText }}</mat-hint>
               </mat-form-field>
 
-              <!-- PASSWORD Input -->
+              <!-- PASSWORD -->
               <mat-form-field appearance="outline" *ngSwitchCase="'PASSWORD'" class="form-field">
-                <mat-label>{{ field.fieldLabel }} <span *ngIf="field.isRequired">*</span></mat-label>
-                <input 
-                  matInput 
-                  type="password"
-                  [formControlName]="field.fieldName"
-                  [placeholder]="field.placeholder || ''">
-                <mat-icon matPrefix>lock</mat-icon>
-                <mat-error *ngIf="hasFieldError(field.fieldName)">
-                  {{ getFieldError(field.fieldName) }}
-                </mat-error>
+                <mat-label>{{ field.fieldLabel }}<span *ngIf="field.isRequired" class="req-star"> *</span></mat-label>
+                <input matInput type="password" [formControlName]="field.fieldName" [placeholder]="field.placeholder || ''">
+                <mat-icon matPrefix>lock_outline</mat-icon>
+                <mat-error *ngIf="hasFieldError(field.fieldName)">{{ getFieldError(field.fieldName) }}</mat-error>
                 <mat-hint *ngIf="field.helpText">{{ field.helpText }}</mat-hint>
               </mat-form-field>
 
               <!-- DROPDOWN -->
               <mat-form-field appearance="outline" *ngSwitchCase="'DROPDOWN'" class="form-field">
-                <mat-label>{{ field.fieldLabel }} <span *ngIf="field.isRequired">*</span></mat-label>
+                <mat-label>{{ field.fieldLabel }}<span *ngIf="field.isRequired" class="req-star"> *</span></mat-label>
                 <mat-select [formControlName]="field.fieldName">
-                  <mat-option [value]="null">-- Select --</mat-option>
-                  <mat-option 
-                    *ngFor="let option of getDropdownOptions(field)" 
-                    [value]="option.value">
+                  <mat-option [value]="null">— Select —</mat-option>
+                  <mat-option *ngFor="let option of getDropdownOptions(field)" [value]="option.value">
                     {{ option.label }}
                   </mat-option>
                 </mat-select>
-                <mat-icon matPrefix>arrow_drop_down</mat-icon>
-                <mat-error *ngIf="hasFieldError(field.fieldName)">
-                  {{ getFieldError(field.fieldName) }}
-                </mat-error>
+                <mat-icon matPrefix>expand_circle_down</mat-icon>
+                <mat-error *ngIf="hasFieldError(field.fieldName)">{{ getFieldError(field.fieldName) }}</mat-error>
                 <mat-hint *ngIf="field.helpText">{{ field.helpText }}</mat-hint>
               </mat-form-field>
 
@@ -163,138 +126,83 @@
     </ng-container>
   </ng-container>
 
-  <!-- Fields without group (default group) -->
+  <!-- Ungrouped (default) fields -->
   <div *ngIf="groupedFields['default']?.length" class="form-section">
     <div class="fields-container">
-      <div 
-        *ngFor="let field of groupedFields['default']" 
+      <div
+        *ngFor="let field of groupedFields['default']"
         class="field-wrapper"
-        [class.required-field]="field.isRequired">
-        
+        [class.required-field]="field.isRequired"
+        [class.full-span]="field.fieldType === 'TEXTAREA'">
+
         <ng-container [ngSwitch]="field.fieldType">
-          
-          <!-- TEXT Input -->
+
           <mat-form-field appearance="outline" *ngSwitchCase="'TEXT'" class="form-field">
-            <mat-label>{{ field.fieldLabel }} <span *ngIf="field.isRequired">*</span></mat-label>
-            <input 
-              matInput 
-              [formControlName]="field.fieldName"
-              [placeholder]="field.placeholder || ''">
+            <mat-label>{{ field.fieldLabel }}<span *ngIf="field.isRequired" class="req-star"> *</span></mat-label>
+            <input matInput [formControlName]="field.fieldName" [placeholder]="field.placeholder || ''">
             <mat-icon matPrefix>text_fields</mat-icon>
-            <mat-error *ngIf="hasFieldError(field.fieldName)">
-              {{ getFieldError(field.fieldName) }}
-            </mat-error>
+            <mat-error *ngIf="hasFieldError(field.fieldName)">{{ getFieldError(field.fieldName) }}</mat-error>
             <mat-hint *ngIf="field.helpText">{{ field.helpText }}</mat-hint>
           </mat-form-field>
 
-          <!-- EMAIL Input -->
           <mat-form-field appearance="outline" *ngSwitchCase="'EMAIL'" class="form-field">
-            <mat-label>{{ field.fieldLabel }} <span *ngIf="field.isRequired">*</span></mat-label>
-            <input 
-              matInput 
-              type="email"
-              [formControlName]="field.fieldName"
-              [placeholder]="field.placeholder || ''">
-            <mat-icon matPrefix>email</mat-icon>
-            <mat-error *ngIf="hasFieldError(field.fieldName)">
-              {{ getFieldError(field.fieldName) }}
-            </mat-error>
+            <mat-label>{{ field.fieldLabel }}<span *ngIf="field.isRequired" class="req-star"> *</span></mat-label>
+            <input matInput type="email" [formControlName]="field.fieldName" [placeholder]="field.placeholder || ''">
+            <mat-icon matPrefix>alternate_email</mat-icon>
+            <mat-error *ngIf="hasFieldError(field.fieldName)">{{ getFieldError(field.fieldName) }}</mat-error>
             <mat-hint *ngIf="field.helpText">{{ field.helpText }}</mat-hint>
           </mat-form-field>
 
-          <!-- PHONE Input -->
           <mat-form-field appearance="outline" *ngSwitchCase="'PHONE'" class="form-field">
-            <mat-label>{{ field.fieldLabel }} <span *ngIf="field.isRequired">*</span></mat-label>
-            <input 
-              matInput 
-              type="tel"
-              [formControlName]="field.fieldName"
-              [placeholder]="field.placeholder || ''"
-              maxlength="10">
-            <mat-icon matPrefix>phone</mat-icon>
-            <mat-error *ngIf="hasFieldError(field.fieldName)">
-              {{ getFieldError(field.fieldName) }}
-            </mat-error>
+            <mat-label>{{ field.fieldLabel }}<span *ngIf="field.isRequired" class="req-star"> *</span></mat-label>
+            <input matInput type="tel" [formControlName]="field.fieldName" [placeholder]="field.placeholder || ''" maxlength="10">
+            <mat-icon matPrefix>phone_iphone</mat-icon>
+            <mat-error *ngIf="hasFieldError(field.fieldName)">{{ getFieldError(field.fieldName) }}</mat-error>
             <mat-hint *ngIf="field.helpText">{{ field.helpText }}</mat-hint>
           </mat-form-field>
 
-          <!-- NUMBER Input -->
           <mat-form-field appearance="outline" *ngSwitchCase="'NUMBER'" class="form-field">
-            <mat-label>{{ field.fieldLabel }} <span *ngIf="field.isRequired">*</span></mat-label>
-            <input 
-              matInput 
-              type="number"
-              [formControlName]="field.fieldName"
-              [placeholder]="field.placeholder || ''">
-            <mat-icon matPrefix>numbers</mat-icon>
-            <mat-error *ngIf="hasFieldError(field.fieldName)">
-              {{ getFieldError(field.fieldName) }}
-            </mat-error>
+            <mat-label>{{ field.fieldLabel }}<span *ngIf="field.isRequired" class="req-star"> *</span></mat-label>
+            <input matInput type="number" [formControlName]="field.fieldName" [placeholder]="field.placeholder || ''">
+            <mat-icon matPrefix>tag</mat-icon>
+            <mat-error *ngIf="hasFieldError(field.fieldName)">{{ getFieldError(field.fieldName) }}</mat-error>
             <mat-hint *ngIf="field.helpText">{{ field.helpText }}</mat-hint>
           </mat-form-field>
 
-          <!-- DATE Input -->
           <mat-form-field appearance="outline" *ngSwitchCase="'DATE'" class="form-field">
-            <mat-label>{{ field.fieldLabel }} <span *ngIf="field.isRequired">*</span></mat-label>
-            <input 
-              matInput 
-              [matDatepicker]="picker"
-              [formControlName]="field.fieldName"
-              [placeholder]="field.placeholder || ''">
-            <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-            <mat-datepicker #picker></mat-datepicker>
-            <mat-icon matPrefix>calendar_today</mat-icon>
-            <mat-error *ngIf="hasFieldError(field.fieldName)">
-              {{ getFieldError(field.fieldName) }}
-            </mat-error>
+            <mat-label>{{ field.fieldLabel }}<span *ngIf="field.isRequired" class="req-star"> *</span></mat-label>
+            <input matInput [matDatepicker]="picker2" [formControlName]="field.fieldName" [placeholder]="field.placeholder || ''">
+            <mat-datepicker-toggle matSuffix [for]="picker2"></mat-datepicker-toggle>
+            <mat-datepicker #picker2></mat-datepicker>
+            <mat-icon matPrefix>event</mat-icon>
+            <mat-error *ngIf="hasFieldError(field.fieldName)">{{ getFieldError(field.fieldName) }}</mat-error>
             <mat-hint *ngIf="field.helpText">{{ field.helpText }}</mat-hint>
           </mat-form-field>
 
-          <!-- TEXTAREA -->
-          <mat-form-field appearance="outline" *ngSwitchCase="'TEXTAREA'" class="form-field full-width">
-            <mat-label>{{ field.fieldLabel }} <span *ngIf="field.isRequired">*</span></mat-label>
-            <textarea 
-              matInput 
-              rows="3"
-              [formControlName]="field.fieldName"
-              [placeholder]="field.placeholder || ''"></textarea>
+          <mat-form-field appearance="outline" *ngSwitchCase="'TEXTAREA'" class="form-field">
+            <mat-label>{{ field.fieldLabel }}<span *ngIf="field.isRequired" class="req-star"> *</span></mat-label>
+            <textarea matInput rows="3" [formControlName]="field.fieldName" [placeholder]="field.placeholder || ''"></textarea>
             <mat-icon matPrefix>notes</mat-icon>
-            <mat-error *ngIf="hasFieldError(field.fieldName)">
-              {{ getFieldError(field.fieldName) }}
-            </mat-error>
+            <mat-error *ngIf="hasFieldError(field.fieldName)">{{ getFieldError(field.fieldName) }}</mat-error>
             <mat-hint *ngIf="field.helpText">{{ field.helpText }}</mat-hint>
           </mat-form-field>
 
-          <!-- PASSWORD Input -->
           <mat-form-field appearance="outline" *ngSwitchCase="'PASSWORD'" class="form-field">
-            <mat-label>{{ field.fieldLabel }} <span *ngIf="field.isRequired">*</span></mat-label>
-            <input 
-              matInput 
-              type="password"
-              [formControlName]="field.fieldName"
-              [placeholder]="field.placeholder || ''">
-            <mat-icon matPrefix>lock</mat-icon>
-            <mat-error *ngIf="hasFieldError(field.fieldName)">
-              {{ getFieldError(field.fieldName) }}
-            </mat-error>
+            <mat-label>{{ field.fieldLabel }}<span *ngIf="field.isRequired" class="req-star"> *</span></mat-label>
+            <input matInput type="password" [formControlName]="field.fieldName" [placeholder]="field.placeholder || ''">
+            <mat-icon matPrefix>lock_outline</mat-icon>
+            <mat-error *ngIf="hasFieldError(field.fieldName)">{{ getFieldError(field.fieldName) }}</mat-error>
             <mat-hint *ngIf="field.helpText">{{ field.helpText }}</mat-hint>
           </mat-form-field>
 
-          <!-- DROPDOWN -->
           <mat-form-field appearance="outline" *ngSwitchCase="'DROPDOWN'" class="form-field">
-            <mat-label>{{ field.fieldLabel }} <span *ngIf="field.isRequired">*</span></mat-label>
+            <mat-label>{{ field.fieldLabel }}<span *ngIf="field.isRequired" class="req-star"> *</span></mat-label>
             <mat-select [formControlName]="field.fieldName">
-              <mat-option [value]="null">-- Select --</mat-option>
-              <mat-option 
-                *ngFor="let option of getDropdownOptions(field)" 
-                [value]="option.value">
-                {{ option.label }}
-              </mat-option>
+              <mat-option [value]="null">— Select —</mat-option>
+              <mat-option *ngFor="let option of getDropdownOptions(field)" [value]="option.value">{{ option.label }}</mat-option>
             </mat-select>
-            <mat-icon matPrefix>arrow_drop_down</mat-icon>
-            <mat-error *ngIf="hasFieldError(field.fieldName)">
-              {{ getFieldError(field.fieldName) }}
-            </mat-error>
+            <mat-icon matPrefix>expand_circle_down</mat-icon>
+            <mat-error *ngIf="hasFieldError(field.fieldName)">{{ getFieldError(field.fieldName) }}</mat-error>
             <mat-hint *ngIf="field.helpText">{{ field.helpText }}</mat-hint>
           </mat-form-field>
 
@@ -302,4 +210,5 @@
       </div>
     </div>
   </div>
+
 </form>

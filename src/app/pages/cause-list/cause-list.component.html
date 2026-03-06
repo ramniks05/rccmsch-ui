@@ -1,4 +1,4 @@
-<div class="cause-list-card">
+<div class="cause-list-card" [ngClass]="customClass">
   <!-- HEADER -->
   <div class="card-header">
     <div class="header-left">
@@ -89,8 +89,8 @@
       </mat-paginator>
     </div>
 
-    <div class="footer-link">
-      <a href="#" class="view-all-link">
+    <div class="footer-link" *ngIf="showButton">
+      <a routerLink="./cause-list" class="view-all-link">
         <span>View All Cause Lists</span>
         <mat-icon>arrow_forward</mat-icon>
       </a>

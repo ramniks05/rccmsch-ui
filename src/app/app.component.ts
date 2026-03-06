@@ -11,21 +11,21 @@ import { filter } from 'rxjs/operators';
 export class AppComponent implements OnInit {
   showHeader: boolean = false;
   showBreadCrumbs: boolean = false;
-  
+
   constructor(
     private router: Router,
     private viewportScroller: ViewportScroller
   ) {
     this.router.events.subscribe(event => {
       if (event instanceof NavigationEnd) {
-        const hiddenRoutes = ['/home', '/error'];
+        const hiddenRoutes = ['/home', '/home?verified=true&message=Account%20activated%20successfully.%20Please%20login%20with%20your%20credentials.'];
         this.showHeader = !hiddenRoutes.includes(event.urlAfterRedirects);
-        const hiddenBreadRoutes = ['/home', '/admin/home'];
+        const hiddenBreadRoutes = ['/home', '/admin/home', '/home?verified=true&message=Account%20activated%20successfully.%20Please%20login%20with%20your%20credentials.'];
         this.showBreadCrumbs = !hiddenBreadRoutes.includes(event.urlAfterRedirects);
       }
     });
   }
-  
+
   ngOnInit(): void {
     // Scroll to top on route change
     this.router.events.pipe(

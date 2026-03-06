@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { Router } from '@angular/router';
 import { AdminService } from 'src/app/admin/admin.service';
 import { CommonService } from 'src/app/core/services/common-service';
 
@@ -7,17 +8,17 @@ export interface HearingDay {
   date: number;
   isHearing: boolean;
   tooltip?: string;
+  count?: number;
 }
 
 @Component({
   selector: 'app-hearing-calendar',
   templateUrl: './hearing-calendar.component.html',
-  styleUrls: ['./hearing-calendar.component.scss']
+  styleUrls: ['./hearing-calendar.component.scss'],
 })
 export class HearingCalendarComponent implements OnInit {
-
   courts: any[] = [];
-  selectedCourt:any;
+  selectedCourt: any;
 
   currentDate = new Date();
   currentMonth = this.currentDate.getMonth();
@@ -25,16 +26,26 @@ export class HearingCalendarComponent implements OnInit {
 
   weeks: number[][] = [];
   hearings: HearingDay[] = [];
+  showButton: boolean = true;
+  customClass: any = '';
 
-  readonly weekDays = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  readonly weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   constructor(
     private service: CommonService,
     private adminService: AdminService,
-    private snack: MatSnackBar
+    private snack: MatSnackBar,
+    private router: Router,
   ) {}
 
   ngOnInit(): void {
+    this.selectedCourt = '';
+    const url = this.router.url;
+    this.customClass =
+      url === '/home/hearing-calendar' ? 'hearing-calendar-style' : '';
+    if (url === '/home/hearing-calendar') {
+      this.showButton = false;
+    }
     this.loadCourts();
     this.buildCalendar();
     this.loadHearings();
@@ -106,28 +117,41 @@ export class HearingCalendarComponent implements OnInit {
   }
 
   loadHearings(): void {
-    this.service
-      .getCalendar(this.currentMonth + 1, this.currentYear, this.selectedCourt)
-      .subscribe(res => this.hearings = res);
-  }
+  this.service
+    .getCalendar(this.currentMonth + 1, this.currentYear, this.selectedCourt)
+    .subscribe((res) => {
+
+      this.hearings = res.map(item => ({
+        ...item,
+        count: Number(item.tooltip?.split('-').pop()) || 0
+      }));
+
+    });
+}
 
   getHearing(day: number): HearingDay | undefined {
-    return this.hearings.find(h => h.date === day);
+    return this.hearings.find((h) => h.date === day);
   }
 
   get monthLabel(): string {
-    return new Date(this.currentYear, this.currentMonth)
-      .toLocaleString('default', { month: 'long', year: 'numeric' });
+    return new Date(this.currentYear, this.currentMonth).toLocaleString(
+      'default',
+      { month: 'long', year: 'numeric' },
+    );
   }
 
   get prevMonthLabel(): string {
-    return new Date(this.currentYear, this.currentMonth - 1)
-      .toLocaleString('default', { month: 'short' });
+    return new Date(this.currentYear, this.currentMonth - 1).toLocaleString(
+      'default',
+      { month: 'short' },
+    );
   }
 
   get nextMonthLabel(): string {
-    return new Date(this.currentYear, this.currentMonth + 1)
-      .toLocaleString('default', { month: 'short' });
+    return new Date(this.currentYear, this.currentMonth + 1).toLocaleString(
+      'default',
+      { month: 'short' },
+    );
   }
 
   /**

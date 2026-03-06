@@ -157,6 +157,10 @@ export class IndexComponent implements OnInit {
     this.getCaseSummary();
   }
 
+  ngOnDestroy(): void {
+    this.subscription?.unsubscribe();
+  }
+
   announceScreenReaderInfo() {
     const message =
       'Screen reader mode activated. Use tab key to navigate through interactive elements.';

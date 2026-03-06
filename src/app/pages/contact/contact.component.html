@@ -1,0 +1,311 @@
+<!-- ═══════════════════════════════════════════
+     RCCMS — Contact Us Page
+     ═══════════════════════════════════════════ -->
+
+<!-- ── Hero ───────────────────────────────────── -->
+<section class="hero">
+  <div class="hero__geo" aria-hidden="true">
+    <span class="geo geo--circle"></span>
+    <span class="geo geo--ring"></span>
+    <span class="geo geo--bar bar-1"></span>
+    <span class="geo geo--bar bar-2"></span>
+  </div>
+
+  <div class="hero__inner">
+    <div class="hero__eyebrow">
+      <span class="eyebrow-dot"></span>
+      Government of Chandigarh &nbsp;·&nbsp; Support Centre
+    </div>
+
+    <h1 class="hero__title">
+      Contact&nbsp;<em>Us</em>
+    </h1>
+
+    <p class="hero__desc">
+      Reach out to the RCCMS support team for help with case filing, account
+      issues, technical queries, or any other matter related to revenue court
+      proceedings in UT Chandigarh.
+    </p>
+
+    <div class="hero__actions">
+      <a routerLink="/home" class="btn btn--primary">← Back to Home</a>
+      <a routerLink="../faq" class="btn btn--ghost">Browse FAQ</a>
+    </div>
+  </div>
+
+  <div class="hero__badge" aria-hidden="true">
+    <div class="badge-seal">HELP</div>
+    <span class="badge-label">Support Centre</span>
+  </div>
+</section>
+
+<!-- ── Stats Band ──────────────────────────────── -->
+<section class="stats-band">
+  <div class="stats-band__inner">
+    <div
+      *ngFor="let stat of stats; trackBy: trackByIndex; let i = index"
+      class="stat-card"
+      #animateOnScroll
+      [style.animation-delay]="(i * 0.1) + 's'"
+    >
+      <div class="stat-card__icon" [innerHTML]="getSvgIcon(stat.icon)"></div>
+      <div class="stat-card__value">{{ stat.value }}</div>
+      <div class="stat-card__label">{{ stat.label }}</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Contact Body ────────────────────────────── -->
+<section class="contact-body">
+  <div class="contact-body__inner">
+
+    <!-- Contact Channels -->
+    <div class="channels-section" #animateOnScroll>
+      <div class="section-label">Reach Us</div>
+      <h2 class="section-title">Get in Touch</h2>
+
+      <div class="channels-grid">
+        <a
+          *ngFor="let ch of channels; trackBy: trackByIndex; let i = index"
+          [href]="ch.actionHref"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="channel-card"
+          [style.--accent]="ch.color"
+          [style.animation-delay]="(i * 0.08) + 's'"
+          #animateOnScroll
+        >
+          <div class="channel-card__icon-wrap">
+            <span [innerHTML]="getSvgIcon(ch.icon)"></span>
+          </div>
+          <div class="channel-card__content">
+            <h3 class="channel-card__title">{{ ch.title }}</h3>
+            <p class="channel-card__detail">{{ ch.detail }}</p>
+            <p class="channel-card__sub" *ngIf="ch.subDetail">{{ ch.subDetail }}</p>
+          </div>
+          <div class="channel-card__action">
+            {{ ch.actionLabel }}
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </div>
+        </a>
+      </div>
+    </div>
+
+    <!-- Main Content: Form + Offices -->
+    <div class="main-grid">
+
+      <!-- Contact Form -->
+      <div class="form-section" #animateOnScroll>
+        <div class="section-label">Write to Us</div>
+        <h2 class="section-title">Send a Message</h2>
+
+        <!-- Idle / Filling state -->
+        <form
+          *ngIf="formStatus !== 'success'"
+          class="contact-form"
+          (ngSubmit)="submitForm()"
+          #contactForm="ngForm"
+          novalidate
+        >
+          <!-- Row 1: Name + Email -->
+          <div class="form-row">
+            <div class="form-field" [class.has-error]="nameInput.invalid && nameInput.touched">
+              <label class="form-label" for="name">Full Name <span class="required">*</span></label>
+              <input
+                id="name"
+                name="name"
+                type="text"
+                class="form-input"
+                placeholder="e.g. Ramesh Kumar"
+                [(ngModel)]="form.name"
+                #nameInput="ngModel"
+                required
+                minlength="2"
+              />
+              <span class="form-error" *ngIf="nameInput.invalid && nameInput.touched">
+                Please enter your full name.
+              </span>
+            </div>
+
+            <div class="form-field" [class.has-error]="emailInput.invalid && emailInput.touched">
+              <label class="form-label" for="email">Email Address <span class="required">*</span></label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                class="form-input"
+                placeholder="e.g. ramesh@example.com"
+                [(ngModel)]="form.email"
+                #emailInput="ngModel"
+                required
+                email
+              />
+              <span class="form-error" *ngIf="emailInput.invalid && emailInput.touched">
+                Please enter a valid email address.
+              </span>
+            </div>
+          </div>
+
+          <!-- Row 2: Phone + Category -->
+          <div class="form-row">
+            <div class="form-field">
+              <label class="form-label" for="phone">Mobile Number</label>
+              <input
+                id="phone"
+                name="phone"
+                type="tel"
+                class="form-input"
+                placeholder="e.g. 98765 43210"
+                [(ngModel)]="form.phone"
+                pattern="[0-9]{10}"
+              />
+            </div>
+
+            <div class="form-field" [class.has-error]="categoryInput.invalid && categoryInput.touched">
+              <label class="form-label" for="category">Query Category <span class="required">*</span></label>
+              <select
+                id="category"
+                name="category"
+                class="form-input form-select"
+                [(ngModel)]="form.category"
+                #categoryInput="ngModel"
+                required
+              >
+                <option value="" disabled>Select a category…</option>
+                <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+              </select>
+              <span class="form-error" *ngIf="categoryInput.invalid && categoryInput.touched">
+                Please select a category.
+              </span>
+            </div>
+          </div>
+
+          <!-- Subject -->
+          <div class="form-field">
+            <label class="form-label" for="subject">Subject</label>
+            <input
+              id="subject"
+              name="subject"
+              type="text"
+              class="form-input"
+              placeholder="Brief subject of your query"
+              [(ngModel)]="form.subject"
+            />
+          </div>
+
+          <!-- Message -->
+          <div class="form-field" [class.has-error]="messageInput.invalid && messageInput.touched">
+            <label class="form-label" for="message">Message <span class="required">*</span></label>
+            <textarea
+              id="message"
+              name="message"
+              class="form-input form-textarea"
+              placeholder="Describe your query in detail. Include your Case Reference Number (CRN) if applicable…"
+              [(ngModel)]="form.message"
+              #messageInput="ngModel"
+              required
+              minlength="20"
+              rows="5"
+            ></textarea>
+            <div class="form-hint">
+              <span class="form-error" *ngIf="messageInput.invalid && messageInput.touched">
+                Message must be at least 20 characters.
+              </span>
+              <span class="char-count" [class.warn]="form.message.length > 900">
+                {{ form.message.length }} / 1000
+              </span>
+            </div>
+          </div>
+
+          <!-- Submit -->
+          <div class="form-actions">
+            <button
+              type="submit"
+              class="btn-submit"
+              [disabled]="formStatus === 'submitting' || contactForm.invalid"
+              [class.loading]="formStatus === 'submitting'"
+            >
+              <span class="btn-submit__icon" [innerHTML]="getSvgIcon('send')"></span>
+              <span>{{ formStatus === 'submitting' ? 'Sending…' : 'Send Message' }}</span>
+              <span class="btn-submit__spinner" *ngIf="formStatus === 'submitting'"></span>
+            </button>
+            <p class="form-note">
+              * Required fields. We respond within 1 working day.
+            </p>
+          </div>
+
+          <!-- Error banner -->
+          <div class="form-banner form-banner--error" *ngIf="formStatus === 'error'">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            Something went wrong. Please try again or email us directly.
+          </div>
+        </form>
+
+        <!-- Success state -->
+        <div class="form-success" *ngIf="formStatus === 'success'">
+          <div class="form-success__icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </div>
+          <h3>Message Sent!</h3>
+          <p>Thank you, <strong>{{ form.name }}</strong>. We have received your query and will respond to <strong>{{ form.email }}</strong> within 1 working day.</p>
+          <button class="btn btn--primary" (click)="resetForm()">Send Another Message</button>
+        </div>
+      </div>
+
+      <!-- Office Locations -->
+      <div class="offices-section" #animateOnScroll>
+        <div class="section-label">Locations</div>
+        <h2 class="section-title">Our Offices</h2>
+
+        <div class="offices-list">
+          <div
+            *ngFor="let office of offices; trackBy: trackByIndex; let i = index"
+            class="office-card"
+            [style.--accent]="office.accentColor"
+            [style.animation-delay]="(i * 0.1) + 's'"
+            #animateOnScroll
+          >
+            <div class="office-card__avatar">{{ office.initials }}</div>
+            <div class="office-card__body">
+              <h4 class="office-card__name">{{ office.name }}</h4>
+              <div class="office-card__rows">
+                <div class="office-row">
+                  <span class="office-row__icon" [innerHTML]="getSvgIcon('map-pin')"></span>
+                  <span>
+                    <span *ngFor="let line of office.address; let last = last">
+                      {{ line }}<br *ngIf="!last" />
+                    </span>
+                  </span>
+                </div>
+                <div class="office-row">
+                  <span class="office-row__icon" [innerHTML]="getSvgIcon('clock2')"></span>
+                  <span>{{ office.hours }}</span>
+                </div>
+                <div class="office-row">
+                  <span class="office-row__icon" [innerHTML]="getSvgIcon('office-phone')"></span>
+                  <a [href]="'tel:' + office.phone" class="office-link">{{ office.phone }}</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+<!-- ── CTA Strip ───────────────────────────────── -->
+<section class="cta-strip">
+  <div class="cta-strip__inner">
+    <div class="cta-strip__text">
+      <h3>Can't find what you're looking for?</h3>
+      <p>Browse our FAQ for instant answers to common questions.</p>
+    </div>
+    <div class="cta-strip__actions">
+      <a routerLink="../faq" class="btn btn--white">Browse FAQ</a>
+      <a routerLink="/home" class="btn btn--outline-white">Back to Home</a>
+    </div>
+  </div>
+</section>

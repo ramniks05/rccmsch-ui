@@ -1,27 +1,54 @@
 <div class="registration-page-container">
+
+  <!-- Hero Header -->
   <div class="registration-header">
+    <div class="header-badge">
+      <mat-icon>gavel</mat-icon>
+      <span>Legal Professional</span>
+    </div>
     <h1>Lawyer Registration</h1>
-    <p class="header-subtitle">Fill in your details to create a new lawyer account</p>
+    <p class="header-subtitle">Create your verified legal professional account to access the platform</p>
     <button mat-button routerLink="/home" class="back-button" aria-label="Back to home">
       <mat-icon>arrow_back</mat-icon>
-      <span>Back to Login</span>
+      <span>Back to Home</span>
     </button>
   </div>
-  
+
+  <!-- Citizen Registration Switch -->
+  <div class="user-type-selection">
+    <div class="user-type-inner">
+      <mat-icon class="type-icon">gavel</mat-icon>
+      <p class="switch-registration-text">
+        Registering as a <strong>Lawyer</strong>. Are you a citizen?
+        <a routerLink="/registration/citizen" class="citizen-link">
+          <mat-icon>person_add</mat-icon>
+          Switch to Citizen Registration
+        </a>
+      </p>
+    </div>
+  </div>
+
   <div class="registration-container">
+
     <!-- Success Message -->
     <div *ngIf="successMessage" class="alert alert-success" role="alert">
-      <mat-icon>check_circle</mat-icon>
-      <span>{{ successMessage }}</span>
+      <div class="alert-icon-wrap"><mat-icon>check_circle</mat-icon></div>
+      <div class="alert-body">
+        <strong>Success!</strong>
+        <span>{{ successMessage }}</span>
+      </div>
     </div>
 
     <!-- Error Message -->
     <div *ngIf="errorMessage" class="alert alert-error" role="alert">
-      <mat-icon>error</mat-icon>
-      <span>{{ errorMessage }}</span>
+      <div class="alert-icon-wrap"><mat-icon>error_outline</mat-icon></div>
+      <div class="alert-body">
+        <strong>Error</strong>
+        <span>{{ errorMessage }}</span>
+      </div>
     </div>
 
-    <!-- Dynamic Registration Form -->
+    <!-- Registration Form -->
     <div *ngIf="!showOtpVerification">
       <app-dynamic-registration-form
         #dynamicForm
@@ -30,92 +57,107 @@
         [isLoading]="isLoading">
       </app-dynamic-registration-form>
 
-      <!-- Submit Buttons (outside dynamic form) -->
+      <!-- Form Actions -->
       <div class="form-actions">
-        <button mat-raised-button type="button" (click)="resetForm()" class="cancel-btn" [disabled]="isLoading">
-          Reset
-        </button>
-        <button mat-raised-button color="primary" type="button" (click)="onSubmit()" [disabled]="isLoading" class="submit-btn">
-          <mat-spinner *ngIf="isLoading" diameter="20" class="button-spinner"></mat-spinner>
-          <span *ngIf="!isLoading">Register as Lawyer</span>
-          <span *ngIf="isLoading">Registering...</span>
-        </button>
+        <p class="form-note">
+          <mat-icon>info_outline</mat-icon>
+          Fields marked with <span class="asterisk">*</span> are mandatory
+        </p>
+        <div class="action-buttons">
+          <button mat-stroked-button type="button" (click)="resetForm()" class="cancel-btn" [disabled]="isLoading">
+            <mat-icon>refresh</mat-icon>
+            Reset
+          </button>
+          <button mat-raised-button type="button" (click)="onSubmit()" [disabled]="isLoading" class="submit-btn">
+            <mat-spinner *ngIf="isLoading" diameter="18" class="button-spinner"></mat-spinner>
+            <mat-icon *ngIf="!isLoading">how_to_reg</mat-icon>
+            <span>{{ isLoading ? 'Registering...' : 'Register as Lawyer' }}</span>
+          </button>
+        </div>
       </div>
-
-      <p class="form-note">* All fields marked with asterisk (*) are mandatory</p>
     </div>
 
-  <!-- OTP Verification Section -->
-  <div *ngIf="showOtpVerification" class="otp-verification-section">
-    <mat-card class="otp-verification-card">
-      <mat-card-header>
-        <mat-card-title class="otp-verification-title">
-          <mat-icon>verified_user</mat-icon>
-          Verify Mobile Number
-        </mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <p class="otp-instruction">
-          An OTP has been sent to your mobile number <strong>{{ registrationMobileNumber }}</strong>. 
-          Please enter the 6-digit OTP to activate your lawyer account.
-        </p>
+    <!-- OTP Verification -->
+    <div *ngIf="showOtpVerification" class="otp-verification-section">
+      <div class="otp-verification-card">
 
-        <!-- Development: Show OTP Code -->
-        <div *ngIf="otpCode" class="dev-otp-display">
-          <mat-icon>info</mat-icon>
-          <div class="dev-otp-content">
-            <strong>Development Mode:</strong> OTP Code: <span class="otp-code">{{ otpCode }}</span>
+        <div class="otp-card-header">
+          <div class="otp-icon-circle">
+            <mat-icon>verified_user</mat-icon>
+          </div>
+          <div>
+            <h2 class="otp-card-title">Verify Your Mobile</h2>
+            <p class="otp-card-sub">One last step to activate your lawyer account</p>
           </div>
         </div>
 
-        <!-- OTP Success Message -->
-        <div *ngIf="otpSuccessMessage" class="alert alert-success" role="alert">
-          <mat-icon>check_circle</mat-icon>
-          <span>{{ otpSuccessMessage }}</span>
+        <div class="otp-instruction">
+          <mat-icon>sms</mat-icon>
+          <p>
+            A 6-digit OTP has been sent to
+            <strong>{{ registrationMobileNumber }}</strong>.
+            Please enter it below to verify your identity.
+          </p>
         </div>
 
-        <!-- OTP Error Message -->
+        <!-- Dev OTP Display -->
+        <div *ngIf="otpCode" class="dev-otp-display">
+          <div class="dev-otp-label">
+            <mat-icon>developer_mode</mat-icon>
+            <span>Development Mode — OTP:</span>
+          </div>
+          <span class="otp-code">{{ otpCode }}</span>
+        </div>
+
+        <!-- OTP Success -->
+        <div *ngIf="otpSuccessMessage" class="alert alert-success" role="alert">
+          <div class="alert-icon-wrap"><mat-icon>check_circle</mat-icon></div>
+          <div class="alert-body"><span>{{ otpSuccessMessage }}</span></div>
+        </div>
+
+        <!-- OTP Error -->
         <div *ngIf="otpErrorMessage" class="alert alert-error" role="alert">
-          <mat-icon>error</mat-icon>
-          <span>{{ otpErrorMessage }}</span>
+          <div class="alert-icon-wrap"><mat-icon>error_outline</mat-icon></div>
+          <div class="alert-body"><span>{{ otpErrorMessage }}</span></div>
         </div>
 
         <form [formGroup]="otpVerificationForm" (ngSubmit)="onVerifyOtp()" class="otp-verification-form">
-          <mat-form-field appearance="outline" class="form-field full-width">
+          <mat-form-field appearance="outline" class="form-field full-width otp-input-field">
             <mat-label>Enter OTP *</mat-label>
-            <input matInput formControlName="otp" placeholder="Enter 6-digit OTP" maxlength="6" type="text" pattern="[0-9]*">
+            <input matInput formControlName="otp" placeholder="_ _ _ _ _ _" maxlength="6" type="text" pattern="[0-9]*">
             <mat-icon matPrefix>pin</mat-icon>
             <mat-error *ngIf="otpVerificationForm.get('otp')?.hasError('required') && otpVerificationForm.get('otp')?.touched">
               OTP is required
             </mat-error>
             <mat-error *ngIf="otpVerificationForm.get('otp')?.hasError('pattern') && otpVerificationForm.get('otp')?.touched">
-              OTP must be 6 digits
+              OTP must be exactly 6 digits
             </mat-error>
           </mat-form-field>
 
           <div class="otp-actions">
-            <button 
-              mat-raised-button 
-              color="primary" 
-              type="submit" 
+            <button
+              mat-raised-button
+              type="submit"
               class="verify-btn"
               [disabled]="otpVerificationForm.invalid || isVerifyingOtp">
-              <mat-spinner *ngIf="isVerifyingOtp" diameter="20" class="button-spinner"></mat-spinner>
-              <span *ngIf="!isVerifyingOtp">Verify OTP</span>
-              <span *ngIf="isVerifyingOtp">Verifying...</span>
+              <mat-spinner *ngIf="isVerifyingOtp" diameter="18" class="button-spinner"></mat-spinner>
+              <mat-icon *ngIf="!isVerifyingOtp">verified</mat-icon>
+              <span>{{ isVerifyingOtp ? 'Verifying...' : 'Verify OTP' }}</span>
             </button>
-            <button 
-              mat-stroked-button 
-              type="button" 
-              (click)="resendOtp()" 
+            <button
+              mat-stroked-button
+              type="button"
+              (click)="resendOtp()"
               class="resend-btn"
               [disabled]="isVerifyingOtp">
+              <mat-icon>send</mat-icon>
               Resend OTP
             </button>
           </div>
         </form>
-      </mat-card-content>
-    </mat-card>
-  </div>
+
+      </div>
+    </div>
+
   </div>
 </div>

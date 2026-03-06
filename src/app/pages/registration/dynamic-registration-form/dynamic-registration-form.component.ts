@@ -26,7 +26,7 @@ export class DynamicRegistrationFormComponent implements OnInit, OnDestroy {
   districts: AdminUnit[] = [];
   subDivisions: AdminUnit[] = [];
   circles: AdminUnit[] = [];
-  
+
   // Cached dropdown options to avoid recalculating on every change detection
   private dropdownOptionsCache: Map<string, any[]> = new Map();
 
@@ -65,12 +65,12 @@ export class DynamicRegistrationFormComponent implements OnInit, OnDestroy {
         next: (response) => {
           this.loading = false;
           const apiResponse = response?.success !== undefined ? response : { success: true, data: response };
-          
+
           if (apiResponse.success && apiResponse.data) {
             this.fields = (apiResponse.data.fields || [])
               .filter((f: RegistrationFormField) => f.isActive)
               .sort((a: RegistrationFormField, b: RegistrationFormField) => a.displayOrder - b.displayOrder);
-            
+
             // Extract field groups if available in response
             if (apiResponse.data.fieldGroups) {
               apiResponse.data.fieldGroups.forEach((group: any) => {
@@ -79,10 +79,10 @@ export class DynamicRegistrationFormComponent implements OnInit, OnDestroy {
                 }
               });
             }
-            
+
             // Cache grouped fields
             this.groupedFields = this.computeGroupedFields();
-            
+
             this.buildForm();
             this.loadUnitHierarchy();
           } else {
@@ -110,7 +110,7 @@ export class DynamicRegistrationFormComponent implements OnInit, OnDestroy {
    */
   private computeGroupedFields(): { [key: string]: RegistrationFormField[] } {
     const grouped: { [key: string]: RegistrationFormField[] } = {};
-    
+
     this.fields.forEach(field => {
       const group = field.fieldGroup || 'default';
       if (!grouped[group]) {
@@ -118,7 +118,7 @@ export class DynamicRegistrationFormComponent implements OnInit, OnDestroy {
       }
       grouped[group].push(field);
     });
-    
+
     return grouped;
   }
 
@@ -132,7 +132,7 @@ export class DynamicRegistrationFormComponent implements OnInit, OnDestroy {
       if (field.isActive) {
         // Get initial value
         let initialValue: any = field.defaultValue || '';
-        
+
         // Handle different field types
         if (field.fieldType === 'DROPDOWN') {
           initialValue = field.defaultValue || null;
@@ -168,15 +168,15 @@ export class DynamicRegistrationFormComponent implements OnInit, OnDestroy {
 
     // Parse and apply validation rules
     const rules = this.schemaService.parseValidationRules(field.validationRules);
-    
+
     if (rules.minLength) {
       validators.push(Validators.minLength(rules.minLength));
     }
-    
+
     if (rules.maxLength) {
       validators.push(Validators.maxLength(rules.maxLength));
     }
-    
+
     if (rules.pattern) {
       validators.push(Validators.pattern(rules.pattern));
     }
@@ -185,7 +185,7 @@ export class DynamicRegistrationFormComponent implements OnInit, OnDestroy {
     if (field.fieldType === 'EMAIL') {
       validators.push(Validators.email);
     }
-    
+
     if (field.fieldType === 'PHONE') {
       validators.push(Validators.pattern(/^[6-9]\d{9}$/));
     }
@@ -215,7 +215,7 @@ export class DynamicRegistrationFormComponent implements OnInit, OnDestroy {
       const ds = this.schemaService.parseDataSource(f.dataSource);
       return ds?.type === 'ADMIN_UNITS' && ds.level === 'STATE';
     });
-    
+
     const districtField = this.fields.find(f => {
       if (!f.isActive) return false;
       const ds = this.schemaService.parseDataSource(f.dataSource);
@@ -231,7 +231,7 @@ export class DynamicRegistrationFormComponent implements OnInit, OnDestroy {
       this.selectedStateId = defaultStateId;
       // Load districts immediately
       this.loadChildUnits(defaultStateId, 'DISTRICT');
-    } 
+    }
     // If both STATE and DISTRICT fields exist, load states first
     else if (stateField && districtField) {
       this.loadRootUnits();
@@ -281,7 +281,7 @@ export class DynamicRegistrationFormComponent implements OnInit, OnDestroy {
         next: (response) => {
           // Handle different response structures
           let units: any[] = [];
-          
+
           if (response?.success !== undefined) {
             // Response has success field (standard API response)
             const apiResponse = response;
@@ -295,7 +295,7 @@ export class DynamicRegistrationFormComponent implements OnInit, OnDestroy {
             // Response has data field but no success field
             units = Array.isArray(response.data) ? response.data : [];
           }
-          
+
           if (level === 'DISTRICT') {
             this.districts = [...units]; // Create new array reference to trigger change detection
             this.subDivisions = [];
@@ -325,7 +325,7 @@ export class DynamicRegistrationFormComponent implements OnInit, OnDestroy {
               this.cdr.markForCheck();
             }, 0);
           }
-          
+
           // Only log if there's an issue (empty response)
           if (units.length === 0 && level === 'DISTRICT') {
             console.warn(`No ${level} units found. Response:`, response);
@@ -357,17 +357,17 @@ export class DynamicRegistrationFormComponent implements OnInit, OnDestroy {
       const ds = this.schemaService.parseDataSource(f.dataSource);
       return ds?.type === 'ADMIN_UNITS' && ds.level === 'STATE';
     });
-    
+
     const districtField = this.fields.find(f => {
       const ds = this.schemaService.parseDataSource(f.dataSource);
       return ds?.type === 'ADMIN_UNITS' && ds.level === 'DISTRICT';
     });
-    
+
     const subDivisionField = this.fields.find(f => {
       const ds = this.schemaService.parseDataSource(f.dataSource);
       return ds?.type === 'ADMIN_UNITS' && ds.level === 'SUB_DIVISION';
     });
-    
+
     const circleField = this.fields.find(f => {
       const ds = this.schemaService.parseDataSource(f.dataSource);
       return ds?.type === 'ADMIN_UNITS' && ds.level === 'CIRCLE';
@@ -470,15 +470,15 @@ export class DynamicRegistrationFormComponent implements OnInit, OnDestroy {
    */
   getDropdownOptions(field: RegistrationFormField): any[] {
     const cacheKey = `${field.fieldName}_${field.dataSource || 'static'}`;
-    
+
     // Check cache first
     if (this.dropdownOptionsCache.has(cacheKey)) {
       return this.dropdownOptionsCache.get(cacheKey)!;
     }
-    
+
     const dataSource = this.schemaService.parseDataSource(field.dataSource);
     let options: any[] = [];
-    
+
     if (dataSource?.type === 'ADMIN_UNITS') {
       if (dataSource.level === 'STATE') {
         options = this.states.map(u => ({ value: u.unitId, label: u.unitName }));
@@ -493,12 +493,12 @@ export class DynamicRegistrationFormComponent implements OnInit, OnDestroy {
       // Static options from fieldOptions
       options = this.schemaService.parseFieldOptions(field.fieldOptions);
     }
-    
+
     // Cache the options
     this.dropdownOptionsCache.set(cacheKey, options);
     return options;
   }
-  
+
   /**
    * Clear dropdown options cache (call when units are updated)
    */
@@ -522,7 +522,7 @@ export class DynamicRegistrationFormComponent implements OnInit, OnDestroy {
     if (Object.keys(this.groupedFields).length > 0) {
       return this.groupedFields;
     }
-    
+
     // Otherwise compute and cache
     this.groupedFields = this.computeGroupedFields();
     return this.groupedFields;
@@ -568,7 +568,7 @@ export class DynamicRegistrationFormComponent implements OnInit, OnDestroy {
     if (control.errors['pattern']) {
       return 'Invalid format';
     }
-    
+
     return 'Invalid value';
   }
 

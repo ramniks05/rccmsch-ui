@@ -1,0 +1,86 @@
+<div class="documents-card">
+
+  <!-- ── HEADER ──────────────────────────────── -->
+  <div class="docs-header">
+    <mat-icon class="header-icon">folder_open</mat-icon>
+    <h3 class="header-title">{{ cardTitle }}</h3>
+
+    <!-- Shows count once loaded, spinner while loading -->
+    <ng-container [ngSwitch]="loadState">
+      <span *ngSwitchCase="'success'" class="docs-count">
+        {{ documents.length }}
+      </span>
+      <span *ngSwitchCase="'loading'" class="docs-count docs-count--skeleton"></span>
+    </ng-container>
+  </div>
+
+  <!-- ── DOCUMENT LIST ────────────────────────── -->
+  <div class="docs-list">
+
+    <!-- Loading skeletons -->
+    <ng-container *ngIf="loadState === 'loading'">
+      <div class="doc-item doc-item--skeleton" *ngFor="let s of [1,2,3]; trackBy: trackByIndex">
+        <div class="doc-icon-wrapper icon-wrap--doc skeleton-box"></div>
+        <div class="doc-content">
+          <div class="skeleton-line skeleton-title"></div>
+          <div class="skeleton-line skeleton-meta"></div>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- Error state -->
+    <div class="state-message state-message--error" *ngIf="loadState === 'error'">
+      <mat-icon>error_outline</mat-icon>
+      <span>Failed to load documents.</span>
+      <button class="retry-btn" (click)="fetchDocuments()">Retry</button>
+    </div>
+
+    <!-- Populated list -->
+    <ng-container *ngIf="loadState === 'success'">
+
+      <a
+        *ngFor="let doc of documents; trackBy: trackById"
+        [href]="getFileUrl(doc.filePath)"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="doc-item"
+      >
+        <!-- File-type icon -->
+        <div class="doc-icon-wrapper" [ngClass]="getIconWrapperClass(doc.filePath)">
+          <mat-icon class="doc-icon">{{ getDocMatIcon(doc.filePath) }}</mat-icon>
+        </div>
+
+        <!-- Title + meta -->
+        <div class="doc-content">
+          <div class="doc-title">{{ doc.title }}</div>
+          <div class="doc-meta">
+            <span class="doc-date">{{ doc.createdAt | date: 'dd MMM yyyy' }}</span>
+            <span class="doc-type-badge" [ngClass]="getTypeBadgeClass(doc.filePath)">
+              {{ getFileType(doc.filePath) }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Download arrow -->
+        <span class="download-icon" [innerHTML]="downloadIconSvg" aria-label="Download"></span>
+      </a>
+
+      <!-- Empty state -->
+      <div class="state-message" *ngIf="!documents.length">
+        <mat-icon>folder_off</mat-icon>
+        <span>No documents available</span>
+      </div>
+
+    </ng-container>
+
+  </div>
+
+  <!-- ── FOOTER ───────────────────────────────── -->
+  <!-- <div class="docs-footer">
+    <a [routerLink]="browseAllLink" class="view-all-docs">
+      <span>Browse All Documents</span>
+      <mat-icon>arrow_forward</mat-icon>
+    </a>
+  </div> -->
+
+</div>
