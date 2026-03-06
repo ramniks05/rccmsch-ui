@@ -35,7 +35,11 @@
         <ul class="accessibility">
           <!-- Skip to main content -->
           <li>
-            <a href="#main-content" class="skip-link">
+            <a
+              href="javascript:void(0)"
+              class="skip-link"
+              (click)="scrollToMain()"
+            >
               <mat-icon>skip_next</mat-icon>
               Skip
             </a>
@@ -43,24 +47,43 @@
 
           <!-- High Contrast -->
           <li>
-            <button aria-label="Toggle high contrast">
+            <button
+              aria-label="Toggle high contrast"
+              (click)="toggleHighContrast()"
+            >
               <mat-icon>contrast</mat-icon>
             </button>
           </li>
 
           <!-- Text Spacing -->
           <li>
-            <button aria-label="Increase text spacing">
+            <button
+              aria-label="Increase text spacing"
+              (click)="toggleTextSpacing()"
+            >
               <mat-icon>format_line_spacing</mat-icon>
             </button>
           </li>
 
           <!-- Screen Reader Info -->
           <li>
-            <button aria-label="Screen reader support">
+            <button
+              type="button"
+              aria-label="Screen reader support"
+              (click)="announceScreenReaderInfo()"
+            >
               <mat-icon>record_voice_over</mat-icon>
             </button>
           </li>
+
+          <!-- Live Region -->
+          <div
+            #liveRegion
+            class="sr-only"
+            aria-live="polite"
+            aria-atomic="true"
+            role="status"
+          ></div>
 
           <!-- Zoom Dropdown (single modern control) -->
           <li class="zoom-dropdown">
@@ -74,10 +97,10 @@
             </button>
 
             <mat-menu #zoomMenu="matMenu">
-              <button mat-menu-item>100%</button>
-              <button mat-menu-item>110%</button>
-              <button mat-menu-item>125%</button>
-              <button mat-menu-item>150%</button>
+              <button mat-menu-item (click)="setZoom(100)">100%</button>
+              <button mat-menu-item (click)="setZoom(110)">110%</button>
+              <button mat-menu-item (click)="setZoom(125)">125%</button>
+              <button mat-menu-item (click)="setZoom(150)">150%</button>
             </mat-menu>
           </li>
         </ul>
@@ -228,7 +251,7 @@
     </div>
 
     <!-- SECTION HEADER -->
-    <div class="section-header">
+    <div class="section-header" id="mainContent" #mainContent tabindex="-1">
       <h2>System Overview & Statistics</h2>
       <p>
         Transparency and progress of the Revenue Court Case Management System

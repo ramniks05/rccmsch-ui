@@ -97,7 +97,7 @@ button {
   mat-icon:first-child:not(:only-child) {
     margin-right: 6px !important;
   }
-  
+
   mat-icon:last-child:not(:only-child) {
     margin-left: 6px !important;
   }
@@ -109,12 +109,12 @@ table.mat-table {
   .mat-mdc-cell,
   .mat-cell {
     vertical-align: middle;
-    
+
     button, a {
       white-space: nowrap;
     }
   }
-  
+
   .mat-mdc-header-cell,
   .mat-header-cell {
     white-space: nowrap;
@@ -165,7 +165,7 @@ mat-icon {
   -webkit-font-smoothing: antialiased !important;
   -moz-osx-font-smoothing: grayscale;
   font-feature-settings: 'liga' !important;
-  
+
   // Ensure proper rendering
   vertical-align: middle;
   overflow: hidden;
@@ -400,3 +400,29 @@ mat-icon {
   }
 }
 
+
+/* High Contrast Mode */
+.high-contrast {
+  background-color: #000 !important;
+  color: #fff !important;
+}
+
+.high-contrast a {
+  color: #ffff00 !important;
+}
+
+.high-contrast button {
+  background: #000 !important;
+  color: #fff !important;
+  border: 1px solid #fff !important;
+}
+/* Text Spacing */
+.text-spacing {
+  line-height: 1.8 !important;
+  letter-spacing: 0.12em !important;
+  word-spacing: 0.16em !important;
+}
+
+.text-spacing p {
+  margin-bottom: 1.5em !important;
+}

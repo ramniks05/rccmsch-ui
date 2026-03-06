@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { HomeData, Service, WhatsNewItem } from 'src/assets/home-model';
 import { HOME_DATA, WHATS_NEW_DATA } from '../../../assets/mock-home-data';
 import { Router } from '@angular/router';
@@ -41,6 +41,8 @@ interface MiniStat {
   styleUrls: ['./index.component.scss'],
 })
 export class IndexComponent implements OnInit {
+  @ViewChild('mainContent') mainContent!: ElementRef;
+  @ViewChild('liveRegion') liveRegion!: ElementRef;
   settings$: Observable<SystemSettings | null>;
   settings: SystemSettings | null = null;
   private subscription?: Subscription;
@@ -153,6 +155,48 @@ export class IndexComponent implements OnInit {
     this.getWhatsNewData();
     this.getDocumentsAvailableList();
     this.getCaseSummary();
+  }
+
+  announceScreenReaderInfo() {
+    const message =
+      'Screen reader mode activated. Use tab key to navigate through interactive elements.';
+
+    this.liveRegion.nativeElement.textContent = '';
+
+    setTimeout(() => {
+      this.liveRegion.nativeElement.textContent = message;
+    }, 100);
+  }
+
+  toggleTextSpacing() {
+    document.body.classList.toggle('text-spacing');
+
+    const enabled = document.body.classList.contains('text-spacing');
+    localStorage.setItem('textSpacing', enabled ? 'true' : 'false');
+  }
+
+  toggleHighContrast() {
+    document.body.classList.toggle('high-contrast');
+
+    const enabled = document.body.classList.contains('high-contrast');
+    localStorage.setItem('highContrast', enabled ? 'true' : 'false');
+  }
+
+  setZoom(percentage: number) {
+    const zoomFactor = percentage / 100;
+
+    document.documentElement.style.fontSize = `${16 * zoomFactor}px`;
+
+    localStorage.setItem('appZoom', percentage.toString());
+  }
+
+  scrollToMain() {
+    this.mainContent.nativeElement.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+
+    this.mainContent.nativeElement.focus();
   }
 
   getCaseSummary(): void {
