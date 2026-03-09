@@ -454,6 +454,30 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
     }
   }
 
+  /** Get valueField from field.dataSource JSON (e.g. "mustkhas", "value", "id"). */
+  private getDataSourceValueField(field: any): string {
+    if (!field?.dataSource) return 'value';
+    try {
+      const ds = typeof field.dataSource === 'string' ? JSON.parse(field.dataSource) : field.dataSource;
+      const v = ds?.valueField ?? ds?.valueKey;
+      return typeof v === 'string' && v.trim() ? v.trim() : 'value';
+    } catch {
+      return 'value';
+    }
+  }
+
+  /** Get labelField from field.dataSource JSON (e.g. "mustkhas", "label", "name"). */
+  private getDataSourceLabelField(field: any): string {
+    if (!field?.dataSource) return 'label';
+    try {
+      const ds = typeof field.dataSource === 'string' ? JSON.parse(field.dataSource) : field.dataSource;
+      const l = ds?.labelField ?? ds?.labelKey;
+      return typeof l === 'string' && l.trim() ? l.trim() : 'label';
+    } catch {
+      return 'label';
+    }
+  }
+
   /**
    * Build runtime params for external API. Key comes from dataSourceParams.parentValueQueryParam
    * (e.g. "Nvcode" for CHD Revenue GetMustkhas_Rccms). For two-level dependency (e.g. GetOwnerDetailsByMustKhas
@@ -550,10 +574,20 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
         }
         this.caseService.getExternalApiDataSource(field.dataSource, params).subscribe({
         next: (response) => {
-          if (response.success && Array.isArray(response.data)) {
-            const options = response.data.map((item: any) => ({
-              value: item.value != null ? item.value : item.id,
-              label: item.label != null ? item.label : item.name || String(item.value)
+          if (!response.success) return;
+          let data: any = response.data;
+          if (data != null && !Array.isArray(data)) {
+            if (Array.isArray(data.data)) data = data.data;
+            else if (Array.isArray(data.items)) data = data.items;
+            else if (Array.isArray(data.list)) data = data.list;
+            else data = null;
+          }
+          if (data != null && Array.isArray(data)) {
+            const valueField = this.getDataSourceValueField(field);
+            const labelField = this.getDataSourceLabelField(field);
+            const options = data.map((item: any) => ({
+              value: item[valueField] != null ? item[valueField] : item.value != null ? item.value : item.id,
+              label: item[labelField] != null ? item[labelField] : item.label != null ? item.label : item.name || String(item[valueField] ?? item.value ?? item.id)
             }));
             field.fieldOptions = JSON.stringify(options);
             const cacheKey = `${field.dataSource}_${JSON.stringify(params)}`;

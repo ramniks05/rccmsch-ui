@@ -85,6 +85,17 @@ export interface CaseSubmissionRequest {
   caseData: string; // JSON string
 }
 
+/** Item from backend case.formDataWithLabels (label + value per field, with group info) */
+export interface FormDataWithLabelsItem {
+  fieldName: string;
+  fieldLabel: string;
+  fieldGroup: string;
+  groupLabel: string;
+  value: string | number | null;
+  displayOrder?: number;
+  groupDisplayOrder?: number;
+}
+
 export interface Case {
   id: number;
   caseNumber: string;
@@ -104,6 +115,8 @@ export interface Case {
   description?: string;
   priority?: string;
   caseData?: string;
+  /** When present, use this for organized display (grouped by groupLabel) instead of parsing caseData */
+  formDataWithLabels?: FormDataWithLabelsItem[];
   createdAt?: string;
   updatedAt?: string;
 }

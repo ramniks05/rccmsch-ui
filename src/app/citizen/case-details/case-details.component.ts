@@ -1,7 +1,20 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { CitizenCaseService, Case, CaseHistory } from '../services/citizen-case.service';
+import { CitizenCaseService, Case, CaseHistory, FormSchema, FormDataWithLabelsItem } from '../services/citizen-case.service';
+
+/** One row to show in Case Data section: label (from form schema) and value */
+export interface CaseDataDisplayItem {
+  label: string;
+  value: string | number | null;
+}
+
+/** Group of form fields for display (e.g. "Applicant Details", "Area Details") */
+export interface FormDataGroup {
+  groupLabel: string;
+  groupDisplayOrder: number;
+  items: { fieldLabel: string; value: string | number | null }[];
+}
 
 @Component({
   selector: 'app-case-details',
@@ -15,6 +28,9 @@ export class CaseDetailsComponent implements OnInit {
   isLoading = false;
   isLoadingHistory = false;
   returnComment = '';
+  /** Case form data as label-value pairs (label from form schema); empty until schema + caseData loaded */
+  caseDataDisplay: CaseDataDisplayItem[] = [];
+  isLoadingCaseData = false;
   
   // Notice related properties
   notice: any = null;
@@ -43,11 +59,17 @@ export class CaseDetailsComponent implements OnInit {
 
   loadCaseDetails(): void {
     this.isLoading = true;
+    this.caseDataDisplay = [];
     this.caseService.getCaseById(this.caseId).subscribe({
       next: (response) => {
         this.isLoading = false;
         if (response.success) {
           this.case = response.data;
+          if (this.case?.formDataWithLabels?.length) {
+            this.caseDataDisplay = [];
+          } else if (this.case?.caseData && this.case?.caseTypeId) {
+            this.loadFormSchemaAndBuildCaseData();
+          }
         } else {
           this.snackBar.open(response.message || 'Failed to load case details', 'Close', { duration: 5000 });
         }
@@ -108,13 +130,130 @@ export class CaseDetailsComponent implements OnInit {
     }
   }
 
-  parseCaseData(caseData?: string): any {
+  /**
+   * Group case.formDataWithLabels by groupLabel for organized display. Sorted by groupDisplayOrder, then by displayOrder.
+   */
+  get formDataGrouped(): FormDataGroup[] {
+    const raw = this.case?.formDataWithLabels;
+    if (!raw || !Array.isArray(raw) || raw.length === 0) return [];
+
+    const byGroup = new Map<string, FormDataWithLabelsItem[]>();
+    for (const item of raw) {
+      const key = item.fieldGroup || 'default';
+      if (!byGroup.has(key)) byGroup.set(key, []);
+      byGroup.get(key)!.push(item);
+    }
+    for (const arr of byGroup.values()) {
+      arr.sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
+    }
+    const groupLabelOrder = new Map<string, number>();
+    raw.forEach(item => {
+      const k = item.fieldGroup || 'default';
+      if (!groupLabelOrder.has(k)) groupLabelOrder.set(k, item.groupDisplayOrder ?? 999);
+    });
+    const groups: FormDataGroup[] = [];
+    byGroup.forEach((items, fieldGroup) => {
+      const first = items[0];
+      groups.push({
+        groupLabel: first?.groupLabel || fieldGroup,
+        groupDisplayOrder: first?.groupDisplayOrder ?? 999,
+        items: items.map(i => ({ fieldLabel: i.fieldLabel, value: i.value }))
+      });
+    });
+    groups.sort((a, b) => a.groupDisplayOrder - b.groupDisplayOrder);
+    return groups;
+  }
+
+  parseCaseData(caseData?: string): Record<string, unknown> | null {
     if (!caseData) return null;
     try {
-      return JSON.parse(caseData);
+      return JSON.parse(caseData) as Record<string, unknown>;
     } catch (e) {
       return null;
     }
+  }
+
+  /**
+   * Load form schema for the case type and build caseDataDisplay (label-value pairs using field labels).
+   */
+  loadFormSchemaAndBuildCaseData(): void {
+    if (!this.case?.caseTypeId || !this.case?.caseData) return;
+    const caseData = this.parseCaseData(this.case.caseData);
+    if (!caseData || typeof caseData !== 'object') return;
+
+    this.isLoadingCaseData = true;
+    this.caseService.getFormSchema(this.case.caseTypeId).subscribe({
+      next: (response) => {
+        this.isLoadingCaseData = false;
+        if (response.success && response.data) {
+          this.caseDataDisplay = this.buildCaseDataDisplay(caseData, response.data);
+        } else {
+          this.caseDataDisplay = this.buildCaseDataDisplayWithoutSchema(caseData);
+        }
+      },
+      error: () => {
+        this.isLoadingCaseData = false;
+        this.caseDataDisplay = this.buildCaseDataDisplayWithoutSchema(caseData);
+      }
+    });
+  }
+
+  /**
+   * Build label-value list from caseData using form schema field labels. Order follows schema fields.
+   */
+  private buildCaseDataDisplay(caseData: Record<string, unknown>, schema: FormSchema): CaseDataDisplayItem[] {
+    const nameToLabel = new Map<string, string>();
+    const fieldOrder: string[] = [];
+    if (schema.fields && schema.fields.length > 0) {
+      schema.fields.forEach(f => {
+        nameToLabel.set(f.fieldName, f.fieldLabel || f.fieldName);
+        fieldOrder.push(f.fieldName);
+      });
+    }
+    if (schema.groups && schema.groups.length > 0) {
+      schema.groups.forEach(g => {
+        (g.fields || []).forEach((f: { fieldName: string; fieldLabel?: string }) => {
+          if (!nameToLabel.has(f.fieldName)) {
+            nameToLabel.set(f.fieldName, f.fieldLabel || f.fieldName);
+            fieldOrder.push(f.fieldName);
+          }
+        });
+      });
+    }
+
+    const result: CaseDataDisplayItem[] = [];
+    const seen = new Set<string>();
+    for (const key of fieldOrder) {
+      if (seen.has(key)) continue;
+      seen.add(key);
+      if (key in caseData) {
+        result.push({
+          label: nameToLabel.get(key) || this.formatFieldNameAsLabel(key),
+          value: caseData[key] as string | number | null
+        });
+      }
+    }
+    for (const key of Object.keys(caseData)) {
+      if (seen.has(key)) continue;
+      result.push({
+        label: this.formatFieldNameAsLabel(key),
+        value: caseData[key] as string | number | null
+      });
+    }
+    return result;
+  }
+
+  private buildCaseDataDisplayWithoutSchema(caseData: Record<string, unknown>): CaseDataDisplayItem[] {
+    return Object.entries(caseData).map(([key, value]) => ({
+      label: this.formatFieldNameAsLabel(key),
+      value: value as string | number | null
+    }));
+  }
+
+  private formatFieldNameAsLabel(fieldName: string): string {
+    return fieldName
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, c => c.toUpperCase());
   }
 
   /**
