@@ -458,4 +458,36 @@ export class OfficerCaseService {
       })
     );
   }
+
+  /**
+   * Get parties for a case
+   * GET /api/cases/{caseId}/parties
+   */
+  getParties(caseId: number): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.apiUrl}/${caseId}/parties`,
+      { headers: this.getAuthHeaders() }
+    ).pipe(
+      catchError(error => {
+        console.error(`Error fetching parties for case ${caseId}:`, error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Get latest attendance submission
+   * GET /api/cases/{caseId}/module-forms/ATTENDANCE/latest
+   */
+  getLatestAttendance(caseId: number): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.apiUrl}/${caseId}/module-forms/ATTENDANCE/latest`,
+      { headers: this.getAuthHeaders() }
+    ).pipe(
+      catchError(error => {
+        console.error(`Error fetching latest attendance for case ${caseId}:`, error);
+        return throwError(() => error);
+      })
+    );
+  }
 }

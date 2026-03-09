@@ -4,6 +4,9 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
 import { OfficerCaseService, CaseDTO, WorkflowTransitionDTO, WorkflowHistory } from '../services/officer-case.service';
 import { WorkflowActionDialogComponent } from '../workflow-action-dialog/workflow-action-dialog.component';
+import { FieldReportRequestDialogComponent } from '../field-report-request-dialog/field-report-request-dialog.component';
+import { FieldReportFormComponent } from '../field-report-form/field-report-form.component';
+import { AttendanceFormComponent } from '../attendance-form/attendance-form.component';
 
 @Component({
   selector: 'app-officer-case-detail',
@@ -33,6 +36,13 @@ export class OfficerCaseDetailComponent implements OnInit {
     ordersheet: false,
     judgement: false
   };
+
+  // Field report functionality
+  showRequestFieldReportButton = false;
+  showSubmitFieldReportButton = false;
+
+  // Attendance functionality
+  showMarkAttendanceButton = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -66,6 +76,8 @@ export class OfficerCaseDetailComponent implements OnInit {
         if (response.success && response.data) {
           this.caseData = response.data;
           this.parseCaseData();
+          // Update attendance button visibility based on case state
+          this.updateAttendanceButtonVisibility();
         } else {
           this.error = response.message || 'Failed to load case details';
         }
@@ -110,6 +122,21 @@ export class OfficerCaseDetailComponent implements OnInit {
           this.transitions = response.data;
           this.determineRequiredModules();
           
+          // Check if REQUEST_FIELD_REPORT transition is available (for Tehsildar)
+          this.showRequestFieldReportButton = this.transitions.some(
+            t => t.transitionCode === 'REQUEST_FIELD_REPORT' && 
+                 (t.checklist?.canExecute !== false)
+          );
+          
+          // Check if SUBMIT_FIELD_REPORT transition is available (for Field Officers)
+          this.showSubmitFieldReportButton = this.transitions.some(
+            t => t.transitionCode === 'SUBMIT_FIELD_REPORT' && 
+                 (t.checklist?.canExecute !== false)
+          );
+          
+          // Update attendance button visibility
+          this.updateAttendanceButtonVisibility();
+          
           // If no transitions available, show appropriate message
           if (this.transitions.length === 0) {
             // No error, just no actions available - this is handled in the template
@@ -118,6 +145,10 @@ export class OfficerCaseDetailComponent implements OnInit {
         } else {
           // Response indicates no actions available
           this.transitions = [];
+          this.showRequestFieldReportButton = false;
+          this.showSubmitFieldReportButton = false;
+          // Update attendance button visibility
+          this.updateAttendanceButtonVisibility();
           this.transitionError = null; // No error, just no actions
         }
       },
@@ -367,5 +398,94 @@ export class OfficerCaseDetailComponent implements OnInit {
     this.loadCaseDetails();
     this.loadAvailableTransitions();
     this.loadWorkflowHistory();
+  }
+
+  /**
+   * Open field report request dialog (for Tehsildar)
+   */
+  openRequestFieldReportDialog(): void {
+    if (!this.caseData) {
+      return;
+    }
+
+    const dialogRef = this.dialog.open(FieldReportRequestDialogComponent, {
+      width: '700px',
+      data: {
+        caseId: this.caseId,
+        unitId: this.caseData.assignedToUnitId || (this.caseData as any).unitId,
+        courtId: (this.caseData as any).courtId
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result === 'success') {
+        // Refresh case details and transitions
+        this.loadCaseDetails();
+        this.loadAvailableTransitions();
+        this.loadWorkflowHistory();
+      }
+    });
+  }
+
+  /**
+   * Open field report form dialog (for Field Officers)
+   */
+  openFieldReportForm(): void {
+    const dialogRef = this.dialog.open(FieldReportFormComponent, {
+      width: '700px',
+      maxHeight: '90vh',
+      data: {
+        caseId: this.caseId
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result === 'success') {
+        // Refresh case details and transitions
+        this.loadCaseDetails();
+        this.loadAvailableTransitions();
+        this.loadWorkflowHistory();
+      }
+    });
+  }
+
+  /**
+   * Update attendance button visibility based on case state and transitions
+   */
+  updateAttendanceButtonVisibility(): void {
+    // Show button if case is in PROCEEDINGS_IN_PROGRESS state
+    // Or if any transition requires ATTENDANCE_SUBMITTED condition
+    this.showMarkAttendanceButton = 
+      this.caseData?.currentStateCode === 'PROCEEDINGS_IN_PROGRESS' ||
+      this.transitions.some(t => {
+        const conditions = t.checklist?.conditions || [];
+        return conditions.some((c: any) => 
+          c.conditionCode === 'ATTENDANCE_SUBMITTED' || 
+          c.label?.toLowerCase().includes('attendance') ||
+          c.moduleType === 'ATTENDANCE'
+        );
+      });
+  }
+
+  /**
+   * Open attendance marking dialog
+   */
+  openAttendanceForm(): void {
+    const dialogRef = this.dialog.open(AttendanceFormComponent, {
+      width: '800px',
+      maxHeight: '90vh',
+      data: {
+        caseId: this.caseId
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result === 'success') {
+        // Refresh case details and transitions (attendance may enable new transitions)
+        this.loadCaseDetails();
+        this.loadAvailableTransitions();
+        this.loadWorkflowHistory();
+      }
+    });
   }
 }

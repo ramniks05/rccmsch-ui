@@ -16,6 +16,11 @@
   margin-bottom: 20px;
 }
 
+.section-divider {
+  margin: 24px 0;
+  border-top-color: #e0e0e0;
+}
+
 .info-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -164,13 +169,28 @@
 .history-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 8px;
+  gap: 12px;
+}
+
+.history-state-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
 }
 
 .history-state {
   font-weight: 600;
   color: #333;
+  font-size: 1rem;
+}
+
+.history-transition {
+  font-size: 0.85rem;
+  color: #667eea;
+  font-weight: 500;
 }
 
 .history-date {
@@ -184,6 +204,7 @@
   gap: 8px;
 }
 
+.history-from-state,
 .history-role,
 .history-comment {
   display: flex;
@@ -197,6 +218,11 @@
     width: 18px;
     height: 18px;
   }
+}
+
+.history-from-state {
+  color: #999;
+  font-style: italic;
 }
 
 .no-history {

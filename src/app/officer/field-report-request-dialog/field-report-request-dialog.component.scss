@@ -1,0 +1,137 @@
+.dialog-container {
+  min-width: 600px;
+  max-width: 800px;
+}
+
+h2[mat-dialog-title] {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  
+  mat-icon {
+    color: #667eea;
+  }
+}
+
+.info-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding: 12px;
+  background: #e3f2fd;
+  border-radius: 8px;
+  color: #1565c0;
+  font-size: 0.95rem;
+  
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.role-group {
+  margin-bottom: 24px;
+}
+
+.role-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e0e0e0;
+  
+  mat-icon {
+    color: #667eea;
+  }
+}
+
+.officer-item {
+  padding: 12px 0;
+}
+
+.officer-name {
+  font-weight: 500;
+  font-size: 14px;
+  color: #212121;
+  margin-bottom: 6px;
+}
+
+.officer-details {
+  display: flex;
+  gap: 20px;
+  font-size: 12px;
+  color: #666;
+  
+  span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+  }
+  
+  .unit-name {
+    font-style: italic;
+  }
+}
+
+mat-list-option.selected {
+  background: #e3f2fd;
+}
+
+.loading-container {
+  text-align: center;
+  padding: 40px;
+  
+  mat-spinner {
+    margin: 0 auto 16px;
+  }
+  
+  p {
+    color: #666;
+  }
+}
+
+.no-officers {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+  }
+  
+  p {
+    margin: 8px 0;
+    font-size: 1rem;
+  }
+  
+  .help-text {
+    font-size: 12px;
+    color: #999;
+    margin-top: 12px;
+  }
+}
+
+.full-width {
+  width: 100%;
+}
+
+.button-spinner {
+  display: inline-block;
+  margin-right: 8px;
+}

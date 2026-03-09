@@ -95,7 +95,7 @@
                   >
                     <mat-option value="">-- Select --</mat-option>
                     <mat-option
-                      *ngFor="let opt of field.fieldOptions | jsonParse"
+                      *ngFor="let opt of getFieldOptions(field)"
                       [value]="opt.value"
                     >
                       {{ opt.label }}

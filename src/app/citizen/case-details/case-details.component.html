@@ -68,6 +68,9 @@
       <!-- Available Actions (workflow transitions + checklist) -->
       <app-available-actions *ngIf="caseId" [caseId]="caseId"></app-available-actions>
 
+      <!-- Divider between Available Actions and Notice Section -->
+      <mat-divider *ngIf="caseId && (isLoadingNotice || notice || noticeNotAvailable)" class="section-divider"></mat-divider>
+
       <!-- Notice Section -->
       <mat-card *ngIf="!isLoadingNotice && notice" class="notice-card">
         <mat-card-header>
@@ -234,10 +237,17 @@
               </div>
               <div class="history-content">
                 <div class="history-header">
-                  <span class="history-state">{{ item.toState?.stateName || 'Unknown State' }}</span>
+                  <div class="history-state-info">
+                    <span class="history-state">{{ item.toStateName || item.toState?.stateName || 'Unknown State' }}</span>
+                    <span *ngIf="item.transitionName" class="history-transition">{{ item.transitionName }}</span>
+                  </div>
                   <span class="history-date">{{ item.performedAt | date:'short' }}</span>
                 </div>
                 <div class="history-details">
+                  <span *ngIf="item.fromStateName" class="history-from-state">
+                    <mat-icon>arrow_back</mat-icon>
+                    From: {{ item.fromStateName }}
+                  </span>
                   <span *ngIf="item.performedByRole" class="history-role">
                     <mat-icon>person</mat-icon>
                     {{ item.performedByRole }}

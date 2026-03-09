@@ -91,7 +91,7 @@ export class CaseDetailsComponent implements OnInit {
           this.history = response.data || [];
           // Find return for correction comment
           const returned = this.history
-            .filter(h => h.toState?.stateCode === 'RETURNED_FOR_CORRECTION')
+            .filter(h => (h.toStateCode || h.toState?.stateCode) === 'RETURNED_FOR_CORRECTION')
             .slice(-1)[0];
           if (returned?.comments) {
             this.returnComment = returned.comments;

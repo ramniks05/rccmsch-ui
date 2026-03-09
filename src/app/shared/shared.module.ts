@@ -31,6 +31,7 @@ import { MatSortModule } from '@angular/material/sort';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatListModule } from '@angular/material/list';
 
 // Quill Editor
 import { QuillModule } from 'ngx-quill';
@@ -99,6 +100,7 @@ import { JsonParsePipe } from '../core/pipes/json-parse.pipe';
     MatTabsModule,
     MatProgressSpinnerModule,
     MatSnackBarModule,
+    MatListModule,
     
     // Third Party
     NgChartsModule,
@@ -152,6 +154,7 @@ import { JsonParsePipe } from '../core/pipes/json-parse.pipe';
     MatSnackBarModule,
     MatProgressSpinnerModule,
     MatTabsModule,
+    MatListModule,
 
     // Quill Editor
     QuillModule,

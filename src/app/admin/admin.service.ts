@@ -252,6 +252,37 @@ export class AdminService {
     );
   }
 
+  /**
+   * Get all field officers below a unit (for field report requests)
+   * API automatically discovers officers based on unit hierarchy
+   * GET /api/admin/postings/field-officers/unit/{unitId}
+   */
+  getFieldOfficersByUnit(unitId: number): Observable<any> {
+    return this.http.get(
+      `${this.baseUrl}/admin/postings/field-officers/unit/${unitId}`,
+      {
+        headers: this.getAuthHeaders(),
+      },
+    );
+  }
+
+  /**
+   * Assign case to officer
+   * PUT /api/admin/cases/{caseId}/assign-officer
+   */
+  assignCaseToOfficer(caseId: number, assignment: {
+    officerId: number;
+    roleCode: string;
+  }): Observable<any> {
+    return this.http.put(
+      `${this.baseUrl}/admin/cases/${caseId}/assign-officer`,
+      assignment,
+      {
+        headers: this.getAuthHeaders(),
+      },
+    );
+  }
+
   // ==================== Roles Management ====================
 
   /**

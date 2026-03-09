@@ -124,13 +124,27 @@ export interface Case {
 export interface CaseHistory {
   id: number;
   caseId: number;
+  instanceId?: number;
+  transitionId?: number;
+  transitionCode?: string;
+  transitionName?: string;
   fromStateId?: number;
+  fromStateCode?: string;
+  fromStateName?: string;
   toStateId?: number;
+  toStateCode?: string;
+  toStateName?: string;
+  performedByOfficerId?: number;
+  performedByOfficerName?: string;
+  performedByRole?: string;
+  performedAtUnitId?: number;
+  performedAtUnitName?: string;
+  comments?: string;
+  metadata?: any;
+  performedAt: string;
+  // Legacy nested structure support (for backward compatibility)
   fromState?: { stateCode: string; stateName: string };
   toState?: { stateCode: string; stateName: string };
-  performedByRole?: string;
-  comments?: string;
-  performedAt: string;
 }
 
 export interface ResubmitRequest {

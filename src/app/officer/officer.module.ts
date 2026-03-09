@@ -8,6 +8,9 @@ import { OfficerCaseDetailComponent } from './officer-case-detail/officer-case-d
 import { WorkflowActionDialogComponent } from './workflow-action-dialog/workflow-action-dialog.component';
 import { HearingFormComponent } from './hearing-form/hearing-form.component';
 import { DocumentEditorComponent } from './document-editor/document-editor.component';
+import { FieldReportRequestDialogComponent } from './field-report-request-dialog/field-report-request-dialog.component';
+import { FieldReportFormComponent } from './field-report-form/field-report-form.component';
+import { AttendanceFormComponent } from './attendance-form/attendance-form.component';
 import { SharedModule } from '../shared/shared.module';
 
 const routes: Routes = [
@@ -49,7 +52,10 @@ const routes: Routes = [
     OfficerCaseDetailComponent,
     WorkflowActionDialogComponent,
     HearingFormComponent,
-    DocumentEditorComponent
+    DocumentEditorComponent,
+    FieldReportRequestDialogComponent,
+    FieldReportFormComponent,
+    AttendanceFormComponent
   ],
   imports: [
     SharedModule,

@@ -2,7 +2,19 @@
   <h3 class="section-title">
     <mat-icon>play_circle</mat-icon>
     Available actions
+    <span *ngIf="!isLoading && !loadError && transitions.length > 0" class="action-count-badge">
+      {{ getExecutableActionsCount() }} action{{ getExecutableActionsCount() !== 1 ? 's' : '' }} available
+    </span>
   </h3>
+
+  <!-- Hint Banner: Inform users about available actions -->
+  <div *ngIf="!isLoading && !loadError && transitions.length > 0" class="action-hint-banner">
+    <mat-icon class="hint-icon">info</mat-icon>
+    <div class="hint-content">
+      <strong>Action Required:</strong>
+      <span>You have {{ getExecutableActionsCount() }} action{{ getExecutableActionsCount() !== 1 ? 's' : '' }} that need{{ getExecutableActionsCount() === 1 ? 's' : '' }} to be taken. Please review the actions below and click "Execute" to proceed with your case.</span>
+    </div>
+  </div>
 
   <div *ngIf="isLoading" class="loading">
     <mat-spinner diameter="32"></mat-spinner>

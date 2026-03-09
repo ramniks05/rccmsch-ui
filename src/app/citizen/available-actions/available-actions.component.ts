@@ -108,6 +108,10 @@ export class AvailableActionsComponent implements OnInit, OnChanges {
     return t.blockingConditions.filter((c) => !c.passed).map((c) => c.label);
   }
 
+  getExecutableActionsCount(): number {
+    return this.transitions.filter(t => t.canExecute).length;
+  }
+
   tooltipText(t: TransitionWithChecklist): string {
     if (!t.blockingConditions?.length) {
       return t.transitionName;
