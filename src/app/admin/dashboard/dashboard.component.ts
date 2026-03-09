@@ -13,6 +13,8 @@ import { DASHBOARD_DATA } from '../../../assets/mock-dashboard-data';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { Router } from '@angular/router';
 import { AdminService } from '../admin.service';
+import { AdvancedSettingsService } from 'src/app/core/services/advanced-settings.service';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-dashboard',
@@ -79,12 +81,12 @@ export class DashboardComponent implements OnInit {
 
   // Data from mock
   districts = DASHBOARD_DATA.districts;
-  officers = DASHBOARD_DATA.officers;
+  officers :any;
   courts = DASHBOARD_DATA.courts;
 
   // Search and filter
   searchTerm = '';
-  displayedColumns = ['officer', 'pending', 'status', 'actions'];
+  displayedColumns = ['officer','designation','district', 'total', 'pending','disposed', 'status', 'actions'];
 
   // Chart period
   trendPeriod = '6m';
@@ -116,7 +118,7 @@ export class DashboardComponent implements OnInit {
       progress: 27,
     },
     {
-      label: 'Active Courts',
+      label: 'Total Courts',
       value: 62,
       icon: 'account_balance',
       color: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
@@ -124,6 +126,7 @@ export class DashboardComponent implements OnInit {
       progress: 95,
     },
   ];
+  caseSummary: any;
 
   // Computed properties (Object-Oriented approach)
   get disposalRate(): number {
@@ -144,7 +147,7 @@ export class DashboardComponent implements OnInit {
   }
 
   get filteredOfficers() {
-    return this.officers.filter((officer) =>
+    return this.officers.filter((officer: any) =>
       officer.name.toLowerCase().includes(this.searchTerm.toLowerCase()),
     );
   }
@@ -339,11 +342,15 @@ export class DashboardComponent implements OnInit {
     private authService: AuthService,
     private router: Router,
     private adminService: AdminService,
+    private advancedSettingsService: AdvancedSettingsService,
+    private snack: MatSnackBar
   ) {}
 
   ngOnInit(): void {
     // Initialize component
+    this.getCaseSummary();
     this.animateNumbers();
+    this.getOfficerStatusClass();
   }
 
   logout() {
@@ -353,9 +360,48 @@ export class DashboardComponent implements OnInit {
     this.router.navigate(['/home']);
   }
 
+  getOfficerStatusClass() {
+    this.advancedSettingsService.getOfficerStatus().subscribe({
+      next: (res) => {
+        console.log(res);
+        this.officers = res.data ?? [];
+        return res.data;
+      },
+      error: (err) => {
+        console.error('Error fetching officer status:', err);
+        return 'inactive'; // Default to inactive on error
+      },
+    });
+  }
+
+  getCaseSummary(): void {
+    this.advancedSettingsService.getCaseSummary().subscribe({
+      next: (res) => {
+        this.caseSummary = res.data ?? [];
+        for (let item of this.kpiMetrics) {
+          if (item.label === 'Total Cases') {
+            item.value = this.caseSummary.totalCases ?? item.value;
+          } else if (item.label === 'Disposed') {
+            item.value = this.caseSummary.disposedCases ?? item.value;
+          } else if (item.label === 'Pending') {
+            item.value = this.caseSummary.pendingCases ?? item.value;
+          } else if (item.label === 'Total Courts') {
+            item.value = this.caseSummary.totalCourts ?? item.value;
+          }
+        }
+      },
+      error: (err) => {
+        console.error('Error fetching case summary:', err);
+        this.snack.open('Failed to load case summary', 'Close', {
+          duration: 3000,
+          panelClass: ['error-snackbar'],
+        });
+      },
+    });
+  }
+
   // Method to update trend chart based on selected period
   updateTrendChart(): void {
-    // This would fetch different data based on the period
     console.log('Updating trend chart for period:', this.trendPeriod);
   }
 

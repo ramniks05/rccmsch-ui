@@ -28,11 +28,21 @@
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="col-md-4">
+          <mat-label>Occupation</mat-label>
+          <input matInput formControlName="occupation" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="col-md-4">
+          <mat-label>Education</mat-label>
+          <input matInput formControlName="education" />
+        </mat-form-field>
+
+        <!-- <mat-form-field appearance="outline" class="col-md-4">
           <mat-label>Date of Birth</mat-label>
           <input matInput [matDatepicker]="dob" formControlName="dateOfBirth" />
           <mat-datepicker-toggle matSuffix [for]="dob"></mat-datepicker-toggle>
           <mat-datepicker #dob></mat-datepicker>
-        </mat-form-field>
+        </mat-form-field> -->
 
         <mat-form-field appearance="outline" class="col-md-4">
           <mat-label>Gender</mat-label>
@@ -58,10 +68,10 @@
           <input matInput formControlName="pincode" />
         </mat-form-field>
 
-        <mat-form-field appearance="outline" class="col-md-4">
+        <!-- <mat-form-field appearance="outline" class="col-md-4">
           <mat-label>Aadhaar Number</mat-label>
           <input matInput formControlName="aadharNumber" />
-        </mat-form-field>
+        </mat-form-field> -->
       </div>
 
       <div class="actions">

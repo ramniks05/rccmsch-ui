@@ -13,6 +13,7 @@ import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { AdvancedSettingsService } from 'src/app/core/services/advanced-settings.service';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 export interface ContactStatItem {
   value: string;
@@ -187,6 +188,7 @@ export class ContactComponent implements OnInit, AfterViewInit {
     public cdr: ChangeDetectorRef,
     private sanitizer: DomSanitizer,
     private advancedSettingsService: AdvancedSettingsService,
+    private snack: MatSnackBar
   ) {}
 
   ngOnInit(): void {}
@@ -223,6 +225,9 @@ export class ContactComponent implements OnInit, AfterViewInit {
       next: (res) => {
         this.formStatus = 'success';
         this.cdr.markForCheck();
+        this.snack.open('Your message has been sent successfully!', 'Close', {
+          duration: 3000,
+        });
       },
       error: () => {
         this.formStatus = 'error';

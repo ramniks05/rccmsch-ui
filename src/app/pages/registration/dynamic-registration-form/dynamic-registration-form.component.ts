@@ -225,7 +225,7 @@ export class DynamicRegistrationFormComponent implements OnInit, OnDestroy {
     // If DISTRICT field exists but NO STATE field, load districts directly for default state
     if (districtField && !stateField) {
       // Load districts for a default state
-      // Note: Replace this with your actual default state ID (e.g., Manipur state ID)
+      // Note: Replace this with your actual default state ID (e.g., Chandigarh state ID)
       // You can also make this configurable via environment or get it from API
       const defaultStateId = 1; // TODO: Replace with actual default state ID or make configurable
       this.selectedStateId = defaultStateId;

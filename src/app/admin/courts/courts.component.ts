@@ -294,7 +294,7 @@ export class CourtsComponent implements OnInit, AfterViewInit {
 
           <mat-form-field appearance="outline" class="half-width">
             <mat-label>Email</mat-label>
-            <input matInput type="email" formControlName="email" placeholder="e.g., dc.impwest@manipur.gov.in">
+            <input matInput type="email" formControlName="email" placeholder="e.g., dc.impwest@chandigarh.gov.in">
           </mat-form-field>
         </div>
 

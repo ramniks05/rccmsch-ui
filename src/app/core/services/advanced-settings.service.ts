@@ -181,4 +181,22 @@ export class AdvancedSettingsService {
       payload
     );
   }
+
+  getOfficerStatus(): Observable<ApiResponse<any[]>> {
+    return this.http.get<ApiResponse<any[]>>(
+      `${this.apiUrl}/dashboard/officer-case-stats`,
+      { headers: this.getAuthHeaders() },
+    );
+  }
+
+  updateCitizenProfile(
+    id: number,
+    payload: any,
+  ): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(
+      `${this.apiUrl}/auth/citizen/edit-profile/${id}`,
+      payload,
+      { headers: this.getAuthHeaders() },
+    );
+  }
 }

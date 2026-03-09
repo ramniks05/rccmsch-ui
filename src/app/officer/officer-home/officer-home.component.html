@@ -46,7 +46,7 @@
       </div>
 
       <p class="welcome-subtitle">Officer Dashboard - Revenue Court Case Management System</p>
-      <p class="welcome-subtitle-small">Government of Manipur</p>
+      <p class="welcome-subtitle-small">Government of Chandigarh</p>
     </div>
     <button mat-raised-button color="primary" (click)="logout()" class="logout-btn">
       <mat-icon>logout</mat-icon>
@@ -84,7 +84,7 @@
             <span class="case-num">{{ item.caseNumber }}</span>
             <span class="subject">{{ item.subject }}</span>
             <span class="state">{{ item.currentStateName }}</span>
-            <span class="transitions" *ngIf="item.availableTransitions?.length">
+            <span class="transitions" *ngIf="item.availableTransitions.length">
               {{ item.availableTransitions[0].label }}
               <ng-container *ngIf="item.availableTransitions.length > 1"> +{{ item.availableTransitions.length - 1 }}</ng-container>
             </span>
