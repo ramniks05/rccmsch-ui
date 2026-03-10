@@ -147,7 +147,7 @@ export class DashboardComponent implements OnInit {
   }
 
   get filteredOfficers() {
-    return this.officers.filter((officer: any) =>
+    return this.officers?.filter((officer: any) =>
       officer.name.toLowerCase().includes(this.searchTerm.toLowerCase()),
     );
   }
