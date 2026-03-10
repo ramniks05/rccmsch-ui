@@ -58,8 +58,8 @@
               matTooltipClass="custom-tooltip"
             >
               <span class="day-number">{{ day }}</span>
-              <span class="hearing-count" *ngIf="getHearing(day)?.count">
-  {{ getHearing(day)?.count }}
+              <span class="hearing-count" *ngIf="getHearing(day)?.totalCases">
+  {{ getHearing(day)?.totalCases }}
 </span>
             </div>
           </td>

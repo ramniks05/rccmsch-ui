@@ -8,7 +8,7 @@ export interface HearingDay {
   date: number;
   isHearing: boolean;
   tooltip?: string;
-  count?: number;
+  totalCases?: number;
 }
 
 @Component({
@@ -119,13 +119,8 @@ export class HearingCalendarComponent implements OnInit {
   loadHearings(): void {
   this.service
     .getCalendar(this.currentMonth + 1, this.currentYear, this.selectedCourt)
-    .subscribe((res) => {
-
-      this.hearings = res.map(item => ({
-        ...item,
-        count: Number(item.tooltip?.split('-').pop()) || 0
-      }));
-
+    .subscribe((res: any) => {
+      this.hearings = res.data;
     });
 }
 

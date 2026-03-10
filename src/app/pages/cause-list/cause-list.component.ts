@@ -52,8 +52,8 @@ export class CauseListComponent implements OnInit {
   }
 
   loadDefaultCauseList(): void {
-    this.service.getLatestCauseList(this.selectedCourt).subscribe((res) => {
-      this.dataSource.data = res;
+    this.service.getLatestCauseList(this.selectedCourt).subscribe((res:any) => {
+      this.dataSource.data = res.data;
     });
   }
 
