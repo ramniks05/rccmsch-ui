@@ -116,6 +116,18 @@
           </mat-checkbox>
           <mat-hint *ngIf="field.helpText" class="help-text">{{ field.helpText }}</mat-hint>
         </div>
+
+        <!-- DYNAMIC_FILES field -->
+        <div *ngIf="field.fieldType === 'DYNAMIC_FILES'" class="dynamic-files-field-wrapper">
+          <app-dynamic-files-field
+            [field]="field"
+            [value]="getDynamicFilesValue(field.fieldName)"
+            [caseId]="caseId"
+            [viewMode]="false"
+            [errors]="getFieldErrors(field.fieldName)"
+            (valueChange)="onDynamicFilesChange(field.fieldName, $event)">
+          </app-dynamic-files-field>
+        </div>
       </div>
 
       <!-- No fields configured -->

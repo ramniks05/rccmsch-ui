@@ -82,6 +82,44 @@ mat-dialog-content {
   }
 }
 
+.dynamic-files-field-wrapper {
+  width: 100%;
+  margin-bottom: 8px;
+  
+  ::ng-deep .dynamic-files-field {
+    .form-label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: rgba(0, 0, 0, 0.87);
+      
+      .text-danger {
+        color: #f44336;
+      }
+    }
+    
+    .form-control {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid rgba(0, 0, 0, 0.23);
+      border-radius: 4px;
+      font-size: 14px;
+      
+      &:focus {
+        outline: none;
+        border-color: #667eea;
+        border-width: 2px;
+      }
+    }
+    
+    .invalid-feedback {
+      color: #f44336;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+  }
+}
+
 .no-fields,
 .no-schema {
   text-align: center;

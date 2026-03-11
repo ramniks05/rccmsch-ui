@@ -310,10 +310,15 @@ export class OfficerCaseService {
   /**
    * Submit module form data
    * POST /api/cases/{caseId}/module-forms/{moduleType}/submit
+   * For FIELD_REPORT module, formData should be an object (not stringified)
+   * For other modules, formData can be stringified if needed
    */
   submitModuleForm(caseId: number, moduleType: string, formData: any, remarks?: string): Observable<ApiResponse<any>> {
-    const payload = {
-      formData: typeof formData === 'string' ? formData : JSON.stringify(formData),
+    // For FIELD_REPORT, send formData as object; for others, stringify if it's not already a string
+    const payload: any = {
+      formData: moduleType === 'FIELD_REPORT' 
+        ? (typeof formData === 'string' ? JSON.parse(formData) : formData)
+        : (typeof formData === 'string' ? formData : JSON.stringify(formData)),
       remarks
     };
 

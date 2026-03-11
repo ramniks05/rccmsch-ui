@@ -19,7 +19,7 @@ export class ModuleFormsComponent implements OnInit {
   selectedModuleType: ModuleType = 'HEARING';
   
   // Module types for dropdown
-  moduleTypes: ModuleType[] = ['HEARING', 'NOTICE', 'ORDERSHEET', 'JUDGEMENT'];
+  moduleTypes: ModuleType[] = ['HEARING', 'NOTICE', 'ORDERSHEET', 'JUDGEMENT', 'FIELD_REPORT'];
   
   // Field types for dropdown
   fieldTypes: FieldType[] = [

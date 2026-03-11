@@ -22,15 +22,20 @@
       <div *ngFor="let roleGroup of roleGroups" class="role-group">
         <h3 class="role-header">
           <mat-icon>{{ getRoleIcon(roleGroup.key) }}</mat-icon>
-          {{ roleGroup.value[0].roleName }}s
+          {{ getRoleDisplayName(roleGroup.key, roleGroup.value[0].roleName) }}s
         </h3>
         
-        <mat-selection-list formControlName="officerId">
-          <mat-list-option 
+        <div class="officer-list">
+          <div 
             *ngFor="let officer of roleGroup.value" 
-            [value]="officer.officerId"
-            (click)="onOfficerSelect(officer)"
-            [class.selected]="selectedOfficerId === officer.officerId">
+            class="officer-card"
+            [class.selected]="selectedOfficerId === officer.officerId"
+            (click)="selectOfficer(officer)">
+            <mat-radio-button 
+              [checked]="selectedOfficerId === officer.officerId"
+              [value]="officer.officerId"
+              (click)="selectOfficer(officer); $event.stopPropagation()">
+            </mat-radio-button>
             <div class="officer-item">
               <div class="officer-name">{{ officer.officerName }}</div>
               <div class="officer-details">
@@ -44,8 +49,8 @@
                 </span>
               </div>
             </div>
-          </mat-list-option>
-        </mat-selection-list>
+          </div>
+        </div>
       </div>
 
       <!-- Comments field -->

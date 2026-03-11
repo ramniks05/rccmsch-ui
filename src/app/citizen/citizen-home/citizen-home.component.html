@@ -34,24 +34,45 @@
       <mat-card-header>
         <mat-card-title>
           <mat-icon class="card-icon accent">notifications_active</mat-icon>
-          Actions required
+          Actions Required
+          <span class="badge-count">{{ actionsRequiredCount }}</span>
         </mat-card-title>
         <mat-card-subtitle>You have {{ actionsRequiredCount }} case(s) requiring your attention</mat-card-subtitle>
       </mat-card-header>
       <mat-card-content>
-        <ul class="actions-list">
-          <li *ngFor="let item of actionsRequiredItems" class="action-item">
-            <span class="case-num">{{ item.caseNumber }}</span>
-            <span class="subject">{{ item.subject }}</span>
-            <span class="action-label">{{ item.actionLabel }}</span>
-            <button mat-raised-button color="primary" (click)="viewCase(item.caseId)">
-              View case
-            </button>
-          </li>
-        </ul>
-        <button mat-stroked-button color="primary" routerLink="/citizen/my-cases" class="view-all-btn">
-          View all my cases
-        </button>
+        <div class="actions-grid">
+          <div *ngFor="let item of actionsRequiredItems" class="action-card">
+            <div class="action-card-header">
+              <div class="action-icon" [class]="'action-' + item.actionCode.toLowerCase()">
+                <mat-icon>
+                  <span *ngIf="item.actionCode === 'ACKNOWLEDGE_NOTICE'">gavel</span>
+                  <span *ngIf="item.actionCode === 'RESUBMIT_AFTER_CORRECTION'">edit</span>
+                  <span *ngIf="item.actionCode !== 'ACKNOWLEDGE_NOTICE' && item.actionCode !== 'RESUBMIT_AFTER_CORRECTION'">assignment</span>
+                </mat-icon>
+              </div>
+              <div class="action-card-info">
+                <div class="case-number">{{ item.caseNumber }}</div>
+                <div class="case-subject">{{ item.subject }}</div>
+              </div>
+            </div>
+            <div class="action-card-body">
+              <div class="action-label-badge">
+                <mat-icon>info</mat-icon>
+                {{ item.actionLabel }}
+              </div>
+              <button mat-raised-button color="primary" (click)="viewCase(item.caseId)" class="action-btn">
+                <mat-icon>visibility</mat-icon>
+                View & Take Action
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="actions-footer">
+          <button mat-stroked-button color="primary" routerLink="/citizen/my-cases" class="view-all-btn">
+            <mat-icon>list</mat-icon>
+            View All My Cases
+          </button>
+        </div>
       </mat-card-content>
     </mat-card>
 

@@ -37,11 +37,18 @@ export class MyCasesComponent implements OnInit {
 
   loadCases(): void {
     this.isLoading = true;
-    this.caseService.getCitizenCases(this.userData.userId).subscribe({
+    // Use new API endpoint - no need to pass userId as it's extracted from token/header
+    this.caseService.getCitizenCases().subscribe({
       next: (response) => {
         this.isLoading = false;
         if (response.success) {
           this.cases = response.data || [];
+          // Sort by application date (newest first)
+          this.cases.sort((a, b) => {
+            const dateA = new Date(a.createdAt || a.applicationDate || 0).getTime();
+            const dateB = new Date(b.createdAt || b.applicationDate || 0).getTime();
+            return dateB - dateA;
+          });
           this.dataSource.data = this.cases;
         } else {
           this.snackBar.open(response.message || 'Failed to load cases', 'Close', { duration: 5000 });

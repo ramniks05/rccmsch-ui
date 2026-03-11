@@ -116,7 +116,18 @@ export class FieldReportFormComponent implements OnInit {
       .sort((a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0));
 
     this.dynamicFields.forEach((field: any) => {
-      const value = this.formData[field.fieldName] || field.defaultValue || '';
+      let value: any;
+      
+      // Handle DYNAMIC_FILES fields - they should be arrays
+      if (field.fieldType === 'DYNAMIC_FILES') {
+        value = this.formData[field.fieldName] || [];
+        if (!Array.isArray(value)) {
+          value = [];
+        }
+      } else {
+        value = this.formData[field.fieldName] || field.defaultValue || '';
+      }
+      
       const validators = [];
       
       if (field.isRequired) {
@@ -179,6 +190,56 @@ export class FieldReportFormComponent implements OnInit {
   }
 
   /**
+   * Transform form data to match expected payload format
+   */
+  private transformFormData(formValue: any): any {
+    const transformed: any = {};
+    
+    Object.keys(formValue).forEach(key => {
+      const value = formValue[key];
+      
+      // Handle DYNAMIC_FILES fields - transform file structure
+      if (Array.isArray(value) && value.length > 0 && value[0]?.fileId) {
+        transformed[key] = value.map((file: any) => ({
+          fileName: file.fileName,
+          fileUrl: file.fileUrl || `/uploads/documents/${file.fileName}`, // Default if not provided
+          fileSize: file.fileSize,
+          fileType: file.fileType || this.getFileTypeFromFileName(file.fileName) // Infer from extension
+        }));
+      } else {
+        // Handle date fields - convert Date objects to ISO string
+        if (value instanceof Date) {
+          transformed[key] = value.toISOString().split('T')[0];
+        } else {
+          transformed[key] = value;
+        }
+      }
+    });
+    
+    return transformed;
+  }
+
+  /**
+   * Get MIME type from file name extension
+   */
+  private getFileTypeFromFileName(fileName: string): string {
+    const ext = fileName.split('.').pop()?.toLowerCase();
+    const mimeTypes: Record<string, string> = {
+      'pdf': 'application/pdf',
+      'jpg': 'image/jpeg',
+      'jpeg': 'image/jpeg',
+      'png': 'image/png',
+      'gif': 'image/gif',
+      'doc': 'application/msword',
+      'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'xls': 'application/vnd.ms-excel',
+      'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'txt': 'text/plain'
+    };
+    return mimeTypes[ext || ''] || 'application/octet-stream';
+  }
+
+  /**
    * Submit field report
    */
   submitFieldReport(): void {
@@ -189,13 +250,16 @@ export class FieldReportFormComponent implements OnInit {
     }
 
     this.submitting = true;
-    const formData = this.form.value;
+    const rawFormData = this.form.value;
+    
+    // Transform form data to match expected payload format
+    const transformedFormData = this.transformFormData(rawFormData);
 
     // Step 1: Submit module form data
     this.caseService.submitModuleForm(
       this.caseId,
       'FIELD_REPORT',
-      formData,
+      transformedFormData,
       'Field report submitted'
     ).pipe(
       catchError(error => {
@@ -313,6 +377,33 @@ export class FieldReportFormComponent implements OnInit {
     }
     
     return 'Invalid value';
+  }
+
+  /**
+   * Get dynamic files value for a field
+   */
+  getDynamicFilesValue(fieldName: string): { fileId: string; fileName: string; fileSize: number }[] {
+    const value = this.form.get(fieldName)?.value;
+    return Array.isArray(value) ? value : [];
+  }
+
+  /**
+   * Handle dynamic files change
+   */
+  onDynamicFilesChange(fieldName: string, value: { fileId: string; fileName: string; fileSize: number }[]): void {
+    this.form.get(fieldName)?.setValue(value);
+    this.form.get(fieldName)?.markAsTouched();
+  }
+
+  /**
+   * Get field errors for display
+   */
+  getFieldErrors(fieldName: string): Record<string, string> {
+    const errors: Record<string, string> = {};
+    if (this.hasFieldError(fieldName)) {
+      errors[fieldName] = this.getFieldError(fieldName);
+    }
+    return errors;
   }
 
   closeDialog(): void {

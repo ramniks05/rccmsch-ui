@@ -40,6 +40,46 @@
       </button>
     </div>
 
+    <!-- Quick Summary Card -->
+    <mat-card class="summary-card">
+      <mat-card-content>
+        <div class="summary-grid">
+          <div class="summary-item primary">
+            <div class="summary-label">Case Number</div>
+            <div class="summary-value">{{ caseData.caseNumber }}</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">Status</div>
+            <div class="summary-value">
+              <span [class]="'status-badge ' + getStatusClass(caseData.currentStateName || caseData.status)">
+                {{ caseData.currentStateName || caseData.status }}
+              </span>
+            </div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">Applicant</div>
+            <div class="summary-value">{{ caseData.applicantName }}</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">Case Type</div>
+            <div class="summary-value">{{ caseData.caseTypeName }}</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">Priority</div>
+            <div class="summary-value">
+              <span [class]="'priority-badge ' + getPriorityClass(caseData.priority)">
+                {{ caseData.priority }}
+              </span>
+            </div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">Application Date</div>
+            <div class="summary-value">{{ caseData.applicationDate | date: 'dd/MM/yyyy' }}</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
     <!-- Tabs for different sections -->
     <mat-tab-group class="case-tabs" animationDuration="300ms">
       
@@ -202,6 +242,13 @@
         </div>
       </mat-tab>
 
+      <!-- Field Report Tab (Show when submitted) -->
+      <mat-tab label="Field Report" *ngIf="requiredModules.fieldReport || hasFieldReportSubmitted">
+        <div class="tab-content">
+          <app-field-report-view [caseId]="caseData.id"></app-field-report-view>
+        </div>
+      </mat-tab>
+
       <!-- Workflow Actions Tab -->
       <mat-tab label="Actions">
         <div class="tab-content">
@@ -219,7 +266,7 @@
                 mat-raised-button 
                 color="primary"
                 (click)="openRequestFieldReportDialog()"
-                [disabled]="loading || executing">
+                [disabled]="loading || executing || !caseData">
                 <mat-icon>send</mat-icon>
                 Request Field Report
               </button>

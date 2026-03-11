@@ -10,6 +10,7 @@ import { HearingFormComponent } from './hearing-form/hearing-form.component';
 import { DocumentEditorComponent } from './document-editor/document-editor.component';
 import { FieldReportRequestDialogComponent } from './field-report-request-dialog/field-report-request-dialog.component';
 import { FieldReportFormComponent } from './field-report-form/field-report-form.component';
+import { FieldReportViewComponent } from './field-report-view/field-report-view.component';
 import { AttendanceFormComponent } from './attendance-form/attendance-form.component';
 import { SharedModule } from '../shared/shared.module';
 
@@ -55,6 +56,7 @@ const routes: Routes = [
     DocumentEditorComponent,
     FieldReportRequestDialogComponent,
     FieldReportFormComponent,
+    FieldReportViewComponent,
     AttendanceFormComponent
   ],
   imports: [

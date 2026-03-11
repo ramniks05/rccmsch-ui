@@ -6,7 +6,7 @@ import { environment } from '../../../environments/environment';
 /**
  * Module Types
  */
-export type ModuleType = 'HEARING' | 'NOTICE' | 'ORDERSHEET' | 'JUDGEMENT';
+export type ModuleType = 'HEARING' | 'NOTICE' | 'ORDERSHEET' | 'JUDGEMENT' | 'FIELD_REPORT';
 
 /**
  * Field Types (includes REPEATABLE_SECTION and DYNAMIC_FILES for attendance/party lists and multi-file uploads)

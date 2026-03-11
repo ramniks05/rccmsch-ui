@@ -427,7 +427,8 @@ export class DocumentTemplatesComponent implements OnInit {
       'HEARING': 'Hearing',
       'NOTICE': 'Notice',
       'ORDERSHEET': 'Order Sheet',
-      'JUDGEMENT': 'Judgement'
+      'JUDGEMENT': 'Judgement',
+      'FIELD_REPORT': 'Field Report'
     };
     return labels[moduleType] || moduleType;
   }
