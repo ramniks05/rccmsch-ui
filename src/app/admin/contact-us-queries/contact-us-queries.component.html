@@ -1,0 +1,116 @@
+<div class="queries-container">
+
+  <div class="header">
+    <h2>Contact Us Queries</h2>
+    <mat-form-field appearance="outline">
+      <mat-label>Search queries</mat-label>
+      <input matInput [(ngModel)]="searchText">
+      <mat-icon matSuffix>search</mat-icon>
+    </mat-form-field>
+  </div>
+
+  <div class="table-wrapper">
+
+    <table mat-table [dataSource]="filteredQueries" class="mat-elevation-z0">
+
+      <!-- Index -->
+      <ng-container matColumnDef="index">
+        <th mat-header-cell *matHeaderCellDef>#</th>
+        <td mat-cell *matCellDef="let q; let i = index">
+          <span class="id-cell">{{ i + 1 }}</span>
+        </td>
+      </ng-container>
+
+      <!-- Full Name -->
+      <ng-container matColumnDef="fullName">
+        <th mat-header-cell *matHeaderCellDef>User</th>
+        <td mat-cell *matCellDef="let q">
+          <div class="user-info">
+            <div class="avatar">{{ getInitials(q.fullName) }}</div>
+            <span class="name">{{ q.fullName }}</span>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Email -->
+      <ng-container matColumnDef="email">
+        <th mat-header-cell *matHeaderCellDef>Email</th>
+        <td mat-cell *matCellDef="let q">
+          <span class="email-cell">{{ q.email }}</span>
+        </td>
+      </ng-container>
+
+      <!-- Mobile -->
+      <ng-container matColumnDef="mobile">
+        <th mat-header-cell *matHeaderCellDef>Mobile</th>
+        <td mat-cell *matCellDef="let q">
+          <span class="mobile-cell">
+            <mat-icon class="phone-icon">phone</mat-icon>
+            {{ q.mobile }}
+          </span>
+        </td>
+      </ng-container>
+
+      <!-- Subject -->
+      <ng-container matColumnDef="subject">
+        <th mat-header-cell *matHeaderCellDef>Subject</th>
+        <td mat-cell *matCellDef="let q">
+          <span class="subject-cell" [matTooltip]="q.subject">{{ q.subject }}</span>
+        </td>
+      </ng-container>
+
+      <!-- Query Category -->
+      <ng-container matColumnDef="queryCategory">
+        <th mat-header-cell *matHeaderCellDef>Category</th>
+        <td mat-cell *matCellDef="let q">
+          <mat-chip class="category-chip" [disableRipple]="true">
+            {{ getCategoryLabel(q.queryCategory) }}
+          </mat-chip>
+        </td>
+      </ng-container>
+
+      <!-- Actions -->
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>Actions</th>
+        <td mat-cell *matCellDef="let q">
+            <button
+              mat-icon-button
+              class="action-btn view-btn"
+              (click)="viewQuery(q)"
+              matTooltip="View Query"
+            >
+              <mat-icon>visibility</mat-icon>
+            </button>
+            <button
+              mat-icon-button
+              class="action-btn reply-btn"
+              (click)="replyQuery(q)"
+              matTooltip="Reply"
+            >
+              <mat-icon>reply</mat-icon>
+            </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+
+    </table>
+
+    <!-- Empty state -->
+    <div class="empty-state" *ngIf="filteredQueries.length === 0">
+      <mat-icon>inbox</mat-icon>
+      <p>No queries found</p>
+      <span>Try adjusting your search term</span>
+    </div>
+
+    <!-- Footer -->
+    <div class="table-footer" *ngIf="filteredQueries.length > 0">
+      <span class="record-count">
+        Showing <strong>{{ filteredQueries.length }}</strong> of <strong>{{ queries.length }}</strong> queries
+      </span>
+    </div>
+
+  </div>
+
+</div>

@@ -1,0 +1,408 @@
+// ========== DESIGN TOKENS ==========
+$ink: #1a1f2e;
+$ink-soft: #4a5568;
+$ink-muted: #8896ab;
+$surface: #ffffff;
+$surface-alt: #f7f9fc;
+$border: rgba(0, 0, 0, 0.06);
+$border-strong: rgba(0, 0, 0, 0.1);
+
+$navy: #1e3a5f;
+$gold: #c9974a;
+$teal: #2d8a7b;
+$rose: #c0546a;
+$sky: #3b7fc4;
+
+$card-shadow:
+  0 1px 3px rgba(0, 0, 0, 0.06),
+  0 4px 16px rgba(0, 0, 0, 0.04);
+$card-hover-shadow:
+  0 4px 12px rgba(0, 0, 0, 0.08),
+  0 16px 40px rgba(0, 0, 0, 0.08);
+$transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+// ========== CONTAINER ==========
+.queries-container {
+  padding: 32px 40px;
+  background: $surface-alt;
+  min-height: 100%;
+  font-family: "DM Sans", "Segoe UI", sans-serif;
+}
+
+// ========== HEADER ==========
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+
+  h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: $ink;
+    margin: 0;
+    letter-spacing: -0.3px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    &::before {
+      content: "";
+      display: inline-block;
+      width: 4px;
+      height: 20px;
+      background: $sky;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+  }
+
+  // ── Search field: fixed height, label & input both vertically centred ──
+  mat-form-field {
+    width: 260px;
+
+    // Kill the ghost space below the field
+    ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+      display: none !important;
+    }
+
+    // Wrapper height
+    ::ng-deep .mat-mdc-text-field-wrapper {
+      background: $surface;
+      border-radius: 8px;
+      height: 42px !important;
+      padding: 0 !important;
+    }
+
+    // Outline colour
+    ::ng-deep .mdc-notched-outline__leading,
+    ::ng-deep .mdc-notched-outline__notch,
+    ::ng-deep .mdc-notched-outline__trailing {
+      border-color: $border-strong !important;
+    }
+
+    // Inner flex row that holds label + input
+    ::ng-deep .mat-mdc-form-field-flex {
+      height: 42px !important;
+      align-items: center !important;
+    }
+
+    // Infix (input area) — vertically centred, no extra padding
+    ::ng-deep .mat-mdc-form-field-infix {
+      padding-top: 0 !important;
+      padding-bottom: 0 !important;
+      min-height: 42px !important;
+      display: flex !important;
+      align-items: center !important;
+    }
+
+    // Float label stays static / centred when unfocused
+    ::ng-deep .mat-mdc-floating-label {
+      top: 50% !important;
+      transform: translateY(-50%) !important;
+      color: $ink-muted;
+      font-size: 14px;
+
+      &.mdc-floating-label--float-above {
+        top: 0 !important;
+        transform: translateY(-50%) scale(0.75) !important;
+      }
+    }
+
+    ::ng-deep input.mat-mdc-input-element {
+      font-size: 14px;
+      color: $ink;
+      line-height: 42px;
+    }
+
+    ::ng-deep .mat-mdc-form-field-icon-suffix .mat-icon {
+      color: $ink-muted;
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      padding-right: 12px;
+    }
+  }
+}
+
+// ========== TABLE WRAPPER ==========
+.table-wrapper {
+  background: $surface;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: $card-shadow;
+  border: 1px solid $border;
+}
+
+table {
+  width: 100%;
+}
+
+// ========== HEADER ROW ==========
+::ng-deep .mat-mdc-header-row {
+  background: $surface-alt !important;
+  border-bottom: 1px solid $border-strong !important;
+  height: 44px !important;
+}
+
+::ng-deep .mat-mdc-header-cell {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: $ink-muted !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.9px !important;
+  padding: 0 20px !important;
+  border-bottom: none !important;
+  white-space: nowrap;
+}
+
+// ========== DATA ROWS ==========
+::ng-deep .mat-mdc-row {
+  height: 62px !important;
+  transition: $transition;
+
+  &:hover {
+    background: rgba($sky, 0.028) !important;
+  }
+
+  &:last-child .mat-mdc-cell {
+    border-bottom: none !important;
+  }
+}
+
+::ng-deep .mat-mdc-cell {
+  font-size: 14px;
+  color: $ink;
+  padding: 0 20px !important;
+  border-bottom: 1px solid $border !important;
+  // Use flex so children align naturally in the centre of the row
+  display: table-cell;
+  vertical-align: middle;
+}
+
+// Actions column — flex container for the two buttons
+::ng-deep .mat-column-actions.mat-mdc-cell {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  padding: 16px !important;
+  overflow: visible !important;
+  // Reset any inherited line-height that shifts children
+  line-height: 1 !important;
+}
+
+::ng-deep .mat-column-actions.mat-mdc-header-cell {
+  text-align: center;
+}
+
+// ========== ID CELL ==========
+.id-cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: $surface-alt;
+  border: 1px solid $border-strong;
+  font-size: 12px;
+  font-weight: 700;
+  color: $ink-muted;
+  font-variant-numeric: tabular-nums;
+}
+
+// ========== USER INFO ==========
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  .avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, rgba($sky, 0.12), rgba($navy, 0.08));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 13px;
+    font-weight: 700;
+    color: $sky;
+    letter-spacing: 0.5px;
+    border: 1px solid rgba($sky, 0.15);
+  }
+
+  .name {
+    font-weight: 600;
+    font-size: 14px;
+    color: $ink;
+  }
+}
+
+// ========== CELLS ==========
+.email-cell {
+  font-size: 13px;
+  color: $ink-soft;
+}
+
+.mobile-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: $ink-soft;
+  font-variant-numeric: tabular-nums;
+
+  .phone-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    color: $ink-muted;
+  }
+}
+
+.subject-cell {
+  font-size: 13px;
+  color: $ink-soft;
+  max-width: 180px;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: default;
+}
+
+// ========== CATEGORY CHIP ==========
+::ng-deep mat-chip.category-chip {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  border-radius: 6px !important;
+  padding: 0 10px !important;
+  height: 24px !important;
+  min-height: 24px !important;
+  letter-spacing: 0.4px;
+  cursor: default;
+  border: none !important;
+  box-shadow: none !important;
+  background: rgba($sky, 0.1) !important;
+  color: $sky !important;
+
+  .mdc-evolution-chip__text-label {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    color: $sky !important;
+    line-height: 24px;
+  }
+}
+
+// ========== ACTION BUTTONS ==========
+button[mat-icon-button].action-btn {
+  // Fixed square size
+  width: 32px !important;
+  height: 32px !important;
+  // Prevent the button itself from growing
+  flex: 0 0 32px !important;
+  // Remove default padding that offsets the icon
+  padding: 0 !important;
+  border-radius: 8px !important;
+  // Critical: position relative so touch-target is contained
+  position: relative !important;
+  overflow: hidden !important;
+  // Vertically align self inside the flex cell
+  align-self: center !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: $transition;
+
+  // Collapse the 48px touch target Material adds by default
+  ::ng-deep .mat-mdc-button-touch-target {
+    width: 32px !important;
+    height: 32px !important;
+    top: 0 !important;
+    left: 0 !important;
+  }
+
+  ::ng-deep .mat-mdc-button-persistent-ripple,
+  ::ng-deep .mat-mdc-button-ripple,
+  ::ng-deep .mat-mdc-focus-indicator {
+    border-radius: 8px !important;
+  }
+
+  ::ng-deep .mat-icon {
+    font-size: 17px !important;
+    width: 17px !important;
+    height: 17px !important;
+    line-height: 17px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  &.view-btn {
+    color: $sky !important;
+    background: rgba($sky, 0.07) !important;
+    &:hover {
+      background: rgba($sky, 0.15) !important;
+    }
+  }
+
+  &.reply-btn {
+    color: $teal !important;
+    background: rgba($teal, 0.07) !important;
+    &:hover {
+      background: rgba($teal, 0.15) !important;
+    }
+  }
+}
+
+// ========== EMPTY STATE ==========
+.empty-state {
+  padding: 60px 24px;
+  text-align: center;
+
+  mat-icon {
+    font-size: 40px;
+    width: 40px;
+    height: 40px;
+    color: rgba($ink-muted, 0.35);
+    display: block;
+    margin: 0 auto 12px;
+  }
+
+  p {
+    margin: 0 0 4px;
+    font-size: 15px;
+    font-weight: 600;
+    color: $ink-soft;
+  }
+
+  span {
+    font-size: 13px;
+    color: $ink-muted;
+  }
+}
+
+// ========== TABLE FOOTER ==========
+.table-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 20px;
+  border-top: 1px solid $border;
+  background: $surface-alt;
+
+  .record-count {
+    font-size: 12px;
+    color: $ink-muted;
+    font-weight: 500;
+
+    strong {
+      color: $ink-soft;
+      font-weight: 700;
+    }
+  }
+}

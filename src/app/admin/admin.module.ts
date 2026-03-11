@@ -39,6 +39,7 @@ import { WhatsNewComponent } from './whats-new/whats-new.component';
 import { AdvancedSettingsComponent } from './advanced-settings/advanced-settings.component';
 import { DocumentsAvailableComponent } from './documents-available/documents-available.component';
 import { ReportsHomeComponent } from '../reports/reports-home/reports-home.component';
+import { ContactUsQueriesComponent } from './contact-us-queries/contact-us-queries.component';
 
 /**
  * Routes for Admin Module
@@ -158,6 +159,11 @@ const routes: Routes = [
         component: ReportsHomeComponent,
         data: { breadcrumb: 'Reports' }
       },
+      {
+        path: 'contact-us-queries',
+        component: ContactUsQueriesComponent,
+        data: { breadcrumb: 'Contact Us Queries' }
+      },
       // default after login
       {
         path: '',
@@ -216,7 +222,7 @@ const routes: Routes = [
     AdminLayoutComponent,
     WhatsNewComponent,
     AdvancedSettingsComponent,
-    DocumentsAvailableComponent
+    DocumentsAvailableComponent,
   ],
   imports: [
     SharedModule,
