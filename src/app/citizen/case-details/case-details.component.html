@@ -68,84 +68,242 @@
       <!-- Available Actions (workflow transitions + checklist) -->
       <app-available-actions *ngIf="caseId" [caseId]="caseId"></app-available-actions>
 
-      <!-- Divider between Available Actions and Notice Section -->
-      <mat-divider *ngIf="caseId && (isLoadingNotice || notice || noticeNotAvailable)" class="section-divider"></mat-divider>
-
-      <!-- Notice Section -->
-      <mat-card *ngIf="!isLoadingNotice && notice" class="notice-card">
+      <!-- Documents Section with Tabs -->
+      <mat-card *ngIf="documents.length > 0 || isLoadingNotice || isLoadingOrdersheet || isLoadingJudgement" class="documents-card">
         <mat-card-header>
           <mat-card-title>
-            <mat-icon>gavel</mat-icon>
-            Notice from Court
+            <mat-icon>description</mat-icon>
+            Case Documents
           </mat-card-title>
         </mat-card-header>
         <mat-card-content>
-          <!-- Notice Content -->
-          <div class="notice-content" [innerHTML]="notice.contentHtml"></div>
-          
-          <!-- Acknowledge Button -->
-          <div class="notice-actions" *ngIf="canAcknowledgeNotice()">
-            <mat-divider class="my-3"></mat-divider>
-            <div class="acknowledge-section">
-              <p class="text-muted mb-2">
-                <mat-icon>info</mat-icon>
-                Please acknowledge that you have received and reviewed this notice.
-              </p>
-              <mat-form-field appearance="outline" class="full-width mb-3">
-                <mat-label>Comments (Optional)</mat-label>
-                <input matInput [(ngModel)]="acknowledgeComments" placeholder="Notice received and acknowledged">
-              </mat-form-field>
-              <button mat-raised-button color="primary" 
-                      (click)="acknowledgeNotice()" 
-                      [disabled]="isAcceptingNotice">
-                <mat-icon>{{ isAcceptingNotice ? 'hourglass_empty' : 'check_circle' }}</mat-icon>
-                {{ isAcceptingNotice ? 'Acknowledging...' : 'Acknowledge Receipt' }}
-              </button>
-            </div>
-          </div>
+          <mat-tab-group>
+            <!-- Notice Tab -->
+            <mat-tab [label]="'Notice' + (notices.length > 0 ? ' (' + notices.length + ')' : '')">
+              <div class="document-tab-content">
+                <!-- Notice Loading -->
+                <div *ngIf="isLoadingNotice" class="loading-container">
+                  <mat-spinner diameter="40"></mat-spinner>
+                  <p>Loading notices...</p>
+                </div>
 
-          <!-- Already Acknowledged -->
-          <div class="already-acknowledged" *ngIf="!canAcknowledgeNotice()">
-            <mat-divider class="my-3"></mat-divider>
-            <div class="alert alert-success">
-              <mat-icon>check_circle</mat-icon>
-              <strong>Notice Acknowledged</strong>
-              <p>You have already acknowledged receipt of this notice.</p>
-            </div>
-          </div>
-        </mat-card-content>
-      </mat-card>
+                <!-- Multiple Notices -->
+                <div *ngIf="!isLoadingNotice && notices.length > 0" class="documents-list">
+                  <mat-accordion>
+                    <mat-expansion-panel *ngFor="let notice of notices; let i = index" [expanded]="i === 0">
+                      <mat-expansion-panel-header>
+                        <mat-panel-title>
+                          <div class="panel-title-content">
+                            <mat-icon>description</mat-icon>
+                            <span>{{ getDocumentTitle(notice, i) }}</span>
+                            <span class="document-badge" [class]="'status-' + notice.status.toLowerCase()">
+                              {{ notice.status }}
+                            </span>
+                          </div>
+                        </mat-panel-title>
+                        <mat-panel-description>
+                          <span *ngIf="notice.createdAt">{{ notice.createdAt | date:'medium' }}</span>
+                          <span *ngIf="notice.signedAt" class="signed-badge">
+                            <mat-icon>verified</mat-icon>
+                            Signed
+                          </span>
+                        </mat-panel-description>
+                      </mat-expansion-panel-header>
+                      
+                      <div class="document-content">
+                        <div class="document-header">
+                          <div class="document-info">
+                            <span class="document-status" [class]="'status-' + notice.status.toLowerCase()">
+                              {{ notice.status }}
+                            </span>
+                            <span *ngIf="notice.signedAt" class="document-date">
+                              Signed: {{ notice.signedAt | date:'medium' }}
+                            </span>
+                            <span *ngIf="notice.createdAt" class="document-date">
+                              Created: {{ notice.createdAt | date:'medium' }}
+                            </span>
+                          </div>
+                          <button mat-raised-button color="primary" (click)="downloadDocument(notice, 'Notice')">
+                            <mat-icon>print</mat-icon>
+                            Print / Download
+                          </button>
+                        </div>
+                        <div class="document-body" [innerHTML]="notice.contentHtml"></div>
+                        
+                        <!-- Acknowledge Button (only for latest notice) -->
+                        <div class="document-actions" *ngIf="i === 0 && canAcknowledgeNotice(notice.id)">
+                          <mat-divider class="my-3"></mat-divider>
+                          <div class="acknowledge-section">
+                            <p class="text-muted mb-2">
+                              <mat-icon>info</mat-icon>
+                              Please acknowledge that you have received and reviewed this notice.
+                            </p>
+                            <mat-form-field appearance="outline" class="full-width mb-3">
+                              <mat-label>Comments (Optional)</mat-label>
+                              <input matInput [(ngModel)]="acknowledgeComments" placeholder="Notice received and acknowledged">
+                            </mat-form-field>
+                            <button mat-raised-button color="primary" 
+                                    (click)="acknowledgeNotice(notice.id)" 
+                                    [disabled]="isAcceptingNotice">
+                              <mat-icon>{{ isAcceptingNotice && acknowledgingNoticeId === notice.id ? 'hourglass_empty' : 'check_circle' }}</mat-icon>
+                              {{ isAcceptingNotice && acknowledgingNoticeId === notice.id ? 'Acknowledging...' : 'Acknowledge Receipt' }}
+                            </button>
+                          </div>
+                        </div>
 
-      <!-- Notice Loading -->
-      <mat-card *ngIf="isLoadingNotice" class="notice-card">
-        <mat-card-header>
-          <mat-card-title>
-            <mat-icon>gavel</mat-icon>
-            Notice from Court
-          </mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <div class="loading-container">
-            <mat-spinner diameter="40"></mat-spinner>
-            <p>Loading notice...</p>
-          </div>
-        </mat-card-content>
-      </mat-card>
+                        <!-- Already Acknowledged -->
+                        <div class="already-acknowledged" *ngIf="i === 0 && !canAcknowledgeNotice(notice.id)">
+                          <mat-divider class="my-3"></mat-divider>
+                          <div class="alert alert-success">
+                            <mat-icon>check_circle</mat-icon>
+                            <strong>Notice Acknowledged</strong>
+                            <p>You have already acknowledged receipt of this notice.</p>
+                          </div>
+                        </div>
+                      </div>
+                    </mat-expansion-panel>
+                  </mat-accordion>
+                </div>
 
-      <!-- Notice Not Available -->
-      <mat-card *ngIf="!isLoadingNotice && noticeNotAvailable && !notice" class="notice-card info-card-light">
-        <mat-card-header>
-          <mat-card-title>
-            <mat-icon>gavel</mat-icon>
-            Notice from Court
-          </mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <div class="no-notice">
-            <mat-icon>info</mat-icon>
-            <p>No notice has been sent to you yet for this case.</p>
-            <small class="text-muted">You will be notified when a notice is available.</small>
-          </div>
+                <!-- Notice Not Available -->
+                <div *ngIf="!isLoadingNotice && noticeNotAvailable && notices.length === 0" class="no-document">
+                  <mat-icon>info</mat-icon>
+                  <p>No notice has been sent to you yet for this case.</p>
+                  <small class="text-muted">You will be notified when a notice is available.</small>
+                </div>
+              </div>
+            </mat-tab>
+
+            <!-- Ordersheet Tab -->
+            <mat-tab [label]="'Ordersheet' + (ordersheets.length > 0 ? ' (' + ordersheets.length + ')' : '')">
+              <div class="document-tab-content">
+                <!-- Ordersheet Loading -->
+                <div *ngIf="isLoadingOrdersheet" class="loading-container">
+                  <mat-spinner diameter="40"></mat-spinner>
+                  <p>Loading ordersheets...</p>
+                </div>
+
+                <!-- Multiple Ordersheets -->
+                <div *ngIf="!isLoadingOrdersheet && ordersheets.length > 0" class="documents-list">
+                  <mat-accordion>
+                    <mat-expansion-panel *ngFor="let ordersheet of ordersheets; let i = index" [expanded]="i === 0">
+                      <mat-expansion-panel-header>
+                        <mat-panel-title>
+                          <div class="panel-title-content">
+                            <mat-icon>description</mat-icon>
+                            <span>{{ getDocumentTitle(ordersheet, i) }}</span>
+                            <span class="document-badge" [class]="'status-' + ordersheet.status.toLowerCase()">
+                              {{ ordersheet.status }}
+                            </span>
+                          </div>
+                        </mat-panel-title>
+                        <mat-panel-description>
+                          <span *ngIf="ordersheet.createdAt">{{ ordersheet.createdAt | date:'medium' }}</span>
+                          <span *ngIf="ordersheet.signedAt" class="signed-badge">
+                            <mat-icon>verified</mat-icon>
+                            Signed
+                          </span>
+                        </mat-panel-description>
+                      </mat-expansion-panel-header>
+                      
+                      <div class="document-content">
+                        <div class="document-header">
+                          <div class="document-info">
+                            <span class="document-status" [class]="'status-' + ordersheet.status.toLowerCase()">
+                              {{ ordersheet.status }}
+                            </span>
+                            <span *ngIf="ordersheet.signedAt" class="document-date">
+                              Signed: {{ ordersheet.signedAt | date:'medium' }}
+                            </span>
+                            <span *ngIf="ordersheet.createdAt" class="document-date">
+                              Created: {{ ordersheet.createdAt | date:'medium' }}
+                            </span>
+                          </div>
+                          <button mat-raised-button color="primary" (click)="downloadDocument(ordersheet, 'Ordersheet')">
+                            <mat-icon>print</mat-icon>
+                            Print / Download
+                          </button>
+                        </div>
+                        <div class="document-body" [innerHTML]="ordersheet.contentHtml"></div>
+                      </div>
+                    </mat-expansion-panel>
+                  </mat-accordion>
+                </div>
+
+                <!-- Ordersheet Not Available -->
+                <div *ngIf="!isLoadingOrdersheet && ordersheetNotAvailable && ordersheets.length === 0" class="no-document">
+                  <mat-icon>info</mat-icon>
+                  <p>No ordersheet has been issued for this case yet.</p>
+                  <small class="text-muted">You will be notified when an ordersheet is available.</small>
+                </div>
+              </div>
+            </mat-tab>
+
+            <!-- Judgement Tab -->
+            <mat-tab [label]="'Judgement' + (judgements.length > 0 ? ' (' + judgements.length + ')' : '')">
+              <div class="document-tab-content">
+                <!-- Judgement Loading -->
+                <div *ngIf="isLoadingJudgement" class="loading-container">
+                  <mat-spinner diameter="40"></mat-spinner>
+                  <p>Loading judgements...</p>
+                </div>
+
+                <!-- Multiple Judgements -->
+                <div *ngIf="!isLoadingJudgement && judgements.length > 0" class="documents-list">
+                  <mat-accordion>
+                    <mat-expansion-panel *ngFor="let judgement of judgements; let i = index" [expanded]="i === 0">
+                      <mat-expansion-panel-header>
+                        <mat-panel-title>
+                          <div class="panel-title-content">
+                            <mat-icon>gavel</mat-icon>
+                            <span>{{ getDocumentTitle(judgement, i) }}</span>
+                            <span class="document-badge" [class]="'status-' + judgement.status.toLowerCase()">
+                              {{ judgement.status }}
+                            </span>
+                          </div>
+                        </mat-panel-title>
+                        <mat-panel-description>
+                          <span *ngIf="judgement.createdAt">{{ judgement.createdAt | date:'medium' }}</span>
+                          <span *ngIf="judgement.signedAt" class="signed-badge">
+                            <mat-icon>verified</mat-icon>
+                            Signed
+                          </span>
+                        </mat-panel-description>
+                      </mat-expansion-panel-header>
+                      
+                      <div class="document-content">
+                        <div class="document-header">
+                          <div class="document-info">
+                            <span class="document-status" [class]="'status-' + judgement.status.toLowerCase()">
+                              {{ judgement.status }}
+                            </span>
+                            <span *ngIf="judgement.signedAt" class="document-date">
+                              Signed: {{ judgement.signedAt | date:'medium' }}
+                            </span>
+                            <span *ngIf="judgement.createdAt" class="document-date">
+                              Created: {{ judgement.createdAt | date:'medium' }}
+                            </span>
+                          </div>
+                          <button mat-raised-button color="primary" (click)="downloadDocument(judgement, 'Judgement')">
+                            <mat-icon>print</mat-icon>
+                            Print / Download
+                          </button>
+                        </div>
+                        <div class="document-body" [innerHTML]="judgement.contentHtml"></div>
+                      </div>
+                    </mat-expansion-panel>
+                  </mat-accordion>
+                </div>
+
+                <!-- Judgement Not Available -->
+                <div *ngIf="!isLoadingJudgement && judgementNotAvailable && judgements.length === 0" class="no-document">
+                  <mat-icon>info</mat-icon>
+                  <p>No judgement has been issued for this case yet.</p>
+                  <small class="text-muted">You will be notified when a judgement is available.</small>
+                </div>
+              </div>
+            </mat-tab>
+          </mat-tab-group>
         </mat-card-content>
       </mat-card>
 
