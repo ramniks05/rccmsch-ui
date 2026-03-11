@@ -8,14 +8,29 @@
       <p class="page-subtitle" *ngIf="case">{{ case.caseNumber }}</p>
     </div>
     <div class="header-actions">
-      <button mat-raised-button color="primary" routerLink="/citizen/my-cases" class="back-btn">
+      <button
+        mat-raised-button
+        color="accent"
+        (click)="generatePdf()"
+        class="pdf-btn"
+      >
+        <mat-icon>picture_as_pdf</mat-icon>
+        Generate PDF
+      </button>
+
+      <button
+        mat-raised-button
+        color="primary"
+        routerLink="/citizen/my-cases"
+        class="back-btn"
+      >
         <mat-icon>arrow_back</mat-icon>
         Back to My Cases
       </button>
     </div>
   </div>
 
-  <div class="page-content">
+  <div class="page-content" #pdfContent>
     <!-- Loading Spinner -->
     <div *ngIf="isLoading" class="loading-container">
       <mat-spinner diameter="50"></mat-spinner>
@@ -43,13 +58,18 @@
             </div>
             <div class="info-item">
               <span class="info-label">Status:</span>
-              <span [class]="'status-badge ' + getStatusBadgeClass(case.status)">
+              <span
+                [class]="'status-badge ' + getStatusBadgeClass(case.status)"
+              >
                 {{ getStatusLabel(case.status) }}
               </span>
             </div>
             <div class="info-item" *ngIf="case.priority">
               <span class="info-label">Priority:</span>
-              <span class="priority-badge" [class]="'priority-' + (case.priority.toLowerCase())">
+              <span
+                class="priority-badge"
+                [class]="'priority-' + case.priority.toLowerCase()"
+              >
                 {{ case.priority }}
               </span>
             </div>
@@ -59,17 +79,30 @@
             </div>
             <div class="info-item" *ngIf="case.createdAt">
               <span class="info-label">Created:</span>
-              <span class="info-value">{{ case.createdAt | date:'medium' }}</span>
+              <span class="info-value">{{
+                case.createdAt | date: "medium"
+              }}</span>
             </div>
           </div>
         </mat-card-content>
       </mat-card>
 
       <!-- Available Actions (workflow transitions + checklist) -->
-      <app-available-actions *ngIf="caseId" [caseId]="caseId"></app-available-actions>
+      <app-available-actions
+        *ngIf="caseId"
+        [caseId]="caseId"
+      ></app-available-actions>
 
       <!-- Documents Section with Tabs -->
-      <mat-card *ngIf="documents.length > 0 || isLoadingNotice || isLoadingOrdersheet || isLoadingJudgement" class="documents-card">
+      <mat-card
+        *ngIf="
+          documents.length > 0 ||
+          isLoadingNotice ||
+          isLoadingOrdersheet ||
+          isLoadingJudgement
+        "
+        class="documents-card"
+      >
         <mat-card-header>
           <mat-card-title>
             <mat-icon>description</mat-icon>
@@ -79,7 +112,12 @@
         <mat-card-content>
           <mat-tab-group>
             <!-- Notice Tab -->
-            <mat-tab [label]="'Notice' + (notices.length > 0 ? ' (' + notices.length + ')' : '')">
+            <mat-tab
+              [label]="
+                'Notice' +
+                (notices.length > 0 ? ' (' + notices.length + ')' : '')
+              "
+            >
               <div class="document-tab-content">
                 <!-- Notice Loading -->
                 <div *ngIf="isLoadingNotice" class="loading-container">
@@ -88,76 +126,130 @@
                 </div>
 
                 <!-- Multiple Notices -->
-                <div *ngIf="!isLoadingNotice && notices.length > 0" class="documents-list">
+                <div
+                  *ngIf="!isLoadingNotice && notices.length > 0"
+                  class="documents-list"
+                >
                   <mat-accordion>
-                    <mat-expansion-panel *ngFor="let notice of notices; let i = index" [expanded]="i === 0">
+                    <mat-expansion-panel
+                      *ngFor="let notice of notices; let i = index"
+                      [expanded]="i === 0"
+                    >
                       <mat-expansion-panel-header>
                         <mat-panel-title>
                           <div class="panel-title-content">
                             <mat-icon>description</mat-icon>
                             <span>{{ getDocumentTitle(notice, i) }}</span>
-                            <span class="document-badge" [class]="'status-' + notice.status.toLowerCase()">
+                            <span
+                              class="document-badge"
+                              [class]="'status-' + notice.status.toLowerCase()"
+                            >
                               {{ notice.status }}
                             </span>
                           </div>
                         </mat-panel-title>
                         <mat-panel-description>
-                          <span *ngIf="notice.createdAt">{{ notice.createdAt | date:'medium' }}</span>
+                          <span *ngIf="notice.createdAt">{{
+                            notice.createdAt | date: "medium"
+                          }}</span>
                           <span *ngIf="notice.signedAt" class="signed-badge">
                             <mat-icon>verified</mat-icon>
                             Signed
                           </span>
                         </mat-panel-description>
                       </mat-expansion-panel-header>
-                      
+
                       <div class="document-content">
                         <div class="document-header">
                           <div class="document-info">
-                            <span class="document-status" [class]="'status-' + notice.status.toLowerCase()">
+                            <span
+                              class="document-status"
+                              [class]="'status-' + notice.status.toLowerCase()"
+                            >
                               {{ notice.status }}
                             </span>
                             <span *ngIf="notice.signedAt" class="document-date">
-                              Signed: {{ notice.signedAt | date:'medium' }}
+                              Signed: {{ notice.signedAt | date: "medium" }}
                             </span>
-                            <span *ngIf="notice.createdAt" class="document-date">
-                              Created: {{ notice.createdAt | date:'medium' }}
+                            <span
+                              *ngIf="notice.createdAt"
+                              class="document-date"
+                            >
+                              Created: {{ notice.createdAt | date: "medium" }}
                             </span>
                           </div>
-                          <button mat-raised-button color="primary" (click)="downloadDocument(notice, 'Notice')">
+                          <button
+                            mat-raised-button
+                            color="primary"
+                            (click)="downloadDocument(notice, 'Notice')"
+                          >
                             <mat-icon>print</mat-icon>
                             Print / Download
                           </button>
                         </div>
-                        <div class="document-body" [innerHTML]="notice.contentHtml"></div>
-                        
+                        <div
+                          class="document-body"
+                          [innerHTML]="notice.contentHtml"
+                        ></div>
+
                         <!-- Acknowledge Button (only for latest notice) -->
-                        <div class="document-actions" *ngIf="i === 0 && canAcknowledgeNotice(notice.id)">
+                        <div
+                          class="document-actions"
+                          *ngIf="i === 0 && canAcknowledgeNotice(notice.id)"
+                        >
                           <mat-divider class="my-3"></mat-divider>
                           <div class="acknowledge-section">
                             <p class="text-muted mb-2">
                               <mat-icon>info</mat-icon>
-                              Please acknowledge that you have received and reviewed this notice.
+                              Please acknowledge that you have received and
+                              reviewed this notice.
                             </p>
-                            <mat-form-field appearance="outline" class="full-width mb-3">
+                            <mat-form-field
+                              appearance="outline"
+                              class="full-width mb-3"
+                            >
                               <mat-label>Comments (Optional)</mat-label>
-                              <input matInput [(ngModel)]="acknowledgeComments" placeholder="Notice received and acknowledged">
+                              <input
+                                matInput
+                                [(ngModel)]="acknowledgeComments"
+                                placeholder="Notice received and acknowledged"
+                              />
                             </mat-form-field>
-                            <button mat-raised-button color="primary" 
-                                    (click)="acknowledgeNotice(notice.id)" 
-                                    [disabled]="isAcceptingNotice">
-                              <mat-icon>{{ isAcceptingNotice && acknowledgingNoticeId === notice.id ? 'hourglass_empty' : 'check_circle' }}</mat-icon>
-                              {{ isAcceptingNotice && acknowledgingNoticeId === notice.id ? 'Acknowledging...' : 'Acknowledge Receipt' }}
+                            <button
+                              mat-raised-button
+                              color="primary"
+                              (click)="acknowledgeNotice(notice.id)"
+                              [disabled]="isAcceptingNotice"
+                            >
+                              <mat-icon>{{
+                                isAcceptingNotice &&
+                                acknowledgingNoticeId === notice.id
+                                  ? "hourglass_empty"
+                                  : "check_circle"
+                              }}</mat-icon>
+                              {{
+                                isAcceptingNotice &&
+                                acknowledgingNoticeId === notice.id
+                                  ? "Acknowledging..."
+                                  : "Acknowledge Receipt"
+                              }}
                             </button>
                           </div>
                         </div>
 
                         <!-- Already Acknowledged -->
-                        <div class="already-acknowledged" *ngIf="i === 0 && !canAcknowledgeNotice(notice.id)">
+                        <div
+                          class="already-acknowledged"
+                          *ngIf="i === 0 && !canAcknowledgeNotice(notice.id)"
+                        >
                           <mat-divider class="my-3"></mat-divider>
                           <div class="alert alert-success">
                             <mat-icon>check_circle</mat-icon>
                             <strong>Notice Acknowledged</strong>
-                            <p>You have already acknowledged receipt of this notice.</p>
+                            <p>
+                              You have already acknowledged receipt of this
+                              notice.
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -166,16 +258,30 @@
                 </div>
 
                 <!-- Notice Not Available -->
-                <div *ngIf="!isLoadingNotice && noticeNotAvailable && notices.length === 0" class="no-document">
+                <div
+                  *ngIf="
+                    !isLoadingNotice &&
+                    noticeNotAvailable &&
+                    notices.length === 0
+                  "
+                  class="no-document"
+                >
                   <mat-icon>info</mat-icon>
                   <p>No notice has been sent to you yet for this case.</p>
-                  <small class="text-muted">You will be notified when a notice is available.</small>
+                  <small class="text-muted"
+                    >You will be notified when a notice is available.</small
+                  >
                 </div>
               </div>
             </mat-tab>
 
             <!-- Ordersheet Tab -->
-            <mat-tab [label]="'Ordersheet' + (ordersheets.length > 0 ? ' (' + ordersheets.length + ')' : '')">
+            <mat-tab
+              [label]="
+                'Ordersheet' +
+                (ordersheets.length > 0 ? ' (' + ordersheets.length + ')' : '')
+              "
+            >
               <div class="document-tab-content">
                 <!-- Ordersheet Loading -->
                 <div *ngIf="isLoadingOrdersheet" class="loading-container">
@@ -184,63 +290,113 @@
                 </div>
 
                 <!-- Multiple Ordersheets -->
-                <div *ngIf="!isLoadingOrdersheet && ordersheets.length > 0" class="documents-list">
+                <div
+                  *ngIf="!isLoadingOrdersheet && ordersheets.length > 0"
+                  class="documents-list"
+                >
                   <mat-accordion>
-                    <mat-expansion-panel *ngFor="let ordersheet of ordersheets; let i = index" [expanded]="i === 0">
+                    <mat-expansion-panel
+                      *ngFor="let ordersheet of ordersheets; let i = index"
+                      [expanded]="i === 0"
+                    >
                       <mat-expansion-panel-header>
                         <mat-panel-title>
                           <div class="panel-title-content">
                             <mat-icon>description</mat-icon>
                             <span>{{ getDocumentTitle(ordersheet, i) }}</span>
-                            <span class="document-badge" [class]="'status-' + ordersheet.status.toLowerCase()">
+                            <span
+                              class="document-badge"
+                              [class]="
+                                'status-' + ordersheet.status.toLowerCase()
+                              "
+                            >
                               {{ ordersheet.status }}
                             </span>
                           </div>
                         </mat-panel-title>
                         <mat-panel-description>
-                          <span *ngIf="ordersheet.createdAt">{{ ordersheet.createdAt | date:'medium' }}</span>
-                          <span *ngIf="ordersheet.signedAt" class="signed-badge">
+                          <span *ngIf="ordersheet.createdAt">{{
+                            ordersheet.createdAt | date: "medium"
+                          }}</span>
+                          <span
+                            *ngIf="ordersheet.signedAt"
+                            class="signed-badge"
+                          >
                             <mat-icon>verified</mat-icon>
                             Signed
                           </span>
                         </mat-panel-description>
                       </mat-expansion-panel-header>
-                      
+
                       <div class="document-content">
                         <div class="document-header">
                           <div class="document-info">
-                            <span class="document-status" [class]="'status-' + ordersheet.status.toLowerCase()">
+                            <span
+                              class="document-status"
+                              [class]="
+                                'status-' + ordersheet.status.toLowerCase()
+                              "
+                            >
                               {{ ordersheet.status }}
                             </span>
-                            <span *ngIf="ordersheet.signedAt" class="document-date">
-                              Signed: {{ ordersheet.signedAt | date:'medium' }}
+                            <span
+                              *ngIf="ordersheet.signedAt"
+                              class="document-date"
+                            >
+                              Signed: {{ ordersheet.signedAt | date: "medium" }}
                             </span>
-                            <span *ngIf="ordersheet.createdAt" class="document-date">
-                              Created: {{ ordersheet.createdAt | date:'medium' }}
+                            <span
+                              *ngIf="ordersheet.createdAt"
+                              class="document-date"
+                            >
+                              Created:
+                              {{ ordersheet.createdAt | date: "medium" }}
                             </span>
                           </div>
-                          <button mat-raised-button color="primary" (click)="downloadDocument(ordersheet, 'Ordersheet')">
+                          <button
+                            mat-raised-button
+                            color="primary"
+                            (click)="downloadDocument(ordersheet, 'Ordersheet')"
+                          >
                             <mat-icon>print</mat-icon>
                             Print / Download
                           </button>
                         </div>
-                        <div class="document-body" [innerHTML]="ordersheet.contentHtml"></div>
+                        <div
+                          class="document-body"
+                          [innerHTML]="ordersheet.contentHtml"
+                        ></div>
                       </div>
                     </mat-expansion-panel>
                   </mat-accordion>
                 </div>
 
                 <!-- Ordersheet Not Available -->
-                <div *ngIf="!isLoadingOrdersheet && ordersheetNotAvailable && ordersheets.length === 0" class="no-document">
+                <div
+                  *ngIf="
+                    !isLoadingOrdersheet &&
+                    ordersheetNotAvailable &&
+                    ordersheets.length === 0
+                  "
+                  class="no-document"
+                >
                   <mat-icon>info</mat-icon>
                   <p>No ordersheet has been issued for this case yet.</p>
-                  <small class="text-muted">You will be notified when an ordersheet is available.</small>
+                  <small class="text-muted"
+                    >You will be notified when an ordersheet is
+                    available.</small
+                  >
                 </div>
               </div>
             </mat-tab>
 
             <!-- Judgement Tab -->
-            <mat-tab [label]="'Judgement' + (judgements.length > 0 ? ' (' + judgements.length + ')' : '')">
+            <mat-tab
+              [label]="
+                'Judgement' +
+                (judgements.length > 0 ? ' (' + judgements.length + ')' : '')
+              "
+            >
               <div class="document-tab-content">
                 <!-- Judgement Loading -->
                 <div *ngIf="isLoadingJudgement" class="loading-container">
@@ -249,57 +405,98 @@
                 </div>
 
                 <!-- Multiple Judgements -->
-                <div *ngIf="!isLoadingJudgement && judgements.length > 0" class="documents-list">
+                <div
+                  *ngIf="!isLoadingJudgement && judgements.length > 0"
+                  class="documents-list"
+                >
                   <mat-accordion>
-                    <mat-expansion-panel *ngFor="let judgement of judgements; let i = index" [expanded]="i === 0">
+                    <mat-expansion-panel
+                      *ngFor="let judgement of judgements; let i = index"
+                      [expanded]="i === 0"
+                    >
                       <mat-expansion-panel-header>
                         <mat-panel-title>
                           <div class="panel-title-content">
                             <mat-icon>gavel</mat-icon>
                             <span>{{ getDocumentTitle(judgement, i) }}</span>
-                            <span class="document-badge" [class]="'status-' + judgement.status.toLowerCase()">
+                            <span
+                              class="document-badge"
+                              [class]="
+                                'status-' + judgement.status.toLowerCase()
+                              "
+                            >
                               {{ judgement.status }}
                             </span>
                           </div>
                         </mat-panel-title>
                         <mat-panel-description>
-                          <span *ngIf="judgement.createdAt">{{ judgement.createdAt | date:'medium' }}</span>
+                          <span *ngIf="judgement.createdAt">{{
+                            judgement.createdAt | date: "medium"
+                          }}</span>
                           <span *ngIf="judgement.signedAt" class="signed-badge">
                             <mat-icon>verified</mat-icon>
                             Signed
                           </span>
                         </mat-panel-description>
                       </mat-expansion-panel-header>
-                      
+
                       <div class="document-content">
                         <div class="document-header">
                           <div class="document-info">
-                            <span class="document-status" [class]="'status-' + judgement.status.toLowerCase()">
+                            <span
+                              class="document-status"
+                              [class]="
+                                'status-' + judgement.status.toLowerCase()
+                              "
+                            >
                               {{ judgement.status }}
                             </span>
-                            <span *ngIf="judgement.signedAt" class="document-date">
-                              Signed: {{ judgement.signedAt | date:'medium' }}
+                            <span
+                              *ngIf="judgement.signedAt"
+                              class="document-date"
+                            >
+                              Signed: {{ judgement.signedAt | date: "medium" }}
                             </span>
-                            <span *ngIf="judgement.createdAt" class="document-date">
-                              Created: {{ judgement.createdAt | date:'medium' }}
+                            <span
+                              *ngIf="judgement.createdAt"
+                              class="document-date"
+                            >
+                              Created:
+                              {{ judgement.createdAt | date: "medium" }}
                             </span>
                           </div>
-                          <button mat-raised-button color="primary" (click)="downloadDocument(judgement, 'Judgement')">
+                          <button
+                            mat-raised-button
+                            color="primary"
+                            (click)="downloadDocument(judgement, 'Judgement')"
+                          >
                             <mat-icon>print</mat-icon>
                             Print / Download
                           </button>
                         </div>
-                        <div class="document-body" [innerHTML]="judgement.contentHtml"></div>
+                        <div
+                          class="document-body"
+                          [innerHTML]="judgement.contentHtml"
+                        ></div>
                       </div>
                     </mat-expansion-panel>
                   </mat-accordion>
                 </div>
 
                 <!-- Judgement Not Available -->
-                <div *ngIf="!isLoadingJudgement && judgementNotAvailable && judgements.length === 0" class="no-document">
+                <div
+                  *ngIf="
+                    !isLoadingJudgement &&
+                    judgementNotAvailable &&
+                    judgements.length === 0
+                  "
+                  class="no-document"
+                >
                   <mat-icon>info</mat-icon>
                   <p>No judgement has been issued for this case yet.</p>
-                  <small class="text-muted">You will be notified when a judgement is available.</small>
+                  <small class="text-muted"
+                    >You will be notified when a judgement is available.</small
+                  >
                 </div>
               </div>
             </mat-tab>
@@ -317,7 +514,12 @@
         </mat-card-header>
         <mat-card-content>
           <p class="return-comment">{{ returnComment }}</p>
-          <button mat-raised-button color="accent" (click)="navigateToResubmit()" class="resubmit-btn">
+          <button
+            mat-raised-button
+            color="accent"
+            (click)="navigateToResubmit()"
+            class="resubmit-btn"
+          >
             <mat-icon>edit</mat-icon>
             Edit & Resubmit
           </button>
@@ -325,7 +527,13 @@
       </mat-card>
 
       <!-- Case Data: organized by groups when formDataWithLabels present, else flat list -->
-      <mat-card *ngIf="case.caseData || (case.formDataWithLabels && case.formDataWithLabels.length)" class="data-card">
+      <mat-card
+        *ngIf="
+          case.caseData ||
+          (case.formDataWithLabels && case.formDataWithLabels.length)
+        "
+        class="data-card"
+      >
         <mat-card-header>
           <mat-card-title>
             <mat-icon>data_object</mat-icon>
@@ -336,7 +544,10 @@
           <!-- Backend sends formDataWithLabels: show grouped by groupLabel -->
           <ng-container *ngIf="formDataGrouped.length > 0">
             <div class="form-data-groups">
-              <div class="form-data-group" *ngFor="let group of formDataGrouped">
+              <div
+                class="form-data-group"
+                *ngFor="let group of formDataGrouped"
+              >
                 <h4 class="group-label">{{ group.groupLabel }}</h4>
                 <div class="info-grid">
                   <div class="info-item" *ngFor="let item of group.items">
@@ -353,13 +564,19 @@
               <mat-spinner diameter="36"></mat-spinner>
               <p>Loading form data...</p>
             </div>
-            <div *ngIf="!isLoadingCaseData && caseDataDisplay.length > 0" class="info-grid">
+            <div
+              *ngIf="!isLoadingCaseData && caseDataDisplay.length > 0"
+              class="info-grid"
+            >
               <div class="info-item" *ngFor="let item of caseDataDisplay">
                 <span class="info-label">{{ item.label }}:</span>
                 <span class="info-value">{{ item.value }}</span>
               </div>
             </div>
-            <div *ngIf="!isLoadingCaseData && caseDataDisplay.length === 0" class="no-case-data">
+            <div
+              *ngIf="!isLoadingCaseData && caseDataDisplay.length === 0"
+              class="no-case-data"
+            >
               <mat-icon>info</mat-icon>
               <p>No form data to display.</p>
             </div>
@@ -383,23 +600,44 @@
             <p>Loading history...</p>
           </div>
 
-          <div *ngIf="!isLoadingHistory && history.length === 0" class="no-history">
+          <div
+            *ngIf="!isLoadingHistory && history.length === 0"
+            class="no-history"
+          >
             <mat-icon>inbox</mat-icon>
             <p>No history available</p>
           </div>
 
-          <div *ngIf="!isLoadingHistory && history.length > 0" class="history-timeline">
-            <div *ngFor="let item of history; let i = index" class="history-item">
+          <div
+            *ngIf="!isLoadingHistory && history.length > 0"
+            class="history-timeline"
+          >
+            <div
+              *ngFor="let item of history; let i = index"
+              class="history-item"
+            >
               <div class="history-icon">
-                <mat-icon>{{ i === 0 ? 'play_arrow' : 'arrow_downward' }}</mat-icon>
+                <mat-icon>{{
+                  i === 0 ? "play_arrow" : "arrow_downward"
+                }}</mat-icon>
               </div>
               <div class="history-content">
                 <div class="history-header">
                   <div class="history-state-info">
-                    <span class="history-state">{{ item.toStateName || item.toState?.stateName || 'Unknown State' }}</span>
-                    <span *ngIf="item.transitionName" class="history-transition">{{ item.transitionName }}</span>
+                    <span class="history-state">{{
+                      item.toStateName ||
+                        item.toState?.stateName ||
+                        "Unknown State"
+                    }}</span>
+                    <span
+                      *ngIf="item.transitionName"
+                      class="history-transition"
+                      >{{ item.transitionName }}</span
+                    >
                   </div>
-                  <span class="history-date">{{ item.performedAt | date:'short' }}</span>
+                  <span class="history-date">{{
+                    item.performedAt | date: "short"
+                  }}</span>
                 </div>
                 <div class="history-details">
                   <span *ngIf="item.fromStateName" class="history-from-state">
