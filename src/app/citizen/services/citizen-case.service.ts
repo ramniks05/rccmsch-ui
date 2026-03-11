@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError, timeout, TimeoutError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/services/auth.service';
 
@@ -114,6 +114,8 @@ export interface Case {
   subject: string;
   description?: string;
   priority?: string;
+  /** YYYY-MM-DD - present in "Get All My Cases" API */
+  applicationDate?: string;
   caseData?: string;
   /** When present, use this for organized display (grouped by groupLabel) instead of parsing caseData */
   formDataWithLabels?: FormDataWithLabelsItem[];
@@ -395,17 +397,53 @@ export class CitizenCaseService {
   }
 
   /**
-   * Get all cases for a citizen (applicant)
+   * GET /api/citizen/cases - Get all cases for logged-in citizen
+   * Per API documentation
    */
-  getCitizenCases(applicantId: number): Observable<ApiResponse<Case[]>> {
+  getCitizenCases(applicantId?: number): Observable<ApiResponse<Case[]>> {
     return this.http.get<ApiResponse<Case[]>>(
-      `${this.apiUrl}/cases/applicant/${applicantId}`,
+      `${this.apiUrl}/citizen/cases`,
       { headers: this.getHeaders() }
     );
   }
 
   /**
-   * Get case by ID
+   * GET /api/citizen/cases/{caseId}/detail - Get complete case detail with history and documents
+   * Per API documentation
+   */
+  getCaseDetail(caseId: number): Observable<ApiResponse<{
+    caseInfo: Case;
+    history: CaseHistory[];
+    documents: Array<{
+      documentId: number;
+      moduleType: string;
+      moduleTypeLabel: string;
+      status: string;
+      hasContent: boolean;
+      createdAt?: string;
+      signedAt?: string;
+    }>;
+  }>> {
+    return this.http.get<ApiResponse<{
+      caseInfo: Case;
+      history: CaseHistory[];
+      documents: Array<{
+        documentId: number;
+        moduleType: string;
+        moduleTypeLabel: string;
+        status: string;
+        hasContent: boolean;
+        createdAt?: string;
+        signedAt?: string;
+      }>;
+    }>>(
+      `${this.apiUrl}/citizen/cases/${caseId}/detail`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  /**
+   * Get case by ID (legacy method - kept for backward compatibility)
    */
   getCaseById(caseId: number): Observable<ApiResponse<Case>> {
     return this.http.get<ApiResponse<Case>>(
@@ -415,7 +453,7 @@ export class CitizenCaseService {
   }
 
   /**
-   * Get workflow history for a case
+   * Get workflow history for a case (legacy method - kept for backward compatibility)
    */
   getCaseHistory(caseId: number): Observable<ApiResponse<CaseHistory[]>> {
     return this.http.get<ApiResponse<CaseHistory[]>>(
@@ -454,26 +492,113 @@ export class CitizenCaseService {
     return this.getActiveCaseNatures();
   }
 
-  // ==================== Notice/Document APIs (Applicant) ====================
+  // ==================== Document APIs (Notice, Ordersheet, Judgement) ====================
 
   /**
    * GET /api/citizen/cases/{caseId}/documents/{moduleType}
-   * View notice sent to applicant
-   * Authentication: Required (JWT token + X-User-Id header)
+   * Get latest document (NOTICE, ORDERSHEET, or JUDGEMENT) for a case
+   * Per API documentation - only returns documents with status FINAL or SIGNED
+   * Returns single document (latest)
    */
-  getNoticeForApplicant(caseId: number, moduleType: string = 'NOTICE'): Observable<ApiResponse<any>> {
-    return this.http.get<ApiResponse<any>>(
+  getDocument(caseId: number, moduleType: 'NOTICE' | 'ORDERSHEET' | 'JUDGEMENT'): Observable<ApiResponse<{
+    id: number;
+    caseId: number;
+    moduleType: string;
+    templateId?: number;
+    templateName?: string;
+    contentHtml: string;
+    contentData?: string;
+    status: string;
+    signedByOfficerId?: number;
+    signedAt?: string;
+    createdAt?: string;
+    updatedAt?: string;
+  }>> {
+    return this.http.get<ApiResponse<{
+      id: number;
+      caseId: number;
+      moduleType: string;
+      templateId?: number;
+      templateName?: string;
+      contentHtml: string;
+      contentData?: string;
+      status: string;
+      signedByOfficerId?: number;
+      signedAt?: string;
+      createdAt?: string;
+      updatedAt?: string;
+    }>>(
       `${this.apiUrl}/citizen/cases/${caseId}/documents/${moduleType}`,
       { headers: this.getHeaders() }
     ).pipe(
       catchError((error) => {
-        // 404 means notice not sent yet
+        // 404 means document not available yet
         if (error.status === 404) {
           return throwError(() => ({ ...error, notFound: true }));
         }
         return throwError(() => error);
       })
     );
+  }
+
+  /**
+   * GET /api/citizen/cases/{caseId}/documents/{moduleType}/all
+   * Get all documents of a specific type (NOTICE, ORDERSHEET, or JUDGEMENT) for a case
+   * Returns array of all documents with status FINAL or SIGNED, ordered by creation date (newest first)
+   */
+  getAllDocumentsByType(caseId: number, moduleType: 'NOTICE' | 'ORDERSHEET' | 'JUDGEMENT'): Observable<ApiResponse<Array<{
+    id: number;
+    caseId: number;
+    moduleType: string;
+    templateId?: number;
+    templateName?: string;
+    contentHtml: string;
+    contentData?: string;
+    status: string;
+    signedByOfficerId?: number;
+    signedAt?: string;
+    createdAt?: string;
+    updatedAt?: string;
+  }>>> {
+    // Try the /all endpoint first, fallback to single document endpoint if not available
+    return this.http.get<ApiResponse<Array<{
+      id: number;
+      caseId: number;
+      moduleType: string;
+      templateId?: number;
+      templateName?: string;
+      contentHtml: string;
+      contentData?: string;
+      status: string;
+      signedByOfficerId?: number;
+      signedAt?: string;
+      createdAt?: string;
+      updatedAt?: string;
+    }>>>(
+      `${this.apiUrl}/citizen/cases/${caseId}/documents/${moduleType}/all`,
+      { headers: this.getHeaders() }
+    ).pipe(
+      catchError((error) => {
+        // If /all endpoint doesn't exist (404), fallback to single document and wrap in array
+        if (error.status === 404) {
+          return this.getDocument(caseId, moduleType).pipe(
+            map(response => ({
+              ...response,
+              data: response.data ? [response.data] : []
+            }))
+          );
+        }
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * GET /api/citizen/cases/{caseId}/documents/{moduleType}
+   * View notice sent to applicant (legacy method - kept for backward compatibility)
+   */
+  getNoticeForApplicant(caseId: number, moduleType: string = 'NOTICE'): Observable<ApiResponse<any>> {
+    return this.getDocument(caseId, moduleType as 'NOTICE');
   }
 
   /**
@@ -494,14 +619,56 @@ export class CitizenCaseService {
   }
 
   /**
-   * Execute a workflow transition
-   * POST /api/cases/{caseId}/transitions/execute
+   * GET /api/cases/{caseId}/transitions - Get available workflow transitions/actions
+   * Per API documentation
+   */
+  getAvailableTransitions(caseId: number): Observable<ApiResponse<Array<{
+    id: number;
+    transitionCode: string;
+    transitionName: string;
+    fromStateCode: string;
+    toStateCode: string;
+    requiresComment: boolean;
+    description?: string;
+    checklist?: {
+      transitionCode: string;
+      transitionName: string;
+      canExecute: boolean;
+      conditions: any[];
+      blockingReasons?: any[];
+    };
+    formSchema?: any;
+  }>>> {
+    return this.http.get<ApiResponse<Array<{
+      id: number;
+      transitionCode: string;
+      transitionName: string;
+      fromStateCode: string;
+      toStateCode: string;
+      requiresComment: boolean;
+      description?: string;
+      checklist?: {
+        transitionCode: string;
+        transitionName: string;
+        canExecute: boolean;
+        conditions: any[];
+        blockingReasons?: any[];
+      };
+      formSchema?: any;
+    }>>>(
+      `${this.apiUrl}/cases/${caseId}/transitions`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  /**
+   * POST /api/cases/{caseId}/transitions/execute - Execute a workflow transition/action
+   * Per API documentation
    */
   executeTransition(caseId: number, request: { transitionCode: string; comments?: string }): Observable<ApiResponse<any>> {
     return this.http.post<ApiResponse<any>>(
       `${this.apiUrl}/cases/${caseId}/transitions/execute`,
       {
-        caseId: caseId,
         transitionCode: request.transitionCode,
         comments: request.comments
       },

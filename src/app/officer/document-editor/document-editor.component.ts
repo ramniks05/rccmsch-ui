@@ -55,10 +55,63 @@ export class DocumentEditorComponent implements OnInit {
   }
 
   /**
-   * Initialize placeholder values from case data
+   * Initialize placeholder values from case data and current officer
    */
   initializePlaceholders(): void {
     if (!this.caseData) return;
+
+    // Get current officer data from localStorage
+    let officerData: any = null;
+    try {
+      const storedData = localStorage.getItem('adminUserData');
+      if (storedData) {
+        officerData = JSON.parse(storedData);
+      }
+    } catch (e) {
+      console.error('Error parsing officer data:', e);
+    }
+
+    // Extract officer information
+    const posting = officerData?.posting || {};
+    const designation = posting.roleName || posting.designation || this.caseData.assignedToRole || '';
+    const officerName = posting.officerName || this.caseData.assignedToOfficerName || '';
+    
+    // Extract court name - priority: caseData > posting > default
+    let courtName = 'Court Name'; // Default fallback
+    if ((this.caseData as any).courtName) {
+      courtName = (this.caseData as any).courtName;
+    } else if (posting.courtName) {
+      courtName = posting.courtName;
+    } else if (this.caseData.assignedToUnitName) {
+      courtName = this.caseData.assignedToUnitName;
+    }
+
+    // Digital Signature ID - can be userId, officerId, or custom field
+    const digitalSignatureId = officerData?.userId?.toString() || 
+                               posting.officerId?.toString() || 
+                               this.caseData.assignedToOfficerId?.toString() || 
+                               '';
+
+    // Parse caseData JSON to extract form fields (including respondent name)
+    let parsedCaseData: Record<string, any> = {};
+    let respondentName = '';
+    
+    if (this.caseData.caseData) {
+      try {
+        parsedCaseData = JSON.parse(this.caseData.caseData);
+        
+        // Try multiple possible field names for respondent
+        // Common variations: respondentName, respondent, respondent_name, etc.
+        respondentName = parsedCaseData['respondentName'] || 
+                        parsedCaseData['respondent'] || 
+                        parsedCaseData['respondent_name'] ||
+                        parsedCaseData['Respondent Name'] ||
+                        parsedCaseData['Respondent'] ||
+                        '';
+      } catch (e) {
+        console.error('Error parsing caseData:', e);
+      }
+    }
 
     this.placeholderValues = {
       '{{caseNumber}}': this.caseData.caseNumber || '',
@@ -72,8 +125,11 @@ export class DocumentEditorComponent implements OnInit {
       '{{applicationDate}}': this.caseData.applicationDate ? new Date(this.caseData.applicationDate).toLocaleDateString() : '',
       '{{currentDate}}': new Date().toLocaleDateString(),
       '{{currentDateTime}}': new Date().toLocaleString(),
-      '{{officerName}}': this.caseData.assignedToOfficerName || '',
-      '{{courtName}}': 'Court Name', // Should come from court data
+      '{{officerName}}': officerName,
+      '{{courtName}}': courtName,
+      '{{designation}}': designation,
+      '{{digitalSignatureId}}': digitalSignatureId,
+      '{{respondentName}}': respondentName,
       '{{status}}': this.caseData.statusName || this.caseData.status || ''
     };
   }
@@ -301,7 +357,8 @@ export class DocumentEditorComponent implements OnInit {
       'HEARING': 'Hearing',
       'NOTICE': 'Notice',
       'ORDERSHEET': 'Order Sheet',
-      'JUDGEMENT': 'Judgement'
+      'JUDGEMENT': 'Judgement',
+      'FIELD_REPORT': 'Field Report'
     };
     return labels[this.documentType] || this.documentType;
   }

@@ -25,6 +25,16 @@ export class CaseDetailsComponent implements OnInit {
   caseId!: number;
   case: Case | null = null;
   history: CaseHistory[] = [];
+  documents: Array<{
+    documentId: number;
+    moduleType: string;
+    moduleTypeLabel: string;
+    status: string;
+    hasContent: boolean;
+    createdAt?: string;
+    signedAt?: string;
+  }> = [];
+  
   isLoading = false;
   isLoadingHistory = false;
   returnComment = '';
@@ -32,12 +42,63 @@ export class CaseDetailsComponent implements OnInit {
   caseDataDisplay: CaseDataDisplayItem[] = [];
   isLoadingCaseData = false;
   
-  // Notice related properties
-  notice: any = null;
+  // Document related properties - now arrays to handle multiple documents
+  notices: Array<{
+    id: number;
+    caseId: number;
+    moduleType: string;
+    templateId?: number;
+    templateName?: string;
+    contentHtml: string;
+    contentData?: string;
+    status: string;
+    signedByOfficerId?: number;
+    signedAt?: string;
+    createdAt?: string;
+    updatedAt?: string;
+  }> = [];
+  
+  ordersheets: Array<{
+    id: number;
+    caseId: number;
+    moduleType: string;
+    templateId?: number;
+    templateName?: string;
+    contentHtml: string;
+    contentData?: string;
+    status: string;
+    signedByOfficerId?: number;
+    signedAt?: string;
+    createdAt?: string;
+    updatedAt?: string;
+  }> = [];
+  
+  judgements: Array<{
+    id: number;
+    caseId: number;
+    moduleType: string;
+    templateId?: number;
+    templateName?: string;
+    contentHtml: string;
+    contentData?: string;
+    status: string;
+    signedByOfficerId?: number;
+    signedAt?: string;
+    createdAt?: string;
+    updatedAt?: string;
+  }> = [];
+  
   isLoadingNotice = false;
+  isLoadingOrdersheet = false;
+  isLoadingJudgement = false;
   isAcceptingNotice = false;
   noticeNotAvailable = false;
+  ordersheetNotAvailable = false;
+  judgementNotAvailable = false;
   acknowledgeComments = 'Notice received and acknowledged';
+  
+  // Track which notice is being acknowledged (for multiple notices)
+  acknowledgingNoticeId: number | null = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -50,26 +111,46 @@ export class CaseDetailsComponent implements OnInit {
     this.route.params.subscribe(params => {
       this.caseId = +params['id'];
       if (this.caseId) {
-        this.loadCaseDetails();
-        this.loadCaseHistory();
-        this.loadNotice();
+        this.loadCaseDetail();
       }
     });
   }
 
-  loadCaseDetails(): void {
+  /**
+   * Load complete case detail using new API endpoint
+   */
+  loadCaseDetail(): void {
     this.isLoading = true;
-    this.caseDataDisplay = [];
-    this.caseService.getCaseById(this.caseId).subscribe({
+    this.caseService.getCaseDetail(this.caseId).subscribe({
       next: (response) => {
         this.isLoading = false;
-        if (response.success) {
-          this.case = response.data;
+        if (response.success && response.data) {
+          // Set case info
+          this.case = response.data.caseInfo;
+          
+          // Set history
+          this.history = response.data.history || [];
+          
+          // Set documents list
+          this.documents = response.data.documents || [];
+          
+          // Find return for correction comment
+          const returned = this.history
+            .filter(h => (h.toStateCode || h.toState?.stateCode) === 'RETURNED_FOR_CORRECTION')
+            .slice(-1)[0];
+          if (returned?.comments) {
+            this.returnComment = returned.comments;
+          }
+          
+          // Load form data if needed
           if (this.case?.formDataWithLabels?.length) {
             this.caseDataDisplay = [];
           } else if (this.case?.caseData && this.case?.caseTypeId) {
             this.loadFormSchemaAndBuildCaseData();
           }
+          
+          // Load documents that are available
+          this.loadAvailableDocuments();
         } else {
           this.snackBar.open(response.message || 'Failed to load case details', 'Close', { duration: 5000 });
         }
@@ -82,27 +163,39 @@ export class CaseDetailsComponent implements OnInit {
     });
   }
 
+  /**
+   * Load documents that are available based on documents list
+   * Now loads all documents of each type (handles multiple notices/ordersheets)
+   */
+  loadAvailableDocuments(): void {
+    // Load all Notices if available
+    if (this.documents.some(d => d.moduleType === 'NOTICE' && d.hasContent)) {
+      this.loadAllNotices();
+    }
+    
+    // Load all Ordersheets if available
+    if (this.documents.some(d => d.moduleType === 'ORDERSHEET' && d.hasContent)) {
+      this.loadAllOrdersheets();
+    }
+    
+    // Load all Judgements if available
+    if (this.documents.some(d => d.moduleType === 'JUDGEMENT' && d.hasContent)) {
+      this.loadAllJudgements();
+    }
+  }
+
+  /**
+   * Legacy method - kept for backward compatibility
+   */
+  loadCaseDetails(): void {
+    this.loadCaseDetail();
+  }
+
+  /**
+   * Legacy method - kept for backward compatibility
+   */
   loadCaseHistory(): void {
-    this.isLoadingHistory = true;
-    this.caseService.getCaseHistory(this.caseId).subscribe({
-      next: (response) => {
-        this.isLoadingHistory = false;
-        if (response.success) {
-          this.history = response.data || [];
-          // Find return for correction comment
-          const returned = this.history
-            .filter(h => (h.toStateCode || h.toState?.stateCode) === 'RETURNED_FOR_CORRECTION')
-            .slice(-1)[0];
-          if (returned?.comments) {
-            this.returnComment = returned.comments;
-          }
-        }
-      },
-      error: (error) => {
-        this.isLoadingHistory = false;
-        console.error('Error loading case history:', error);
-      }
-    });
+    // History is now loaded with case detail
   }
 
   getStatusBadgeClass(status: string): string {
@@ -257,17 +350,28 @@ export class CaseDetailsComponent implements OnInit {
   }
 
   /**
-   * Load notice sent to applicant
+   * Load all notice documents
    */
-  loadNotice(): void {
+  loadAllNotices(): void {
     this.isLoadingNotice = true;
     this.noticeNotAvailable = false;
     
-    this.caseService.getNoticeForApplicant(this.caseId, 'NOTICE').subscribe({
+    this.caseService.getAllDocumentsByType(this.caseId, 'NOTICE').subscribe({
       next: (response) => {
         this.isLoadingNotice = false;
         if (response.success && response.data) {
-          this.notice = response.data;
+          this.notices = response.data || [];
+          // Sort by creation date (newest first)
+          this.notices.sort((a, b) => {
+            const dateA = new Date(a.createdAt || 0).getTime();
+            const dateB = new Date(b.createdAt || 0).getTime();
+            return dateB - dateA;
+          });
+          if (this.notices.length === 0) {
+            this.noticeNotAvailable = true;
+          }
+        } else {
+          this.noticeNotAvailable = true;
         }
       },
       error: (error: any) => {
@@ -276,40 +380,165 @@ export class CaseDetailsComponent implements OnInit {
         if (error.status === 404 || error.notFound) {
           this.noticeNotAvailable = true;
         } else {
-          console.error('Error loading notice:', error);
+          console.error('Error loading notices:', error);
         }
       }
     });
   }
 
   /**
-   * Accept/Acknowledge notice receipt
+   * Load all ordersheet documents
    */
-  acknowledgeNotice(): void {
+  loadAllOrdersheets(): void {
+    this.isLoadingOrdersheet = true;
+    this.ordersheetNotAvailable = false;
+    
+    this.caseService.getAllDocumentsByType(this.caseId, 'ORDERSHEET').subscribe({
+      next: (response) => {
+        this.isLoadingOrdersheet = false;
+        if (response.success && response.data) {
+          this.ordersheets = response.data || [];
+          // Sort by creation date (newest first)
+          this.ordersheets.sort((a, b) => {
+            const dateA = new Date(a.createdAt || 0).getTime();
+            const dateB = new Date(b.createdAt || 0).getTime();
+            return dateB - dateA;
+          });
+          if (this.ordersheets.length === 0) {
+            this.ordersheetNotAvailable = true;
+          }
+        } else {
+          this.ordersheetNotAvailable = true;
+        }
+      },
+      error: (error: any) => {
+        this.isLoadingOrdersheet = false;
+        if (error.status === 404 || error.notFound) {
+          this.ordersheetNotAvailable = true;
+        } else {
+          console.error('Error loading ordersheets:', error);
+        }
+      }
+    });
+  }
+
+  /**
+   * Load all judgement documents
+   */
+  loadAllJudgements(): void {
+    this.isLoadingJudgement = true;
+    this.judgementNotAvailable = false;
+    
+    this.caseService.getAllDocumentsByType(this.caseId, 'JUDGEMENT').subscribe({
+      next: (response) => {
+        this.isLoadingJudgement = false;
+        if (response.success && response.data) {
+          this.judgements = response.data || [];
+          // Sort by creation date (newest first)
+          this.judgements.sort((a, b) => {
+            const dateA = new Date(a.createdAt || 0).getTime();
+            const dateB = new Date(b.createdAt || 0).getTime();
+            return dateB - dateA;
+          });
+          if (this.judgements.length === 0) {
+            this.judgementNotAvailable = true;
+          }
+        } else {
+          this.judgementNotAvailable = true;
+        }
+      },
+      error: (error: any) => {
+        this.isLoadingJudgement = false;
+        if (error.status === 404 || error.notFound) {
+          this.judgementNotAvailable = true;
+        } else {
+          console.error('Error loading judgements:', error);
+        }
+      }
+    });
+  }
+
+  /**
+   * Legacy methods - kept for backward compatibility
+   */
+  loadNotice(): void {
+    this.loadAllNotices();
+  }
+
+  loadOrdersheet(): void {
+    this.loadAllOrdersheets();
+  }
+
+  loadJudgement(): void {
+    this.loadAllJudgements();
+  }
+
+  /**
+   * Download/Print document
+   */
+  downloadDocument(document: any, documentType: string): void {
+    if (!document || !document.contentHtml) {
+      this.snackBar.open('Document content not available', 'Close', { duration: 3000 });
+      return;
+    }
+
+    // Open in new window for printing
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>${documentType} - ${this.case?.caseNumber}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            @media print {
+              body { padding: 0; }
+            }
+          </style>
+        </head>
+        <body>
+          ${document.contentHtml}
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
+      setTimeout(() => {
+        printWindow.print();
+      }, 250);
+    }
+  }
+
+  /**
+   * Accept/Acknowledge notice receipt
+   * @param noticeId Optional - if provided, acknowledges specific notice
+   */
+  acknowledgeNotice(noticeId?: number): void {
     if (!confirm('Acknowledge that you have received and reviewed this notice?')) {
       return;
     }
 
     this.isAcceptingNotice = true;
+    this.acknowledgingNoticeId = noticeId || null;
     
     this.caseService.acceptNotice(this.caseId, 'NOTICE', this.acknowledgeComments).subscribe({
       next: (response) => {
         this.isAcceptingNotice = false;
+        this.acknowledgingNoticeId = null;
         if (response.success) {
           this.snackBar.open('Notice acknowledged successfully. This has been recorded in case history.', 'Close', { 
             duration: 5000,
             panelClass: ['success-snackbar']
           });
           // Reload history to show the acknowledgment
-          this.loadCaseHistory();
-          // Reload notice to update status
-          this.loadNotice();
+          this.loadCaseDetail();
         } else {
           this.snackBar.open(response.message || 'Failed to acknowledge notice', 'Close', { duration: 5000 });
         }
       },
       error: (error) => {
         this.isAcceptingNotice = false;
+        this.acknowledgingNoticeId = null;
         const errorMessage = error?.error?.message || error?.message || 'Failed to acknowledge notice';
         this.snackBar.open(errorMessage, 'Close', { duration: 5000 });
       }
@@ -318,9 +547,11 @@ export class CaseDetailsComponent implements OnInit {
 
   /**
    * Check if notice can be acknowledged (not yet acknowledged)
+   * @param noticeId Optional - check for specific notice
    */
-  canAcknowledgeNotice(): boolean {
-    // Check if there's already an acknowledgment in history
+  canAcknowledgeNotice(noticeId?: number): boolean {
+    // Check if there's already an acknowledgment in history for this notice
+    // For now, check if any notice has been acknowledged
     const hasAcknowledgment = this.history.some(h => 
       h.performedByRole === 'CITIZEN' && 
       h.comments && 
@@ -328,5 +559,20 @@ export class CaseDetailsComponent implements OnInit {
        h.comments.toLowerCase().includes('received'))
     );
     return !hasAcknowledgment;
+  }
+
+  /**
+   * Get document display title with date
+   */
+  getDocumentTitle(document: any, index: number): string {
+    const date = document.createdAt ? new Date(document.createdAt).toLocaleDateString() : '';
+    const count = document.moduleType === 'NOTICE' ? this.notices.length :
+                  document.moduleType === 'ORDERSHEET' ? this.ordersheets.length :
+                  this.judgements.length;
+    
+    if (count > 1) {
+      return `${document.moduleType} #${count - index} ${date ? `(${date})` : ''}`;
+    }
+    return document.moduleType;
   }
 }

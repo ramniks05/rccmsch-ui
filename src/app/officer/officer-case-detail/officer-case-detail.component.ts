@@ -34,8 +34,12 @@ export class OfficerCaseDetailComponent implements OnInit {
     hearing: false,
     notice: false,
     ordersheet: false,
-    judgement: false
+    judgement: false,
+    fieldReport: false
   };
+  
+  // Track if field report has been submitted
+  hasFieldReportSubmitted = false;
 
   // Field report functionality
   showRequestFieldReportButton = false;
@@ -129,10 +133,48 @@ export class OfficerCaseDetailComponent implements OnInit {
           );
           
           // Check if SUBMIT_FIELD_REPORT transition is available (for Field Officers)
-          this.showSubmitFieldReportButton = this.transitions.some(
-            t => t.transitionCode === 'SUBMIT_FIELD_REPORT' && 
-                 (t.checklist?.canExecute !== false)
+          const submitFieldReportTransition = this.transitions.find(
+            t => t.transitionCode === 'SUBMIT_FIELD_REPORT'
           );
+          
+          console.log('=== SUBMIT_FIELD_REPORT Transition Debug ===');
+          console.log('- Case ID:', this.caseId);
+          console.log('- Case State:', this.caseData?.currentStateCode, this.caseData?.currentStateName);
+          console.log('- Total transitions available:', this.transitions.length);
+          console.log('- All transition codes:', this.transitions.map(t => ({
+            code: t.transitionCode,
+            name: t.transitionName,
+            fromState: t.fromStateCode,
+            toState: t.toStateCode,
+            canExecute: t.checklist?.canExecute,
+            checklist: t.checklist
+          })));
+          console.log('- SUBMIT_FIELD_REPORT transition found:', submitFieldReportTransition);
+          
+          if (submitFieldReportTransition) {
+            console.log('- Transition details:', {
+              code: submitFieldReportTransition.transitionCode,
+              name: submitFieldReportTransition.transitionName,
+              fromState: submitFieldReportTransition.fromStateCode,
+              toState: submitFieldReportTransition.toStateCode,
+              canExecute: submitFieldReportTransition.checklist?.canExecute,
+              conditions: submitFieldReportTransition.checklist?.conditions,
+              fullChecklist: submitFieldReportTransition.checklist
+            });
+          } else {
+            console.warn('- SUBMIT_FIELD_REPORT transition NOT FOUND in available transitions!');
+            console.warn('- This means either:');
+            console.warn('  1. Transition permissions are not set for current user role');
+            console.warn('  2. Case is not in the correct state (should be "Field Report Requested")');
+            console.warn('  3. Hierarchy rule mismatch (case not assigned to this officer)');
+            console.warn('  4. Transition conditions are not met');
+          }
+          
+          this.showSubmitFieldReportButton = submitFieldReportTransition !== undefined && 
+            (submitFieldReportTransition.checklist?.canExecute !== false);
+          
+          console.log('- showSubmitFieldReportButton:', this.showSubmitFieldReportButton);
+          console.log('=== End Debug ===');
           
           // Update attendance button visibility
           this.updateAttendanceButtonVisibility();
@@ -181,7 +223,8 @@ export class OfficerCaseDetailComponent implements OnInit {
       hearing: false,
       notice: false,
       ordersheet: false,
-      judgement: false
+      judgement: false,
+      fieldReport: false
     };
 
     // Check each transition
@@ -198,6 +241,8 @@ export class OfficerCaseDetailComponent implements OnInit {
           this.requiredModules.ordersheet = true;
         } else if (moduleType === 'JUDGEMENT') {
           this.requiredModules.judgement = true;
+        } else if (moduleType === 'FIELD_REPORT') {
+          this.requiredModules.fieldReport = true;
         }
       }
 
@@ -215,13 +260,50 @@ export class OfficerCaseDetailComponent implements OnInit {
               this.requiredModules.ordersheet = true;
             } else if (moduleType === 'JUDGEMENT') {
               this.requiredModules.judgement = true;
+            } else if (moduleType === 'FIELD_REPORT') {
+              this.requiredModules.fieldReport = true;
             }
           }
         });
       }
     });
 
+    // Check if field report has been submitted (case is in "Field Report Submitted" state or later)
+    this.checkFieldReportSubmission();
+
     console.log('Required modules:', this.requiredModules);
+  }
+
+  /**
+   * Check if field report has been submitted
+   */
+  checkFieldReportSubmission(): void {
+    if (!this.caseData) return;
+    
+    // Check if case is in "Field Report Submitted" state or later
+    const currentState = this.caseData.currentStateCode || this.caseData.currentStateName || '';
+    const stateLower = currentState.toLowerCase();
+    
+    // Show field report view if case is in "Field Report Submitted" state or later
+    if (stateLower.includes('field report submitted') || 
+        stateLower.includes('field_report_submitted') ||
+        this.transitions.some(t => t.transitionCode === 'REVIEW_FIELD_REPORT')) {
+      this.hasFieldReportSubmitted = true;
+      this.requiredModules.fieldReport = true;
+    }
+    
+    // Also check by loading field report data
+    this.caseService.getModuleFormWithData(this.caseId, 'FIELD_REPORT').subscribe({
+      next: (response: any) => {
+        if (response.success && response.data && response.data.hasExistingData) {
+          this.hasFieldReportSubmitted = true;
+          this.requiredModules.fieldReport = true;
+        }
+      },
+      error: () => {
+        // Field report not submitted yet or not configured
+      }
+    });
   }
 
   /**
@@ -405,26 +487,47 @@ export class OfficerCaseDetailComponent implements OnInit {
    */
   openRequestFieldReportDialog(): void {
     if (!this.caseData) {
+      this.snackBar.open('Case data not available', 'Close', { duration: 3000 });
       return;
     }
 
-    const dialogRef = this.dialog.open(FieldReportRequestDialogComponent, {
-      width: '700px',
-      data: {
-        caseId: this.caseId,
-        unitId: this.caseData.assignedToUnitId || (this.caseData as any).unitId,
-        courtId: (this.caseData as any).courtId
-      }
-    });
+    const unitId = this.caseData.assignedToUnitId || (this.caseData as any).unitId;
+    
+    if (!unitId) {
+      this.snackBar.open('Unit ID is required to request field report. Please ensure the case is assigned to a unit.', 'Close', { 
+        duration: 5000,
+        panelClass: ['error-snackbar']
+      });
+      console.error('Unit ID is missing. Case data:', this.caseData);
+      return;
+    }
 
-    dialogRef.afterClosed().subscribe(result => {
-      if (result === 'success') {
-        // Refresh case details and transitions
-        this.loadCaseDetails();
-        this.loadAvailableTransitions();
-        this.loadWorkflowHistory();
-      }
-    });
+    try {
+      const dialogRef = this.dialog.open(FieldReportRequestDialogComponent, {
+        width: '700px',
+        maxWidth: '90vw',
+        data: {
+          caseId: this.caseId,
+          unitId: unitId,
+          courtId: (this.caseData as any).courtId
+        }
+      });
+
+      dialogRef.afterClosed().subscribe(result => {
+        if (result === 'success') {
+          // Refresh case details and transitions
+          this.loadCaseDetails();
+          this.loadAvailableTransitions();
+          this.loadWorkflowHistory();
+        }
+      });
+    } catch (error) {
+      console.error('Error opening field report request dialog:', error);
+      this.snackBar.open('Failed to open field report request dialog. Please try again.', 'Close', { 
+        duration: 5000,
+        panelClass: ['error-snackbar']
+      });
+    }
   }
 
   /**
