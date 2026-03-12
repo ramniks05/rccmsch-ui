@@ -1,8 +1,35 @@
-/* ================= ROOT ================= */
+/* ================= FONTS ================= */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif:wght@400;600;700&family=Source+Sans+3:ital,wght@0,400;0,500;0,600;1,400&display=swap');
+
+/* ================= ROOT / HOST ================= */
 :host {
+  /* Colour tokens */
+  --c-navy:       #0b2d55;
+  --c-blue:       #1a4f8a;
+  --c-blue-mid:   #1e60aa;
+  --c-accent:     #b87417;
+  --c-accent-bg:  #fdf3e3;
+  --c-red:        #b91c1c;
+  --c-bg:         #e8ecf2;
+  --c-white:      #ffffff;
+  --c-border:     #bcc8db;
+  --c-border-dk:  #9aaec6;
+  --c-text:       #141e2e;
+  --c-muted:      #546070;
+  --c-section-hd: #12396e;
+  --c-row-alt:    #f4f7fb;
+
   display: block;
-  background: #f2f4f8;
-  padding: 32px;
+  background-color: var(--c-bg);
+  background-image:
+    linear-gradient(0deg,  transparent 24px, rgba(0,0,0,.025) 25px),
+    linear-gradient(90deg, transparent 24px, rgba(0,0,0,.025) 25px);
+  background-size: 25px 25px;
+  padding: 24px 32px 52px;
+  font-family: 'Source Sans 3', sans-serif;
+  color: var(--c-text);
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 /* ================= PAGE TITLE ================= */
@@ -10,291 +37,399 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  color: #0d3d6b;
-  font-weight: 600;
-  margin-bottom: 24px;
-}
+  font-family: 'Noto Serif', serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--c-navy);
+  margin-bottom: 18px;
+  letter-spacing: 0.015em;
 
-mat-icon {
-  font-size: 26px;
-  color: #2f5be7;
-}
-
-/* ================= FORM CONTAINER ================= */
-form {
-  background: #ffffff;
-  padding: 28px;
-  border-radius: 12px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
-}
-
-/* ================= FORM GROUPS ================= */
-.form-group-section {
-  margin-bottom: 32px;
-  padding: 20px;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
-
-  .group-title {
-    margin: 0 0 20px 0;
-    padding-bottom: 12px;
-    border-bottom: 2px solid #2f5be7;
-    color: #0d3d6b;
-    font-size: 20px;
-    font-weight: 600;
+  mat-icon {
+    font-size: 22px !important;
+    width: 22px !important;
+    height: 22px !important;
+    color: var(--c-accent) !important;
   }
 }
 
-.full-width {
-  width: 100%;
+/* ================= FORM WRAPPER ================= */
+form {
+  background: var(--c-white);
+  border: 1px solid var(--c-border-dk);
+  box-shadow: 0 1px 8px rgba(11,45,85,.10);
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    display: block;
+    height: 4px;
+    background: linear-gradient(
+      90deg,
+      var(--c-navy)     0%   33%,
+      var(--c-blue-mid) 33%  66%,
+      var(--c-accent)   66% 100%
+    );
+  }
 }
 
-/* ================= GRID SPACING ================= */
+/* ================= INTRO BLOCK (above dynamic sections) ================= */
+.form-intro {
+  padding: 20px 24px 0;
+}
+
+/* ================= SECTION GROUP ================= */
+.form-group-section {
+  border-top: 1px solid var(--c-border);
+
+  &:first-of-type {
+    margin-top: 16px;
+  }
+}
+
+/* Section header banner — bleeds full width naturally */
+.group-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 7px 24px;
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--c-white);
+  background: var(--c-section-hd);
+  border-left: 4px solid var(--c-accent);
+
+  &::before {
+    content: '▸';
+    font-size: 9px;
+    opacity: .65;
+  }
+}
+
+/* Fields grid inside section */
+.section-fields {
+  padding: 18px 24px 6px;
+  background: var(--c-white);
+}
+
+.form-group-section:nth-child(even) .section-fields {
+  background: var(--c-row-alt);
+}
+
+/* ================= FIELD COLUMNS ================= */
 .col-lg-4,
 .col-md-6,
 .col-sm-12 {
-  margin-bottom: 20px;
+  padding-right: 14px !important;
+  padding-left: 0 !important;
 }
 
-/* ================= REQUIRED MARK ================= */
-.required {
-  color: #d32f2f;
-  margin-left: 4px;
+.full-width { width: 100%; }
+
+/* ================= ADMIN / COURT BLOCK ================= */
+.admin-block {
+  padding: 18px 24px 4px;
+  border-top: 1px solid var(--c-border);
+  background: var(--c-row-alt);
 }
 
-/* ================= ACTIONS ================= */
+.admin-block-title {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--c-muted);
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed var(--c-border-dk);
+}
+
+/* ================= ACTIONS BAR ================= */
 .actions {
-  text-align: right;
-  margin-top: 24px;
-}
-
-/* ================= RESPONSIVE ================= */
-@media (max-width: 768px) {
-  :host {
-    padding: 20px;
-  }
-
-  form {
-    padding: 20px;
-  }
-}
-
-/* ======================================================
-   ANGULAR MATERIAL – LABEL, BORDER, ERROR, HINT
-   ====================================================== */
-
-/* Remove extra padding under hints & errors */
-:host ::ng-deep .mat-mdc-form-field-hint-wrapper,
-:host ::ng-deep .mat-mdc-form-field-error-wrapper {
-  padding: 0 !important;
-  margin-top: 2px;
-}
-
-/* Default label color */
-:host ::ng-deep .mdc-floating-label {
-  color: #1a5490 !important;
-  font-weight: 500;
-}
-
-/* Focused label */
-:host ::ng-deep
-.mat-mdc-form-field.mat-focused
-.mdc-floating-label {
-  color: #1a5490 !important;
-}
-
-/* Required asterisk */
-:host ::ng-deep
-.mdc-floating-label
-.mat-mdc-form-field-required-marker {
-  color: #d32f2f;
-}
-
-/* Default outline border */
-:host ::ng-deep .mdc-notched-outline__leading,
-:host ::ng-deep .mdc-notched-outline__notch,
-:host ::ng-deep .mdc-notched-outline__trailing {
-  border-color: #d0d7e2 !important;
-}
-
-/* Focused outline */
-:host ::ng-deep
-.mat-mdc-form-field.mat-focused
-.mdc-notched-outline__leading,
-:host ::ng-deep
-.mat-mdc-form-field.mat-focused
-.mdc-notched-outline__notch,
-:host ::ng-deep
-.mat-mdc-form-field.mat-focused
-.mdc-notched-outline__trailing {
-  border-color: #1a5490 !important;
-  border-width: 2px;
-}
-
-/* Error outline */
-:host ::ng-deep
-.mat-mdc-form-field.mat-form-field-invalid
-.mdc-notched-outline__leading,
-:host ::ng-deep
-.mat-mdc-form-field.mat-form-field-invalid
-.mdc-notched-outline__notch,
-:host ::ng-deep
-.mat-mdc-form-field.mat-form-field-invalid
-.mdc-notched-outline__trailing {
-  border-color: #d32f2f !important;
-}
-
-/* Error label */
-:host ::ng-deep
-.mat-mdc-form-field.mat-form-field-invalid
-.mdc-floating-label {
-  color: #d32f2f !important;
-}
-
-/* ======================================================
-   CUSTOM FILE FIELD (MATCHES MAT-FORM-FIELD)
-   ====================================================== */
-
-.mat-file-field {
-  position: relative;
-  padding: 18px 12px 10px;
-  border: 1px solid #d0d7e2;
-  border-radius: 8px;
-  background: #fff;
-  transition: border-color 0.2s ease;
-}
-
-/* File label (floating style) */
-.mat-file-label {
-  position: absolute;
-  top: -8px;
-  left: 10px;
-  background: #fff;
-  padding: 0 6px;
-  font-size: 12px;
-  font-weight: 400;
-  color: #1a5490;
-}
-
-/* File control row */
-.mat-file-control {
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 24px;
+  background: #d9e1ec;
+  border-top: 2px solid var(--c-border-dk);
+
+  button[mat-raised-button] {
+    background: var(--c-blue) !important;
+    color: var(--c-white) !important;
+    font-family: 'Source Sans 3', sans-serif !important;
+    font-size: 12.5px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    height: 38px;
+    padding: 0 26px;
+    border-radius: 1px !important;
+    box-shadow: 0 2px 5px rgba(11,45,85,.22) !important;
+    transition: background .15s;
+
+    &:hover:not([disabled]) { background: var(--c-navy) !important; }
+    &[disabled]             { background: #93a8c0 !important; }
+  }
+
+  .cancel-btn {
+    font-family: 'Source Sans 3', sans-serif !important;
+    font-size: 12.5px !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--c-blue) !important;
+    border-color: var(--c-blue) !important;
+    border-radius: 1px !important;
+    height: 38px;
+    padding: 0 20px;
+  }
 }
 
-/* Filename */
-.file-name {
-  font-size: 13px;
-  color: #555;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 180px;
+.inline-spinner {
+  display: inline-block;
+  margin-right: 6px;
+  vertical-align: middle;
 }
 
-/* Hint text */
-.mat-file-hint {
-  font-size: 12px;
-  margin-top: 4px;
-  color: #6c757d;
-}
-
-/* Error text */
-.mat-file-error-text {
-  font-size: 12px;
-  margin-top: 4px;
-  color: #d32f2f;
-}
-
-/* Error state */
-.mat-file-error {
-  border-color: #d32f2f;
-}
-
-/* Hover */
-.mat-file-field:hover {
-  border-color: #1a5490;
-}
-
-/* ======================================================
-   INFO CARD (Court Level Information)
-   ====================================================== */
+/* ================= INFO CARD ================= */
 .info-card {
-  background: #e3f2fd;
-  border-left: 4px solid #2196f3;
-  margin-bottom: 16px;
-  
+  background: #e6f0fb !important;
+  border: none !important;
+  border-left: 4px solid var(--c-blue-mid) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  margin: 0 0 14px !important;
+
   mat-card-content {
-    padding: 12px 16px !important;
+    padding: 8px 14px !important;
     margin: 0 !important;
   }
 
   .info-row {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
 
     mat-icon {
-      color: #2196f3;
-      font-size: 20px;
-      width: 20px;
-      height: 20px;
+      color: var(--c-blue-mid) !important;
+      font-size: 16px !important;
+      width: 16px !important;
+      height: 16px !important;
+      flex-shrink: 0;
     }
 
     .info-content {
-      flex: 1;
-      font-size: 14px;
-      color: #1565c0;
+      font-size: 12px;
+      color: var(--c-navy);
+      line-height: 1.5;
 
-      strong {
-        font-weight: 600;
-        color: #0d47a1;
-      }
+      strong { font-weight: 600; }
 
-      .ml-2 {
-        margin-left: 16px;
-      }
+      .ml-2 { margin-left: 14px; }
 
       .appeal-badge {
         display: inline-block;
-        padding: 4px 8px;
-        background: #fff3cd;
-        color: #856404;
-        border-radius: 4px;
-        font-size: 12px;
+        padding: 1px 7px;
+        background: var(--c-accent-bg);
+        color: #7a4500;
+        border: 1px solid var(--c-accent);
+        font-size: 10.5px;
         font-weight: 600;
-        margin-left: 12px;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        margin-left: 10px;
       }
     }
   }
 }
 
-/* ======================================================
-   NO FIELDS MESSAGE
-   ====================================================== */
+/* ================= NO FIELDS MSG ================= */
 .no-fields-message {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 20px;
-  margin-bottom: 24px;
-  background: #fff8e1;
-  border-left: 4px solid #ffc107;
-  border-radius: 8px;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 16px;
+  margin: 14px 24px 6px;
+  background: #fffbeb;
+  border-left: 4px solid var(--c-accent);
 
   mat-icon {
-    color: #f57c00;
-    font-size: 28px;
-    width: 28px;
-    height: 28px;
+    color: var(--c-accent) !important;
+    font-size: 19px !important;
+    width: 19px !important;
+    height: 19px !important;
+    margin-top: 1px;
     flex-shrink: 0;
   }
 
   p {
     margin: 0;
-    color: #e65100;
-    font-size: 14px;
+    color: #78450a;
+    font-size: 12.5px;
+    line-height: 1.5;
+  }
+}
+
+/* ================= LOADING ================= */
+.loading-schema {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 24px;
+  color: var(--c-muted);
+  font-size: 13px;
+}
+
+/* ================= FILE INPUT ================= */
+.mat-file-field {
+  position: relative;
+  padding: 14px 12px 10px;
+  border: 1px solid var(--c-border);
+  background: var(--c-white);
+  transition: border-color .15s;
+  &:hover { border-color: var(--c-blue); }
+}
+
+/* Fix label bg for alt rows */
+.form-group-section:nth-child(even) .mat-file-field { background: var(--c-row-alt); }
+.form-group-section:nth-child(even) .mat-file-label { background: var(--c-row-alt); }
+
+.mat-file-label {
+  position: absolute;
+  top: -8px;
+  left: 10px;
+  background: var(--c-white);
+  padding: 0 5px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--c-blue);
+}
+
+.mat-file-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  button[mat-stroked-button] {
+    border-radius: 1px !important;
+    border-color: var(--c-blue) !important;
+    color: var(--c-blue) !important;
+    font-size: 12px !important;
+    height: 32px !important;
+    padding: 0 12px !important;
+  }
+}
+
+.file-name {
+  font-size: 12px;
+  color: var(--c-muted);
+  font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+
+.mat-file-hint      { font-size: 11px; margin-top: 4px; color: var(--c-muted); }
+.mat-file-error-text{ font-size: 11px; margin-top: 4px; color: var(--c-red); }
+.mat-file-error     { border-color: var(--c-red); }
+
+/* ======================================================
+   ANGULAR MATERIAL OVERRIDES
+   ====================================================== */
+
+:host ::ng-deep .mat-mdc-form-field-hint-wrapper,
+:host ::ng-deep .mat-mdc-form-field-error-wrapper {
+  padding: 0 !important;
+  margin-top: 1px;
+}
+
+:host ::ng-deep .mdc-floating-label {
+  font-family: 'Source Sans 3', sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: var(--c-blue) !important;
+}
+
+:host ::ng-deep .mat-mdc-form-field.mat-focused .mdc-floating-label {
+  color: var(--c-navy) !important;
+}
+
+:host ::ng-deep .mdc-floating-label .mat-mdc-form-field-required-marker {
+  color: var(--c-red);
+}
+
+/* Square corners on outline */
+:host ::ng-deep .mdc-notched-outline__leading  { border-radius: 0 !important; }
+:host ::ng-deep .mdc-notched-outline__trailing { border-radius: 0 !important; }
+
+:host ::ng-deep .mdc-notched-outline__leading,
+:host ::ng-deep .mdc-notched-outline__notch,
+:host ::ng-deep .mdc-notched-outline__trailing {
+  border-color: var(--c-border) !important;
+}
+
+:host ::ng-deep .mat-mdc-form-field.mat-focused .mdc-notched-outline__leading,
+:host ::ng-deep .mat-mdc-form-field.mat-focused .mdc-notched-outline__notch,
+:host ::ng-deep .mat-mdc-form-field.mat-focused .mdc-notched-outline__trailing {
+  border-color: var(--c-blue) !important;
+  border-width: 2px !important;
+}
+
+:host ::ng-deep .mat-mdc-form-field.mat-form-field-invalid .mdc-notched-outline__leading,
+:host ::ng-deep .mat-mdc-form-field.mat-form-field-invalid .mdc-notched-outline__notch,
+:host ::ng-deep .mat-mdc-form-field.mat-form-field-invalid .mdc-notched-outline__trailing {
+  border-color: var(--c-red) !important;
+}
+
+:host ::ng-deep .mat-mdc-form-field.mat-form-field-invalid .mdc-floating-label {
+  color: var(--c-red) !important;
+}
+
+:host ::ng-deep .mat-mdc-input-element,
+:host ::ng-deep .mat-mdc-select-value-text {
+  font-family: 'Source Sans 3', sans-serif !important;
+  font-size: 13.5px !important;
+  color: var(--c-text) !important;
+}
+
+:host ::ng-deep .mat-mdc-form-field-icon-prefix mat-icon,
+:host ::ng-deep [matPrefix] {
+  color: var(--c-muted) !important;
+  font-size: 17px !important;
+}
+
+:host ::ng-deep .mat-mdc-form-field-hint {
+  font-family: 'Source Sans 3', sans-serif !important;
+  font-size: 11px !important;
+  color: var(--c-muted) !important;
+}
+
+:host ::ng-deep .mat-mdc-form-field-error {
+  font-family: 'Source Sans 3', sans-serif !important;
+  font-size: 11px !important;
+  color: var(--c-red) !important;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 768px) {
+  :host { padding: 12px 12px 40px; }
+
+  .form-intro,
+  .section-fields,
+  .admin-block { padding-left: 14px; padding-right: 14px; }
+
+  .group-title { padding-left: 14px; padding-right: 14px; }
+
+  .actions {
+    padding: 12px 14px;
+    flex-direction: column-reverse;
+    align-items: stretch;
+    button { width: 100%; }
   }
 }
