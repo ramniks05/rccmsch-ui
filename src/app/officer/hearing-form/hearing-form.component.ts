@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { OfficerCaseService } from '../services/officer-case.service';
 import { ModuleFormField, FieldType } from '../../admin/services/module-forms.service';
 import { getVisibleFields, isFieldVisible, isFieldRequired } from '../../core/utils/conditional-logic';
@@ -13,6 +13,7 @@ import type { OptionItem } from '../../core/models/form-builder.types';
 })
 export class HearingFormComponent implements OnInit {
   @Input() caseId!: number;
+  @Output() formSubmitted = new EventEmitter<void>(); // Emit when form is successfully submitted
   
   // Form data
   formSchema: ModuleFormField[] = [];
@@ -128,6 +129,8 @@ export class HearingFormComponent implements OnInit {
         this.viewMode = true;
         this.submitting = false;
         this.validationErrors = {};
+        // Notify parent component to reload transitions and case details
+        this.formSubmitted.emit();
       },
       error: (error) => {
         console.error('Error submitting form:', error);

@@ -100,6 +100,7 @@
 
         <!-- Action Buttons -->
         <div *ngIf="editMode" class="d-flex gap-2 mt-3">
+          <!-- Save as Draft - Available for all roles -->
           <button 
             class="btn btn-secondary" 
             (click)="saveDraft()"
@@ -112,20 +113,29 @@
             </span>
           </button>
           
+          <!-- Save as Final - Only for Tehsildar -->
           <button 
+            *ngIf="canSaveAsFinal()"
             class="btn btn-info" 
             (click)="saveFinal()"
             [disabled]="saving">
             <i class="bi bi-check-circle"></i> Save as Final
           </button>
           
+          <!-- Sign Document - Only for Tehsildar -->
           <button 
-            *ngIf="documentStatus !== 'SIGNED'"
+            *ngIf="canSignDocument() && documentStatus !== 'SIGNED'"
             class="btn btn-success" 
             (click)="signDocument()"
             [disabled]="saving">
             <i class="bi bi-pen"></i> Sign Document
           </button>
+          
+          <!-- Role-based info message for Reader -->
+          <div *ngIf="isReader()" class="alert alert-info d-flex align-items-center ms-2 mb-0" style="padding: 0.5rem 1rem;">
+            <i class="bi bi-info-circle me-2"></i>
+            <small>As Reader, you can only save documents as draft. Tehsildar can finalize and sign.</small>
+          </div>
           
           <button 
             class="btn btn-outline-secondary" 

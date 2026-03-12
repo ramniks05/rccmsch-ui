@@ -205,7 +205,10 @@
       <!-- Hearing Form Tab (Conditional) -->
       <mat-tab label="Hearing" *ngIf="requiredModules.hearing">
         <div class="tab-content">
-          <app-hearing-form [caseId]="caseData.id"></app-hearing-form>
+          <app-hearing-form 
+            [caseId]="caseData.id"
+            (formSubmitted)="onHearingFormSubmitted()">
+          </app-hearing-form>
         </div>
       </mat-tab>
 

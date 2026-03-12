@@ -40,14 +40,66 @@ export class DocumentEditorComponent implements OnInit {
   
   // Placeholders for replacement
   placeholderValues: Record<string, string> = {};
+  
+  // User role for access control
+  userRoleCode: string = '';
+  userRoleName: string = '';
 
   constructor(
     private officerCaseService: OfficerCaseService,
     private sanitizer: DomSanitizer
-  ) {}
+  ) {
+    this.loadUserRole();
+  }
+  
+  /**
+   * Load user role from localStorage
+   */
+  loadUserRole(): void {
+    try {
+      const storedData = localStorage.getItem('adminUserData');
+      if (storedData) {
+        const officerData = JSON.parse(storedData);
+        const posting = officerData?.posting || {};
+        this.userRoleCode = posting.roleCode || '';
+        this.userRoleName = posting.roleName || '';
+      }
+    } catch (e) {
+      console.error('Error loading user role:', e);
+    }
+  }
+  
+  /**
+   * Check if current user is Reader
+   */
+  isReader(): boolean {
+    return this.userRoleCode?.toUpperCase() === 'READER';
+  }
+  
+  /**
+   * Check if current user is Tehsildar
+   */
+  isTehsildar(): boolean {
+    return this.userRoleCode?.toUpperCase() === 'TEHSILDAR';
+  }
+  
+  /**
+   * Check if user can save as final (Tehsildar only)
+   */
+  canSaveAsFinal(): boolean {
+    return this.isTehsildar();
+  }
+  
+  /**
+   * Check if user can sign document (Tehsildar only)
+   */
+  canSignDocument(): boolean {
+    return this.isTehsildar();
+  }
 
   ngOnInit(): void {
     if (this.caseId) {
+      this.loadUserRole(); // Ensure role is loaded
       this.initializePlaceholders();
       this.loadTemplate();
       this.loadDocument();
@@ -233,6 +285,7 @@ export class DocumentEditorComponent implements OnInit {
    * Save document as draft
    */
   saveDraft(): void {
+    console.log('Saving document as DRAFT');
     this.saveDocument('DRAFT');
   }
 
@@ -243,6 +296,7 @@ export class DocumentEditorComponent implements OnInit {
     if (!confirm('Mark this document as FINAL? It will be ready for review.')) {
       return;
     }
+    console.log('Saving document as FINAL');
     this.saveDocument('FINAL');
   }
 
@@ -253,6 +307,7 @@ export class DocumentEditorComponent implements OnInit {
     if (!confirm('Sign this document? Once signed, it may not be editable.')) {
       return;
     }
+    console.log('Saving document as SIGNED');
     this.saveDocument('SIGNED');
   }
 
@@ -265,16 +320,47 @@ export class DocumentEditorComponent implements OnInit {
       return;
     }
 
+    // Validate status value
+    if (!['DRAFT', 'FINAL', 'SIGNED'].includes(status)) {
+      console.error('Invalid status:', status);
+      alert('Invalid document status');
+      return;
+    }
+
     this.saving = true;
+    
+    // Ensure status is exactly as expected (uppercase, no whitespace)
+    const normalizedStatus = status.trim().toUpperCase() as 'DRAFT' | 'FINAL' | 'SIGNED';
+    
     const documentData: any = {
       templateId: this.template.id,
       contentHtml: this.contentHtml,
       contentData: JSON.stringify(this.contentData),
-      status: status
+      status: normalizedStatus // Explicitly set normalized status
     };
+    
+    // Double-check status before sending
+    if (normalizedStatus !== status.toUpperCase()) {
+      console.warn('Status was normalized:', status, '->', normalizedStatus);
+    }
+
+    console.log('=== Document Save Debug ===');
+    console.log('Document Type:', this.documentType);
+    console.log('Case ID:', this.caseId);
+    console.log('Requested Status:', status);
+    console.log('Document data being sent:', { 
+      templateId: documentData.templateId,
+      status: documentData.status,
+      contentData: documentData.contentData,
+      contentHtml: '[HTML content - length: ' + documentData.contentHtml.length + ']'
+    });
 
     if (this.document && this.document.id) {
       // Update existing document
+      console.log('Updating existing document ID:', this.document.id);
+      console.log('Current document status:', this.document.status);
+      console.log('API Endpoint: PUT /api/cases/' + this.caseId + '/documents/' + this.documentType + '/' + this.document.id);
+      
       this.officerCaseService.updateDocument(
         this.caseId,
         this.documentType,
@@ -282,35 +368,76 @@ export class DocumentEditorComponent implements OnInit {
         documentData
       ).subscribe({
         next: (response) => {
-          alert('Document updated successfully');
+          console.log('=== Document Update Response ===');
+          console.log('Full response:', response);
+          console.log('Response data:', response.data);
+          const returnedStatus = response.data?.status || status;
+          console.log('Requested status:', status);
+          console.log('Returned status from backend:', returnedStatus);
+          
+          if (returnedStatus !== status) {
+            console.warn('⚠️ WARNING: Status mismatch!');
+            console.warn('Requested:', status, 'but backend returned:', returnedStatus);
+            alert(`⚠️ Status mismatch: Requested "${status}" but backend returned "${returnedStatus}". Please check backend logic.`);
+          } else {
+            console.log('✅ Status matches correctly');
+          }
+          
+          alert(`Document updated successfully. Status: ${returnedStatus}`);
           this.document = response.data;
-          this.documentStatus = status;
+          this.documentStatus = returnedStatus as 'DRAFT' | 'FINAL' | 'SIGNED';
           this.editMode = false;
           this.saving = false;
         },
         error: (error) => {
-          console.error('Error updating document:', error);
-          alert('Failed to update document');
+          console.error('=== Document Update Error ===');
+          console.error('Error details:', error);
+          console.error('Request payload was:', documentData);
+          console.error('Document Type:', this.documentType);
+          console.error('Status sent:', status);
+          alert('Failed to update document. Check console for details.');
           this.saving = false;
         }
       });
     } else {
       // Create new document
+      console.log('Creating new document');
+      console.log('API Endpoint: POST /api/cases/' + this.caseId + '/documents/' + this.documentType);
+      
       this.officerCaseService.saveDocument(
         this.caseId,
         this.documentType,
         documentData
       ).subscribe({
         next: (response) => {
-          alert('Document saved successfully');
+          console.log('=== Document Save Response ===');
+          console.log('Full response:', response);
+          console.log('Response data:', response.data);
+          const returnedStatus = response.data?.status || status;
+          console.log('Requested status:', status);
+          console.log('Returned status from backend:', returnedStatus);
+          
+          if (returnedStatus !== status) {
+            console.warn('⚠️ WARNING: Status mismatch!');
+            console.warn('Requested:', status, 'but backend returned:', returnedStatus);
+            alert(`⚠️ Status mismatch: Requested "${status}" but backend returned "${returnedStatus}". Please check backend logic.`);
+          } else {
+            console.log('✅ Status matches correctly');
+          }
+          
+          alert(`Document saved successfully. Status: ${returnedStatus}`);
           this.document = response.data;
-          this.documentStatus = status;
+          this.documentStatus = returnedStatus as 'DRAFT' | 'FINAL' | 'SIGNED';
           this.editMode = false;
           this.saving = false;
         },
         error: (error) => {
-          console.error('Error saving document:', error);
-          alert('Failed to save document');
+          console.error('=== Document Save Error ===');
+          console.error('Error details:', error);
+          console.error('Request payload was:', documentData);
+          console.error('Document Type:', this.documentType);
+          console.error('Status sent:', status);
+          alert('Failed to save document. Check console for details.');
           this.saving = false;
         }
       });
