@@ -332,7 +332,71 @@ export class OfficerCaseDetailComponent implements OnInit {
   /**
    * Handle action button click
    */
+  /**
+   * Check if transition can be executed (not blocked by conditions)
+   */
+  isTransitionExecutable(transition: WorkflowTransitionDTO): boolean {
+    // Check if checklist says it can execute
+    if (transition.checklist?.canExecute === false) {
+      return false;
+    }
+    // Default to true if no checklist or canExecute is not explicitly false
+    return true;
+  }
+
+  /**
+   * Get blocking reasons for a transition
+   */
+  getBlockingReasons(transition: WorkflowTransitionDTO): string {
+    if (this.isTransitionExecutable(transition)) {
+      return '';
+    }
+    
+    // Get blocking reasons from checklist
+    const reasons: string[] = [];
+    
+    if (transition.checklist?.blockingReasons && transition.checklist.blockingReasons.length > 0) {
+      reasons.push(...transition.checklist.blockingReasons);
+    }
+    
+    // Also check conditions that failed
+    if (transition.checklist?.conditions) {
+      const failedConditions = transition.checklist.conditions
+        .filter(c => !c.passed && c.required)
+        .map(c => c.label || c.message);
+      reasons.push(...failedConditions);
+    }
+    
+    return reasons.length > 0 
+      ? reasons.join('. ') 
+      : 'This action cannot be performed. Required conditions are not met.';
+  }
+
+  /**
+   * Check if there are any blocked transitions
+   */
+  hasBlockedTransitions(): boolean {
+    return this.transitions.some(t => !this.isTransitionExecutable(t));
+  }
+
+  /**
+   * Get list of blocked transitions
+   */
+  getBlockedTransitions(): WorkflowTransitionDTO[] {
+    return this.transitions.filter(t => !this.isTransitionExecutable(t) && this.getBlockingReasons(t));
+  }
+
   handleActionClick(transition: WorkflowTransitionDTO): void {
+    // Prevent execution if blocked
+    if (!this.isTransitionExecutable(transition)) {
+      const reasons = this.getBlockingReasons(transition);
+      this.snackBar.open(
+        reasons || 'This action cannot be performed. Required conditions are not met.',
+        'Close',
+        { duration: 5000, panelClass: ['error-snackbar'] }
+      );
+      return;
+    }
     const dialogRef = this.dialog.open(WorkflowActionDialogComponent, {
       width: '500px',
       data: {

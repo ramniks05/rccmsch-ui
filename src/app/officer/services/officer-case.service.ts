@@ -70,6 +70,7 @@ export interface WorkflowTransitionDTO {
       passed: boolean;
       message: string;
     }>;
+    blockingReasons?: string[];
   };
   formSchema?: {
     caseNatureId: number;
@@ -335,6 +336,40 @@ export class OfficerCaseService {
   }
 
   /**
+   * Submit module form data with files (multipart/form-data)
+   * POST /api/cases/{caseId}/module-forms/{moduleType}/submit
+   * 
+   * FormData structure:
+   * - Regular fields: fieldName = value
+   * - fileMetadata: JSON string with file metadata
+   * - files: File objects (multiple)
+   * - fileInfo_0, fileInfo_1, ...: JSON strings with file info (fieldName, fileId, displayName, originalFileName)
+   * - remarks: Optional remarks
+   */
+  submitModuleFormWithFiles(caseId: number, moduleType: string, formData: FormData): Observable<ApiResponse<any>> {
+    // Create headers without Content-Type (browser will set it automatically with boundary)
+    const token = localStorage.getItem('adminToken');
+    const headers: { [key: string]: string } = {};
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    // Note: Do NOT set Content-Type header - browser will set it automatically with boundary
+
+    return this.http.post<ApiResponse<any>>(
+      `${this.apiUrl}/${caseId}/module-forms/${moduleType}/submit`,
+      formData,
+      { headers: new HttpHeaders(headers) }
+    ).pipe(
+      catchError(error => {
+        console.error(`Error submitting module form with files for case ${caseId}:`, error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
    * Get submitted module form data
    * GET /api/cases/{caseId}/module-forms/{moduleType}/data
    */
@@ -345,6 +380,56 @@ export class OfficerCaseService {
     ).pipe(
       catchError(error => {
         console.error(`Error fetching submitted module form data for case ${caseId}:`, error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Upload file for a case (multipart/form-data)
+   * POST /api/cases/{caseId}/documents/upload
+   * 
+   * This endpoint uploads a file and returns file metadata including:
+   * - fileId: Unique identifier for the uploaded file
+   * - fileName: Original filename
+   * - fileUrl: Server path where file is stored (relative or absolute)
+   * - fileSize: File size in bytes
+   * - fileType: MIME type of the file
+   */
+  uploadFile(caseId: number, file: File): Observable<ApiResponse<{
+    fileId: string;
+    fileName: string;
+    fileUrl: string;
+    fileSize: number;
+    fileType: string;
+  }>> {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    // Create headers without Content-Type (browser will set it automatically with boundary for multipart/form-data)
+    const token = localStorage.getItem('adminToken');
+    const headers: { [key: string]: string } = {};
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    // Note: Do NOT set Content-Type header - browser will set it automatically with boundary
+    // Setting it manually will break multipart/form-data
+    
+    return this.http.post<ApiResponse<{
+      fileId: string;
+      fileName: string;
+      fileUrl: string;
+      fileSize: number;
+      fileType: string;
+    }>>(
+      `${this.apiUrl}/${caseId}/documents/upload`,
+      formData,
+      { headers: new HttpHeaders(headers) }
+    ).pipe(
+      catchError(error => {
+        console.error(`Error uploading file for case ${caseId}:`, error);
         return throwError(() => error);
       })
     );

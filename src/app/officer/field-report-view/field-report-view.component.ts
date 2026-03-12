@@ -1,5 +1,6 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { OfficerCaseService } from '../services/officer-case.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-field-report-view',
@@ -30,6 +31,7 @@ export class FieldReportViewComponent implements OnInit {
    */
   loadFieldReport(): void {
     this.loading = true;
+    this.hasData = false;
     
     this.caseService.getModuleFormWithData(this.caseId, 'FIELD_REPORT').subscribe({
       next: (response: any) => {
@@ -43,7 +45,15 @@ export class FieldReportViewComponent implements OnInit {
               this.formData = typeof response.data.formData === 'string'
                 ? JSON.parse(response.data.formData)
                 : response.data.formData;
-              this.hasData = true;
+              
+              // Check if formData has any actual values
+              const hasValues = Object.keys(this.formData).some(key => {
+                const value = this.formData[key];
+                if (Array.isArray(value)) return value.length > 0;
+                return value !== null && value !== undefined && value !== '';
+              });
+              
+              this.hasData = hasValues && this.formSchema && this.formSchema.fields && this.formSchema.fields.length > 0;
               
               // Get submission date if available
               if (response.data.submittedAt) {
@@ -52,13 +62,21 @@ export class FieldReportViewComponent implements OnInit {
             } catch (e) {
               console.error('Error parsing form data:', e);
               this.formData = {};
+              this.hasData = false;
             }
+          } else {
+            // No existing data
+            this.hasData = false;
           }
+        } else {
+          this.hasData = false;
         }
       },
       error: (error: any) => {
         this.loading = false;
+        this.hasData = false;
         console.error('Error loading field report:', error);
+        // Don't show error to user - just show "no data" message
       }
     });
   }
@@ -112,5 +130,54 @@ export class FieldReportViewComponent implements OnInit {
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  /**
+   * Get full file URL (handles both relative and absolute URLs)
+   */
+  getFileUrl(file: any): string {
+    // If fileUrl exists, use it
+    if (file.fileUrl) {
+      // If URL is already absolute (starts with http:// or https://), return as is
+      if (file.fileUrl.startsWith('http://') || file.fileUrl.startsWith('https://')) {
+        return file.fileUrl;
+      }
+      
+      // If URL starts with /, it's a relative path - prepend API base URL
+      if (file.fileUrl.startsWith('/')) {
+        // Remove /api from apiUrl if present, then add the file path
+        const baseUrl = environment.apiUrl.replace('/api', '');
+        return `${baseUrl}${file.fileUrl}`;
+      }
+      
+      // Otherwise, assume it's relative to API base
+      const baseUrl = environment.apiUrl.replace('/api', '');
+      return `${baseUrl}/${file.fileUrl}`;
+    }
+    
+    // Fallback: construct URL from fileId or fileName if fileUrl is not available
+    if (file.fileId || file.fileName) {
+      const baseUrl = environment.apiUrl.replace('/api', '');
+      const fileName = file.fileName || file.fileId;
+      return `${baseUrl}/uploads/documents/${fileName}`;
+    }
+    
+    return '';
+  }
+
+  /**
+   * Open file in new tab
+   */
+  openFile(file: any, event?: Event): void {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    
+    const fileUrl = this.getFileUrl(file);
+    if (fileUrl) {
+      // Open in new tab
+      window.open(fileUrl, '_blank', 'noopener,noreferrer');
+    }
   }
 }
