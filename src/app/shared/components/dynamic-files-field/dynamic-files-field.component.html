@@ -30,11 +30,38 @@
     </div>
     <div *ngIf="uploadError" class="mt-2 text-danger small">{{ uploadError }}</div>
     <ul *ngIf="value?.length" class="list-group list-group-flush mt-2">
-      <li *ngFor="let f of value; let i = index" class="list-group-item d-flex justify-content-between align-items-center py-2">
-        <span>{{ f.fileName }} <span class="text-muted small">({{ (f.fileSize / 1024).toFixed(1) }} KB)</span></span>
-        <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeFile(i)" title="Remove file">
-          <i class="bi bi-x-circle"></i>
-        </button>
+      <li *ngFor="let f of value; let i = index; trackBy: trackByFileId" class="list-group-item py-3">
+        <div class="d-flex flex-column gap-2">
+          <div class="d-flex justify-content-between align-items-start">
+            <div class="flex-grow-1">
+              <label class="form-label small mb-1">
+                File Type <span class="text-danger">*</span>
+              </label>
+              <input
+                type="text"
+                class="form-control form-control-sm"
+                [class.is-invalid]="!hasValidFileName(f, i)"
+                [value]="getDisplayName(f, i)"
+                #fileTypeInput
+                (input)="updateLocalInputValue(i, fileTypeInput.value)"
+                (blur)="updateFileName(i, fileTypeInput.value, true)"
+                placeholder="Enter file type (e.g., Report, Photo, Document)"
+                required>
+              <div *ngIf="!hasValidFileName(f)" class="invalid-feedback d-block small">
+                File type is required
+              </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-danger ms-2" (click)="removeFile(i)" title="Remove file">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="text-muted small">
+              <mat-icon>attach_file</mat-icon> {{ f.fileName }}
+              <span class="ms-2">({{ (f.fileSize / 1024).toFixed(1) }} KB)</span>
+            </span>
+          </div>
+        </div>
       </li>
     </ul>
   </div>

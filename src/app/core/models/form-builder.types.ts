@@ -79,6 +79,10 @@ export interface FileItem {
   fileId: string;
   fileName: string;
   fileSize: number;
+  displayName?: string; // Optional display name that user can edit (file type)
+  fileUrl?: string; // Optional: Server path where file is stored (from upload response)
+  fileType?: string; // Optional: MIME type of the file (from upload response)
+  file?: File; // Optional: File object (for multipart/form-data submission)
 }
 
 export type FormData = Record<string, unknown>;

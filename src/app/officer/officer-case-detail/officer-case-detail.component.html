@@ -242,8 +242,8 @@
         </div>
       </mat-tab>
 
-      <!-- Field Report Tab (Show when submitted) -->
-      <mat-tab label="Field Report" *ngIf="requiredModules.fieldReport || hasFieldReportSubmitted">
+      <!-- Field Report Tab (Show when submitted or when field report is required) -->
+      <mat-tab label="Field Report" *ngIf="requiredModules.fieldReport || hasFieldReportSubmitted || showSubmitFieldReportButton">
         <div class="tab-content">
           <app-field-report-view [caseId]="caseData.id"></app-field-report-view>
         </div>
@@ -347,7 +347,8 @@
             mat-raised-button
             [class]="'action-btn ' + getActionClass(transition.transitionCode)"
             (click)="handleActionClick(transition)"
-            [disabled]="executing">
+            [disabled]="executing || !isTransitionExecutable(transition)"
+            [matTooltip]="getBlockingReasons(transition)">
             <mat-icon>
               {{ transition.transitionCode.includes('APPROVE') ? 'check_circle' : 
                  transition.transitionCode.includes('REJECT') ? 'cancel' : 
@@ -355,7 +356,19 @@
             </mat-icon>
             {{ transition.transitionName }}
             <span *ngIf="transition.requiresComment" class="comment-required">*</span>
+            <mat-icon *ngIf="!isTransitionExecutable(transition)" class="blocked-icon" color="warn">lock</mat-icon>
           </button>
+          <!-- Show blocking reasons for disabled actions -->
+          <div *ngIf="hasBlockedTransitions()" class="blocking-reasons">
+            <mat-icon color="warn">info</mat-icon>
+            <div class="reasons-list">
+              <div *ngFor="let transition of getBlockedTransitions()">
+                <div>
+                  <strong>{{ transition.transitionName }}:</strong> {{ getBlockingReasons(transition) }}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </mat-card-content>
     </mat-card>

@@ -64,6 +64,21 @@ mat-dialog-content {
 
 .full-width {
   width: 100%;
+  
+  // Style for disabled/readonly date fields
+  ::ng-deep {
+    input[disabled],
+    input[readonly] {
+      cursor: not-allowed;
+      background-color: #f5f5f5;
+      color: rgba(0, 0, 0, 0.87);
+    }
+    
+    .mat-datepicker-toggle[disabled] {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
 }
 
 .required {

@@ -2,4 +2,33 @@
   .list-group-item {
     font-size: 0.9rem;
   }
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    vertical-align: middle;
+    margin-right: 4px;
+  }
+
+  .btn mat-icon {
+    margin-right: 0;
+  }
+
+  .form-label {
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+
+  .invalid-feedback {
+    display: block;
+    width: 100%;
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    color: #dc3545;
+  }
+
+  .is-invalid {
+    border-color: #dc3545;
+  }
 }
