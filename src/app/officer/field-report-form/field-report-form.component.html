@@ -83,10 +83,13 @@
             matInput 
             [matDatepicker]="picker"
             [formControlName]="field.fieldName"
-            [placeholder]="field.placeholder || ''">
-          <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-          <mat-datepicker #picker></mat-datepicker>
+            [placeholder]="field.placeholder || ''"
+            [readonly]="true"
+            [disabled]="true">
+          <mat-datepicker-toggle matSuffix [for]="picker" [disabled]="true"></mat-datepicker-toggle>
+          <mat-datepicker #picker [disabled]="true"></mat-datepicker>
           <mat-hint *ngIf="field.helpText">{{ field.helpText }}</mat-hint>
+          <mat-hint>Date is automatically set to today's date</mat-hint>
           <mat-error *ngIf="hasFieldError(field.fieldName)">
             {{ getFieldError(field.fieldName) }}
           </mat-error>
@@ -124,6 +127,7 @@
             [value]="getDynamicFilesValue(field.fieldName)"
             [caseId]="caseId"
             [viewMode]="false"
+            [uploadCallback]="uploadFile.bind(this)"
             [errors]="getFieldErrors(field.fieldName)"
             (valueChange)="onDynamicFilesChange(field.fieldName, $event)">
           </app-dynamic-files-field>

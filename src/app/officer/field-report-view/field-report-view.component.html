@@ -1,11 +1,11 @@
 <div class="field-report-view-container">
-  <div class="card">
-    <div class="card-header bg-info text-white">
-      <h5 class="mb-0">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>
         <mat-icon>description</mat-icon> Field Report
-      </h5>
-    </div>
-    <div class="card-body">
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
       <!-- Loading State -->
       <div *ngIf="loading" class="text-center py-4">
         <mat-spinner diameter="40"></mat-spinner>
@@ -13,28 +13,25 @@
       </div>
 
       <!-- No Data -->
-      <div *ngIf="!loading && !hasData" class="alert alert-info">
+      <div *ngIf="!loading && !hasData" class="no-data-message">
         <mat-icon>info</mat-icon>
         <span>No field report submitted yet.</span>
       </div>
 
       <!-- Submitted Data -->
-      <div *ngIf="!loading && hasData && formSchema">
+      <div *ngIf="!loading && hasData && formSchema && formSchema.fields && formSchema.fields.length > 0">
         <!-- Submission Info -->
-        <div *ngIf="submittedAt" class="alert alert-success d-flex justify-content-between align-items-center mb-3">
-          <div>
-            <mat-icon>check_circle</mat-icon>
-            <strong>Field report submitted</strong>
-            <span class="ms-2">on {{ submittedAt | date:'medium' }}</span>
-          </div>
+        <div *ngIf="submittedAt" class="submission-info">
+          <mat-icon>check_circle</mat-icon>
+          <strong>Field report submitted</strong>
+          <span>on {{ submittedAt | date:'medium' }}</span>
         </div>
 
         <!-- Form Fields -->
-        <div class="row g-3">
+        <div class="fields-grid">
           <div *ngFor="let field of formSchema.fields" 
-               [class.col-md-6]="field.fieldType !== 'DYNAMIC_FILES' && field.fieldType !== 'TEXTAREA'" 
-               [class.col-12]="field.fieldType === 'DYNAMIC_FILES' || field.fieldType === 'TEXTAREA'"
-               class="mb-3">
+               class="field-wrapper"
+               [class.full-width]="field.fieldType === 'DYNAMIC_FILES' || field.fieldType === 'TEXTAREA'">
             <div class="field-item">
               <label class="field-label">
                 {{ field.fieldLabel }}
@@ -48,8 +45,8 @@
               </div>
 
               <!-- Textarea fields -->
-              <div *ngIf="field.fieldType === 'TEXTAREA'" class="field-value">
-                <div class="textarea-value">{{ getFieldValue(field) }}</div>
+              <div *ngIf="field.fieldType === 'TEXTAREA'" class="field-value textarea-value">
+                {{ getFieldValue(field) }}
               </div>
 
               <!-- Dynamic Files -->
@@ -59,17 +56,17 @@
                 </div>
                 <div *ngIf="getFileList(field).length > 0" class="file-list">
                   <div *ngFor="let file of getFileList(field)" class="file-item">
-                    <mat-icon class="file-icon">description</mat-icon>
+                    <mat-icon class="file-icon">attach_file</mat-icon>
                     <div class="file-info">
-                      <div class="file-name">{{ file.fileName }}</div>
+                      <div class="file-name">{{ file.displayName || file.fileName }}</div>
                       <div class="file-meta">
                         <span>{{ formatFileSize(file.fileSize) }}</span>
-                        <span *ngIf="file.fileType" class="ms-2">• {{ file.fileType }}</span>
+                        <span *ngIf="file.fileType"> • {{ file.fileType }}</span>
                       </div>
-                      <div *ngIf="file.fileUrl" class="file-url">
-                        <a [href]="file.fileUrl" target="_blank" class="file-link">
+                      <div *ngIf="file.fileUrl || file.fileName" class="file-url">
+                        <button mat-button color="primary" (click)="openFile(file, $event)" class="file-link">
                           <mat-icon>open_in_new</mat-icon> View File
-                        </a>
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -79,6 +76,6 @@
           </div>
         </div>
       </div>
-    </div>
-  </div>
+    </mat-card-content>
+  </mat-card>
 </div>
