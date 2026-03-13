@@ -413,6 +413,19 @@ export class OfficerCaseDetailComponent implements OnInit {
   }
 
   /**
+   * Handle hearing form submission - reload transitions and case details
+   */
+  onHearingFormSubmitted(): void {
+    console.log('Hearing form submitted, reloading transitions and case details...');
+    // Reload case details to get updated state
+    this.loadCaseDetails();
+    // Reload transitions to update action availability based on hearing date assignment
+    this.loadAvailableTransitions();
+    // Reload history to show the hearing form submission
+    this.loadWorkflowHistory();
+  }
+
+  /**
    * Execute workflow transition
    */
   executeTransition(transitionCode: string, comments: string): void {
