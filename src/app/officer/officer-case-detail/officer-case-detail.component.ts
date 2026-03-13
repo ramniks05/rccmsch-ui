@@ -19,6 +19,13 @@ export class OfficerCaseDetailComponent implements OnInit {
   transitions: WorkflowTransitionDTO[] = [];
   history: WorkflowHistory[] = [];
 
+  // Current officer role (for Reader/Tehsildar specific behaviour)
+  userRoleCode: string = '';
+  userRoleName: string = '';
+
+  // Latest Notice document status (DRAFT / FINAL / SIGNED)
+  latestNoticeStatus: 'DRAFT' | 'FINAL' | 'SIGNED' | null = null;
+
   loading = false;
   loadingTransitions = false;
   loadingHistory = false;
@@ -57,6 +64,7 @@ export class OfficerCaseDetailComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.loadUserRole();
     this.route.params.subscribe(params => {
       this.caseId = +params['id'];
       if (this.caseId) {
@@ -65,6 +73,30 @@ export class OfficerCaseDetailComponent implements OnInit {
         this.loadWorkflowHistory();
       }
     });
+  }
+
+  /**
+   * Load current officer role from localStorage (same structure used in document editor)
+   */
+  loadUserRole(): void {
+    try {
+      const storedData = localStorage.getItem('adminUserData');
+      if (storedData) {
+        const officerData = JSON.parse(storedData);
+        const posting = officerData?.posting || {};
+        this.userRoleCode = posting.roleCode || '';
+        this.userRoleName = posting.roleName || '';
+      }
+    } catch (e) {
+      console.error('Error loading user role in officer case detail:', e);
+    }
+  }
+
+  /**
+   * Convenience check for Reader role
+   */
+  private isReader(): boolean {
+    return this.userRoleCode?.toUpperCase() === 'READER';
   }
 
   /**
@@ -272,6 +304,31 @@ export class OfficerCaseDetailComponent implements OnInit {
     this.checkFieldReportSubmission();
 
     console.log('Required modules:', this.requiredModules);
+
+    // Load latest Notice status when Notice module is relevant
+    if (this.requiredModules.notice && this.caseId) {
+      this.loadLatestNoticeStatus();
+    }
+  }
+
+  /**
+   * Load latest Notice document status for the case
+   */
+  private loadLatestNoticeStatus(): void {
+    this.latestNoticeStatus = null;
+    this.caseService.getLatestDocument(this.caseId, 'NOTICE').subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          const status = String(response.data.status || '').toUpperCase();
+          if (status === 'DRAFT' || status === 'FINAL' || status === 'SIGNED') {
+            this.latestNoticeStatus = status as 'DRAFT' | 'FINAL' | 'SIGNED';
+          }
+        }
+      },
+      error: (err) => {
+        console.warn('Failed to load latest Notice status for case', this.caseId, err);
+      }
+    });
   }
 
   /**
@@ -336,10 +393,19 @@ export class OfficerCaseDetailComponent implements OnInit {
    * Check if transition can be executed (not blocked by conditions)
    */
   isTransitionExecutable(transition: WorkflowTransitionDTO): boolean {
-    // Check if checklist says it can execute
+    // If checklist explicitly blocks the transition, apply custom overrides
     if (transition.checklist?.canExecute === false) {
+      // Custom rule: For Reader role, if latest Notice is in DRAFT status,
+      // allow executing transitions even if checklist reports canExecute = false.
+      // This matches requirement: "on Reader login, if document is in DRAFT mode,
+      // transition should be enabled."
+      if (this.isReader() && this.latestNoticeStatus === 'DRAFT') {
+        return true;
+      }
+
       return false;
     }
+
     // Default to true if no checklist or canExecute is not explicitly false
     return true;
   }

@@ -506,10 +506,26 @@ export class DocumentEditorComponent implements OnInit {
    * Check if document can be edited
    */
   canEdit(): boolean {
-    if (!this.document) return true;
-    if (this.document.status === 'SIGNED' && this.template && !this.template.allowEditAfterSign) {
+    // If there is no document yet, always allow creating/editing
+    if (!this.document) {
+      return true;
+    }
+
+    // Never allow editing when signed and template is locked after sign
+    if (
+      this.document.status === 'SIGNED' &&
+      this.template &&
+      !this.template.allowEditAfterSign
+    ) {
       return false;
     }
+
+    // Reader role: allow editing only when document is in DRAFT status
+    if (this.isReader()) {
+      return this.document.status === 'DRAFT';
+    }
+
+    // Other roles follow default rules above
     return true;
   }
 }
