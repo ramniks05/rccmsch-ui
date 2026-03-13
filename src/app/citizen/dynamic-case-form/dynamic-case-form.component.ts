@@ -44,6 +44,7 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
   /** Debounce timer per field to avoid duplicate external API calls when multiple parents trigger reload */
   private loadDataSourceDebounce = new Map<string, ReturnType<typeof setTimeout>>();
   citizenUnitId: number | null = null; // From registration data
+  villageList: any;
 
   constructor(
     private fb: FormBuilder,
@@ -253,6 +254,11 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
           }
 
           console.log('Final data to process:', data);
+          for (let item of data.fields || []) {
+            if (item.fieldName === "select_village") {
+              this.villageList = JSON.parse(item?.fieldOptions) || [];
+            }
+          }
 
           if (!data || typeof data !== 'object') {
             console.error('Form schema: invalid or empty response');
@@ -1466,7 +1472,12 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
         }
       }
     });
-
+    for (let item of this.villageList) {
+      if (item.nvcode == formValues.select_village) {
+        formValues.select_village = formValues.select_village + " - " + item.villagename;
+        break;
+      }
+    }
     // Convert form data to JSON string
     const caseDataJson = JSON.stringify(formValues);
 

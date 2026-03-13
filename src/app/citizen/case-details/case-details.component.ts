@@ -513,9 +513,6 @@ export class CaseDetailsComponent implements OnInit {
     this.loadAllJudgements();
   }
 
-  /**
-   * Download/Print document
-   */
   downloadDocument(document: any, documentType: string): void {
     if (!document || !document.contentHtml) {
       this.snackBar.open('Document content not available', 'Close', {
@@ -524,30 +521,602 @@ export class CaseDetailsComponent implements OnInit {
       return;
     }
 
-    // Open in new window for printing
     const printWindow = window.open('', '_blank');
     if (printWindow) {
+      const createdDate = document.createdAt
+        ? new Date(document.createdAt).toLocaleDateString('en-IN', {
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric',
+          })
+        : '';
+      const signedDate = document.signedAt
+        ? new Date(document.signedAt).toLocaleDateString('en-IN', {
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric',
+          })
+        : '';
+      const generatedDate = new Date().toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+      });
+
+      const statusClass = ['signed', 'final', 'draft'].includes(
+        (document.status || '').toLowerCase(),
+      )
+        ? (document.status || '').toLowerCase()
+        : 'default';
+
       printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>${documentType} - ${this.case?.caseNumber}</title>
-          <style>
-            body { font-family: Arial, sans-serif; padding: 20px; }
-            @media print {
-              body { padding: 0; }
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8" />
+        <title>${documentType} — ${this.case?.caseNumber || 'Case Document'}</title>
+        <style>
+
+          *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+          html { background: #dde1ea; }
+
+          body {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 13px;
+            color: #1a1a1a;
+            background: #dde1ea;
+            min-height: 100vh;
+            padding: 28px 16px 56px;
+          }
+
+          .print-toolbar {
+            max-width: 880px;
+            margin: 0 auto 14px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+          }
+
+          .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 9px 22px;
+            border-radius: 4px;
+            font-family: Arial, sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: opacity 0.15s;
+          }
+          .btn:hover { opacity: 0.85; }
+          .btn-print { background: #0f2850; color: #fff; }
+          .btn-close  { background: #c8cdd8; color: #333; }
+
+          .paper {
+            max-width: 880px;
+            margin: 0 auto;
+            background: #fff;
+            box-shadow: 0 6px 40px rgba(0,0,0,0.22), 0 1px 6px rgba(0,0,0,0.10);
+            border-radius: 3px;
+            overflow: hidden;
+          }
+
+          /* ── Letterhead ── */
+          .letterhead {
+            background: #0f2850;
+            background-image:
+              radial-gradient(circle at 90% -10%, rgba(196,160,80,0.12) 0%, transparent 55%),
+              radial-gradient(circle at -5% 110%, rgba(255,255,255,0.05) 0%, transparent 50%);
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+
+          .letterhead-inner {
+            padding: 26px 40px 20px;
+            display: flex;
+            align-items: center;
+            gap: 22px;
+          }
+
+          .emblem {
+            width: 68px; height: 68px;
+            border-radius: 50%;
+            border: 2px solid rgba(196,160,80,0.55);
+            background: rgba(255,255,255,0.06);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 26px;
+          }
+
+          .letterhead-text .gov-name {
+            font-family: Arial, sans-serif;
+            font-size: 17px; font-weight: 700;
+            color: #fff;
+            letter-spacing: 1.4px;
+            text-transform: uppercase;
+            line-height: 1.25; margin-bottom: 4px;
+          }
+          .letterhead-text .dept-name {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            color: rgba(196,160,80,0.92);
+            letter-spacing: 0.4px; margin-bottom: 2px;
+          }
+          .letterhead-text .doc-sub {
+            font-family: Arial, sans-serif;
+            font-size: 10.5px;
+            color: rgba(255,255,255,0.42);
+          }
+
+          .gold-bar {
+            height: 4px;
+            background: linear-gradient(90deg, #b8943a 0%, #e8c96a 50%, #b8943a 100%);
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+
+          /* ── Title Band ── */
+          .title-band {
+            background: #f4f6fb;
+            border-bottom: 1px solid #dde3ef;
+            padding: 16px 40px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          .title-band .doc-title {
+            font-family: Arial, sans-serif;
+            font-size: 20px; font-weight: 700;
+            color: #0f2850;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+          }
+          .title-band .doc-subtitle {
+            font-family: Arial, sans-serif;
+            font-size: 11.5px; color: #666; margin-top: 3px;
+          }
+
+          .status-chip {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 5px 15px; border-radius: 20px;
+            font-family: Arial, sans-serif;
+            font-size: 11px; font-weight: 700;
+            letter-spacing: 0.8px; text-transform: uppercase;
+            white-space: nowrap; flex-shrink: 0;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          .status-chip.signed  { background: #e6f4ea; color: #1e6b2e; border: 1px solid #a8d5b0; }
+          .status-chip.final   { background: #e3f0fd; color: #1455a4; border: 1px solid #9dc4f0; }
+          .status-chip.draft   { background: #fff4e0; color: #8a5700; border: 1px solid #f5c96a; }
+          .status-chip.default { background: #f0f0f0; color: #444;    border: 1px solid #ccc; }
+          .status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+          .signed  .status-dot { background: #2e8b47; }
+          .final   .status-dot { background: #1a6ec4; }
+          .draft   .status-dot { background: #e09400; }
+          .default .status-dot { background: #999; }
+
+          /* ── Meta Row ── */
+          .meta-row {
+            background: #fff;
+            padding: 10px 40px;
+            border-bottom: 1px solid #e8edf6;
+            display: flex; flex-wrap: wrap; gap: 0;
+          }
+          .meta-item {
+            display: flex; align-items: center; gap: 7px;
+            padding: 3px 20px 3px 0; margin-right: 20px;
+            border-right: 1px solid #dde3ef;
+          }
+          .meta-item:last-child { border-right: none; }
+          .meta-label {
+            font-family: Arial, sans-serif;
+            font-size: 9.5px; color: #999;
+            text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;
+          }
+          .meta-value {
+            font-family: Arial, sans-serif;
+            font-size: 12px; color: #111; font-weight: 700;
+          }
+
+          /* ── Document Body ── */
+          .doc-body {
+            padding: 36px 48px 44px;
+            background: #fff;
+          }
+
+          .doc-body * {
+            font-family: 'Times New Roman', Times, serif !important;
+            line-height: 1.85 !important;
+            color: #1a1a1a;
+          }
+
+          .doc-body p, .doc-body div {
+            margin-bottom: 6px;
+            text-align: left;
+          }
+
+          .doc-body h1, .doc-body h2, .doc-body h3,
+          .doc-body h4, .doc-body h5, .doc-body h6 {
+            font-family: Arial, sans-serif !important;
+            font-weight: 700 !important;
+            color: #0f2850 !important;
+            margin: 18px 0 8px !important;
+            line-height: 1.3 !important;
+          }
+          .doc-body h1 { font-size: 16px !important; }
+          .doc-body h2 { font-size: 14px !important; }
+          .doc-body h3 { font-size: 13px !important; }
+
+          .doc-body strong, .doc-body b {
+            font-weight: 700 !important; color: #111 !important;
+          }
+
+          /* ── Ordersheet specific styling ── */
+          .doc-body .ordersheet-title {
+            font-family: Arial, sans-serif !important;
+            font-size: 18px !important;
+            font-weight: 700 !important;
+            color: #0f2850 !important;
+            text-align: center !important;
+            letter-spacing: 2px !important;
+            margin-bottom: 20px !important;
+            padding-bottom: 10px !important;
+            border-bottom: 2px solid #0f2850 !important;
+          }
+
+          .doc-body .ordersheet-field {
+            display: flex !important;
+            gap: 8px !important;
+            margin-bottom: 8px !important;
+            padding: 6px 0 !important;
+            border-bottom: 1px solid #f0f0f0 !important;
+          }
+
+          .doc-body .ordersheet-field-label {
+            font-weight: 700 !important;
+            color: #0f2850 !important;
+            min-width: 160px !important;
+          }
+
+          /* Tables */
+          .doc-body table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            margin: 16px 0 !important;
+            font-size: 12px !important;
+          }
+          .doc-body table th {
+            background: #0f2850 !important;
+            color: #fff !important;
+            font-family: Arial, sans-serif !important;
+            font-weight: 700 !important;
+            padding: 8px 12px !important;
+            text-align: left !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          .doc-body table td {
+            padding: 7px 12px !important;
+            border: 1px solid #dde3ef !important;
+          }
+          .doc-body table tr:nth-child(even) td {
+            background: #f7f9fd !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+
+          .doc-body hr {
+            border: none !important;
+            border-top: 1px solid #dde3ef !important;
+            margin: 20px 0 !important;
+          }
+
+          /* ── Two-column party layout (injected by JS) ── */
+          .party-row {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: flex-start !important;
+            gap: 24px !important;
+            margin-bottom: 16px !important;
+          }
+          .party-left  { flex: 1; min-width: 0; }
+          .party-right { flex: 1; min-width: 0; text-align: right; }
+          .party-right * { text-align: right !important; }
+
+          /* ── Signature ── */
+          .signature-section {
+            margin-top: 52px; padding-top: 20px;
+            border-top: 1px solid #dde3ef;
+            display: flex; justify-content: flex-end;
+          }
+          .signature-block { text-align: center; min-width: 200px; }
+          .signature-line { height: 1px; background: #555; margin-bottom: 7px; }
+          .signature-label {
+            font-family: Arial, sans-serif !important;
+            font-size: 11px; color: #555;
+            text-transform: uppercase; letter-spacing: 0.5px;
+          }
+          .signature-date {
+            font-family: Arial, sans-serif !important;
+            font-size: 11px; color: #999; margin-top: 3px;
+          }
+
+          /* ── Footer ── */
+          .doc-footer {
+            background: #0f2850;
+            padding: 11px 40px;
+            display: flex; align-items: center;
+            justify-content: space-between; gap: 16px;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          .footer-note {
+            font-family: Arial, sans-serif;
+            font-size: 9.5px; color: rgba(196,160,80,0.85); font-style: italic;
+          }
+          .footer-case {
+            font-family: Arial, sans-serif;
+            font-size: 9.5px; color: rgba(255,255,255,0.45); white-space: nowrap;
+          }
+
+          /* ── Print ── */
+          @media print {
+            html, body {
+              background: #fff !important; padding: 0 !important; margin: 0 !important;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
             }
-          </style>
-        </head>
-        <body>
-          ${document.contentHtml}
-        </body>
-        </html>
-      `);
+            .no-print { display: none !important; }
+            .paper { max-width: 100% !important; box-shadow: none !important; border-radius: 0 !important; }
+            .letterhead { background: #0f2850 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .gold-bar { background: linear-gradient(90deg, #b8943a 0%, #e8c96a 50%, #b8943a 100%) !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .title-band { background: #f4f6fb !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .doc-footer { background: #0f2850 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .doc-body table th { background: #0f2850 !important; color: #fff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .doc-body table tr:nth-child(even) td { background: #f7f9fd !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+          }
+
+        </style>
+      </head>
+      <body>
+
+        <div class="print-toolbar no-print">
+          <button class="btn btn-close" onclick="window.close()">✕ Close</button>
+          <button class="btn btn-print" onclick="window.print()">🖨 Print / Save as PDF</button>
+        </div>
+
+        <div class="paper">
+
+          <div class="letterhead">
+            <div class="letterhead-inner">
+              <div class="emblem">⚖</div>
+              <div class="letterhead-text">
+                <div class="gov-name">Government of Chandigarh</div>
+                <div class="dept-name">Department of Legal Affairs</div>
+                <div class="doc-sub">Official Legal Document — Confidential</div>
+              </div>
+            </div>
+            <div class="gold-bar"></div>
+          </div>
+
+          <div class="title-band">
+            <div>
+              <div class="doc-title">${documentType}</div>
+              <div class="doc-subtitle">
+                Case No: ${this.case?.caseNumber || '—'}
+                ${this.case?.subject ? '&nbsp;|&nbsp;' + this.case.subject : ''}
+              </div>
+            </div>
+            <div class="status-chip ${statusClass}">
+              <span class="status-dot"></span>
+              ${document.status || 'N/A'}
+            </div>
+          </div>
+
+          <div class="meta-row">
+            ${createdDate ? `<div class="meta-item"><span class="meta-label">Created</span><span class="meta-value">${createdDate}</span></div>` : ''}
+            ${signedDate ? `<div class="meta-item"><span class="meta-label">Signed</span><span class="meta-value">${signedDate}</span></div>` : ''}
+            <div class="meta-item"><span class="meta-label">Generated</span><span class="meta-value">${generatedDate}</span></div>
+            ${this.case?.priority ? `<div class="meta-item"><span class="meta-label">Priority</span><span class="meta-value">${this.case.priority}</span></div>` : ''}
+          </div>
+
+          <div class="doc-body" id="docBody">
+            ${document.contentHtml}
+            ${
+              signedDate
+                ? `
+            <div class="signature-section">
+              <div class="signature-block">
+                <div class="signature-line"></div>
+                <div class="signature-label">Authorised Signatory</div>
+                <div class="signature-date">Signed on: ${signedDate}</div>
+              </div>
+            </div>`
+                : ''
+            }
+          </div>
+
+          <div class="doc-footer">
+            <span class="footer-note">This is a system-generated document. No manual signature required unless stated.</span>
+            <span class="footer-case">${this.case?.caseNumber || ''}</span>
+          </div>
+
+        </div>
+
+        <script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var body = document.getElementById('docBody');
+    if (!body) return;
+
+    var docType = '${documentType}'.toUpperCase();
+
+    // ── ORDERSHEET ────────────────────────────────────────────────────────
+    if (docType.includes('ORDER')) {
+      var allNodes = Array.from(body.querySelectorAll('p, div'));
+      allNodes.forEach(function (el) {
+        var text = (el.innerText || el.textContent || '').trim();
+        if (!text) return;
+
+        if (text.toUpperCase() === 'ORDERSHEET' || text.toUpperCase() === 'ORDER SHEET') {
+          el.style.fontFamily = 'Arial, sans-serif';
+          el.style.fontSize = '18px';
+          el.style.fontWeight = '700';
+          el.style.color = '#0f2850';
+          el.style.textAlign = 'center';
+          el.style.letterSpacing = '2px';
+          el.style.paddingBottom = '10px';
+          el.style.borderBottom = '2px solid #0f2850';
+          el.style.marginBottom = '20px';
+          return;
+        }
+
+        if (text.includes(':')) {
+          var colonIdx = text.indexOf(':');
+          var label = text.substring(0, colonIdx).trim();
+          var value = text.substring(colonIdx + 1).trim();
+          if (label && label.split(' ').length <= 5) {
+            el.innerHTML =
+              '<span style="font-weight:700;color:#0f2850;font-family:Arial,sans-serif;min-width:160px;display:inline-block;">'
+              + label + ':</span>'
+              + '<span style="color:#1a1a1a;">' + value + '</span>';
+            el.style.display = 'flex';
+            el.style.gap = '8px';
+            el.style.padding = '6px 0';
+            el.style.borderBottom = '1px solid #f0f0f0';
+          }
+        }
+
+        if (text.startsWith('[') || text.length > 60) {
+          el.style.marginTop = '20px';
+          el.style.padding = '16px';
+          el.style.background = '#f7f9fd';
+          el.style.borderLeft = '3px solid #0f2850';
+          el.style.borderRadius = '0 4px 4px 0';
+          el.style.lineHeight = '1.8';
+        }
+      });
+      return;
+    }
+
+    // ── NOTICE: collect only TRUE LEAF nodes (no element children) ────────
+    function getLeafElements(root) {
+      var leaves = [];
+      var all = Array.from(root.querySelectorAll('*'));
+      all.forEach(function(el) {
+        // A true leaf: no child ELEMENTS (may have text nodes)
+        var hasElementChildren = Array.from(el.children).some(function(c) {
+          return c.nodeType === 1;
+        });
+        if (!hasElementChildren) {
+          var text = (el.innerText || el.textContent || '').trim();
+          if (text.length > 0) {
+            leaves.push(el);
+          }
+        }
+      });
+      return leaves;
+    }
+
+    var leaves = getLeafElements(body);
+
+    var matterIdx = -1;
+    var utIdx     = -1;
+    var endIdx    = -1;
+
+    var endKeywords = ['subject:', 'case nature', 'whereas', 'notice / summons', 'notice/summons', 'summons'];
+
+    leaves.forEach(function(el, idx) {
+      var text  = (el.innerText || el.textContent || '').trim();
+      var lower = text.toLowerCase();
+      var upper = text.toUpperCase();
+
+      if (utIdx === -1 && upper.includes('UT CHANDIGARH')) {
+        utIdx = idx;
+      }
+      if (matterIdx === -1 && lower.includes('in the matter of')) {
+        matterIdx = idx;
+      }
+      if (matterIdx > -1 && endIdx === -1 && idx > matterIdx) {
+        if (endKeywords.some(function(k){ return lower.startsWith(k); })) {
+          endIdx = idx;
+        }
+      }
+    });
+
+    if (matterIdx === -1) return;
+    if (endIdx === -1) endIdx = matterIdx + 8;
+
+    var leftLeaves  = utIdx > -1 ? leaves.slice(utIdx, matterIdx) : [];
+    var rightLeaves = leaves.slice(matterIdx, endIdx);
+
+    if (rightLeaves.length === 0) return;
+
+    // Find the docBody-level ancestor of the first relevant node
+    var firstNode = leftLeaves.length > 0 ? leftLeaves[0] : rightLeaves[0];
+    var anchor = firstNode;
+    while (anchor.parentElement && anchor.parentElement.id !== 'docBody') {
+      anchor = anchor.parentElement;
+    }
+
+    // Build columns using only the leaf text content (not outerHTML to avoid duplication)
+    var leftHtml = leftLeaves.map(function(el) {
+      var text = (el.innerText || el.textContent || '').trim();
+      var tag  = el.tagName.toLowerCase();
+      // Preserve bold/strong if original element was bold
+      var isBold = el.style.fontWeight === 'bold' || el.tagName === 'STRONG' || el.tagName === 'B'
+        || window.getComputedStyle(el).fontWeight >= 600;
+      return '<div style="margin-bottom:5px;line-height:1.7;' + (isBold ? 'font-weight:700;' : '') + '">' + text + '</div>';
+    }).join('');
+
+    var rightHtml = rightLeaves.map(function(el) {
+      var text = (el.innerText || el.textContent || '').trim();
+      var isBold = el.style.fontWeight === 'bold' || el.tagName === 'STRONG' || el.tagName === 'B'
+        || window.getComputedStyle(el).fontWeight >= 600;
+      return '<div style="text-align:right;margin-bottom:5px;line-height:1.7;' + (isBold ? 'font-weight:700;' : '') + '">' + text + '</div>';
+    }).join('');
+
+    // Create flex row
+    var row = document.createElement('div');
+    row.className = 'party-row';
+    row.innerHTML =
+      '<div class="party-left">'  + leftHtml  + '</div>' +
+      '<div class="party-right">' + rightHtml + '</div>';
+
+    // Insert before the anchor (docBody-level element)
+    if (anchor && anchor.parentElement) {
+      anchor.parentElement.insertBefore(row, anchor);
+    }
+
+    // Hide the original docBody-level ancestors of all affected leaves
+    var hidden = new Set();
+    leftLeaves.concat(rightLeaves).forEach(function(el) {
+      var hide = el;
+      while (hide.parentElement && hide.parentElement.id !== 'docBody') {
+        hide = hide.parentElement;
+      }
+      if (!hidden.has(hide)) {
+        hidden.add(hide);
+        hide.style.display = 'none';
+      }
+    });
+  });
+</script>
+
+      </body>
+      </html>
+    `);
+
       printWindow.document.close();
-      setTimeout(() => {
-        printWindow.print();
-      }, 250);
+      setTimeout(() => printWindow.focus(), 300);
     }
   }
 
