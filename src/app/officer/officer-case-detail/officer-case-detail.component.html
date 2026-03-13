@@ -1,36 +1,39 @@
 <div class="case-detail-container">
+
   <!-- Header -->
   <div class="header-section">
-    <button mat-icon-button (click)="goBack()" class="back-button">
-      <mat-icon>arrow_back</mat-icon>
-    </button>
-    <h2>Case Details</h2>
-    <div class="header-actions">
-      <button mat-raised-button (click)="refresh()" [disabled]="loading">
+    <div class="header-left">
+      <button mat-icon-button (click)="refresh()" [disabled]="loading" class="refresh-icon-btn" matTooltip="Refresh">
         <mat-icon>refresh</mat-icon>
-        Refresh
       </button>
     </div>
+    <div class="header-center">
+      <h2>Case Details</h2>
+    </div>
+    <div class="header-right"></div>
   </div>
 
   <!-- Loading -->
   <div *ngIf="loading" class="loading-container">
-    <mat-spinner diameter="50"></mat-spinner>
+    <div class="loading-ring">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
     <p>Loading case details...</p>
   </div>
 
   <!-- Error -->
   <div *ngIf="error && !loading" class="error-container">
-    <mat-icon color="warn">error</mat-icon>
+    <mat-icon color="warn">error_outline</mat-icon>
     <p>{{ error }}</p>
-    <button mat-raised-button color="primary" (click)="loadCaseDetails()">Retry</button>
+    <button mat-flat-button color="primary" (click)="loadCaseDetails()">Retry</button>
   </div>
 
   <!-- Case Details -->
   <div *ngIf="!loading && !error && caseData" class="case-content">
-    <!-- Workflow / condition failure message (stays visible until dismissed) -->
+
+    <!-- Workflow Error Banner -->
     <div *ngIf="transitionError" class="workflow-error-banner" role="alert">
-      <mat-icon color="warn">warning</mat-icon>
+      <mat-icon>warning_amber</mat-icon>
       <div class="workflow-error-content">
         <strong>Action could not be completed</strong>
         <p class="workflow-error-reason">{{ transitionError }}</p>
@@ -40,391 +43,339 @@
       </button>
     </div>
 
-    <!-- Quick Summary Card -->
-    <mat-card class="summary-card">
-      <mat-card-content>
-        <div class="summary-grid">
-          <div class="summary-item primary">
-            <div class="summary-label">Case Number</div>
-            <div class="summary-value">{{ caseData.caseNumber }}</div>
+    <!-- Hero Summary Card -->
+    <div class="hero-card">
+      <div class="hero-inner">
+        <!-- Case Number Row -->
+        <div class="hero-top">
+          <div class="hero-accent-bar"></div>
+          <div class="hero-case-info">
+            <div class="hero-case-label">Case Number</div>
+            <div class="hero-case-number">{{ caseData.caseNumber }}</div>
           </div>
-          <div class="summary-item">
-            <div class="summary-label">Status</div>
-            <div class="summary-value">
-              <span [class]="'status-badge ' + getStatusClass(caseData.currentStateName || caseData.status)">
+        </div>
+        <!-- Meta Fields Row -->
+        <div class="hero-fields">
+          <div class="hero-field">
+            <div class="hf-label">Status</div>
+            <div class="hf-value">
+              <span [class]="'status-pill ' + getStatusClass(caseData.currentStateName || caseData.status)">
+                <span class="status-dot"></span>
                 {{ caseData.currentStateName || caseData.status }}
               </span>
             </div>
           </div>
-          <div class="summary-item">
-            <div class="summary-label">Applicant</div>
-            <div class="summary-value">{{ caseData.applicantName }}</div>
+          <div class="hero-field">
+            <div class="hf-label">Applicant</div>
+            <div class="hf-value">{{ caseData.applicantName }}</div>
           </div>
-          <div class="summary-item">
-            <div class="summary-label">Case Type</div>
-            <div class="summary-value">{{ caseData.caseTypeName }}</div>
+          <div class="hero-field">
+            <div class="hf-label">Case Type</div>
+            <div class="hf-value">{{ caseData.caseTypeName }}</div>
           </div>
-          <div class="summary-item">
-            <div class="summary-label">Priority</div>
-            <div class="summary-value">
-              <span [class]="'priority-badge ' + getPriorityClass(caseData.priority)">
+          <div class="hero-field">
+            <div class="hf-label">Priority</div>
+            <div class="hf-value">
+              <span [class]="'priority-pill ' + getPriorityClass(caseData.priority)">
                 {{ caseData.priority }}
               </span>
             </div>
           </div>
-          <div class="summary-item">
-            <div class="summary-label">Application Date</div>
-            <div class="summary-value">{{ caseData.applicationDate | date: 'dd/MM/yyyy' }}</div>
+          <div class="hero-field">
+            <div class="hf-label">Application Date</div>
+            <div class="hf-value">{{ caseData.applicationDate | date: 'dd MMM yyyy' }}</div>
           </div>
         </div>
-      </mat-card-content>
-    </mat-card>
+      </div>
+    </div>
 
-    <!-- Tabs for different sections -->
-    <mat-tab-group class="case-tabs" animationDuration="300ms">
-      
-      <!-- Case Info Tab -->
+    <!-- Tabs -->
+    <mat-tab-group class="case-tabs" animationDuration="200ms">
+
+      <!-- ── Case Info Tab ── -->
       <mat-tab label="Case Info">
         <div class="tab-content">
-          <!-- Case Information Card -->
-          <mat-card class="info-card">
-            <mat-card-header>
-              <mat-card-title>
-                <mat-icon>description</mat-icon>
-                Case Information
-              </mat-card-title>
-            </mat-card-header>
-            <mat-card-content>
-              <div class="info-grid">
-                <div class="info-item">
-                  <label>Case Number:</label>
-                  <span class="value">{{ caseData.caseNumber }}</span>
-                </div>
-                <div class="info-item">
-                  <label>Case Type:</label>
-                  <span class="value">{{ caseData.caseTypeName }}</span>
-                </div>
-                <div class="info-item">
-                  <label>Case Nature:</label>
-                  <span class="value">{{ caseData.caseNatureName }}</span>
-                </div>
-                <div class="info-item">
-                  <label>Current Status:</label>
-                  <span [class]="'status-badge ' + getStatusClass(caseData.currentStateName || caseData.status)">
+
+          <!-- Case Information -->
+          <div class="detail-section">
+            <div class="section-header">
+              <div class="section-icon"><mat-icon>folder_open</mat-icon></div>
+              <span class="section-title">Case Information</span>
+            </div>
+            <div class="detail-grid">
+              <div class="detail-cell">
+                <div class="cell-label">Case Number</div>
+                <div class="cell-value mono">{{ caseData.caseNumber }}</div>
+              </div>
+              <div class="detail-cell">
+                <div class="cell-label">Case Type</div>
+                <div class="cell-value">{{ caseData.caseTypeName }}</div>
+              </div>
+              <div class="detail-cell">
+                <div class="cell-label">Case Nature</div>
+                <div class="cell-value">{{ caseData.caseNatureName }}</div>
+              </div>
+              <div class="detail-cell">
+                <div class="cell-label">Current Status</div>
+                <div class="cell-value">
+                  <span [class]="'status-pill ' + getStatusClass(caseData.currentStateName || caseData.status)">
+                    <span class="status-dot"></span>
                     {{ caseData.currentStateName || caseData.status }}
                   </span>
                 </div>
-                <div class="info-item">
-                  <label>Priority:</label>
-                  <span [class]="'priority-badge ' + getPriorityClass(caseData.priority)">
-                    {{ caseData.priority }}
-                  </span>
-                </div>
-                <div class="info-item">
-                  <label>Application Date:</label>
-                  <span class="value">{{ caseData.applicationDate | date: 'dd/MM/yyyy' }}</span>
-                </div>
-                <div class="info-item" *ngIf="caseData.assignedToOfficerName">
-                  <label>Assigned To:</label>
-                  <span class="value">{{ caseData.assignedToOfficerName }} ({{ caseData.assignedToRole }})</span>
-                </div>
-                <div class="info-item" *ngIf="caseData.assignedToUnitName">
-                  <label>Unit:</label>
-                  <span class="value">{{ caseData.assignedToUnitName }}</span>
+              </div>
+              <div class="detail-cell">
+                <div class="cell-label">Priority</div>
+                <div class="cell-value">
+                  <span [class]="'priority-pill ' + getPriorityClass(caseData.priority)">{{ caseData.priority }}</span>
                 </div>
               </div>
-            </mat-card-content>
-          </mat-card>
-
-          <!-- Applicant Information Card -->
-          <mat-card class="info-card">
-      <mat-card-header>
-        <mat-card-title>
-          <mat-icon>person</mat-icon>
-          Applicant Information
-        </mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="info-grid">
-          <div class="info-item">
-            <label>Name:</label>
-            <span class="value">{{ caseData.applicantName }}</span>
-          </div>
-          <div class="info-item">
-            <label>Mobile:</label>
-            <span class="value">{{ caseData.applicantMobile }}</span>
-          </div>
-          <div class="info-item" *ngIf="caseData.applicantEmail">
-            <label>Email:</label>
-            <span class="value">{{ caseData.applicantEmail }}</span>
-          </div>
-        </div>
-      </mat-card-content>
-    </mat-card>
-
-    <!-- Case Details Card -->
-    <mat-card class="info-card">
-      <mat-card-header>
-        <mat-card-title>
-          <mat-icon>info</mat-icon>
-          Case Details
-        </mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="info-item">
-          <label>Subject:</label>
-          <p class="value">{{ caseData.subject }}</p>
-        </div>
-        <div class="info-item" *ngIf="caseData.description">
-          <label>Description:</label>
-          <p class="value">{{ caseData.description }}</p>
-        </div>
-      </mat-card-content>
-    </mat-card>
-
-          <!-- Form Data Card -->
-          <mat-card class="info-card" *ngIf="hasParsedCaseData()">
-            <mat-card-header>
-              <mat-card-title>
-                <mat-icon>assignment</mat-icon>
-                Form Data
-              </mat-card-title>
-            </mat-card-header>
-            <mat-card-content>
-              <div class="form-data-grid">
-                <div class="form-data-item" *ngFor="let item of parsedCaseData | keyvalue">
-                  <label>{{ item.key | titlecase }}:</label>
-                  <span class="value">{{ item.value }}</span>
+              <div class="detail-cell">
+                <div class="cell-label">Application Date</div>
+                <div class="cell-value">{{ caseData.applicationDate | date: 'dd MMM yyyy' }}</div>
+              </div>
+              <div class="detail-cell" *ngIf="caseData.assignedToOfficerName">
+                <div class="cell-label">Assigned To</div>
+                <div class="cell-value">
+                  {{ caseData.assignedToOfficerName }}
+                  <span class="role-tag">{{ caseData.assignedToRole }}</span>
                 </div>
               </div>
-            </mat-card-content>
-          </mat-card>
+              <div class="detail-cell" *ngIf="caseData.assignedToUnitName">
+                <div class="cell-label">Unit</div>
+                <div class="cell-value">{{ caseData.assignedToUnitName }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Applicant Information -->
+          <div class="detail-section">
+            <div class="section-header">
+              <div class="section-icon"><mat-icon>person_outline</mat-icon></div>
+              <span class="section-title">Applicant Information</span>
+            </div>
+            <div class="detail-grid">
+              <div class="detail-cell">
+                <div class="cell-label">Name</div>
+                <div class="cell-value">{{ caseData.applicantName }}</div>
+              </div>
+              <div class="detail-cell">
+                <div class="cell-label">Mobile</div>
+                <div class="cell-value">{{ caseData.applicantMobile }}</div>
+              </div>
+              <div class="detail-cell" *ngIf="caseData.applicantEmail">
+                <div class="cell-label">Email</div>
+                <div class="cell-value">{{ caseData.applicantEmail }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Case Details -->
+          <div class="detail-section">
+            <div class="section-header">
+              <div class="section-icon"><mat-icon>notes</mat-icon></div>
+              <span class="section-title">Case Details</span>
+            </div>
+            <div class="detail-block">
+              <div class="detail-cell">
+                <div class="cell-label">Subject</div>
+                <div class="cell-value narrative">{{ caseData.subject }}</div>
+              </div>
+              <div class="detail-cell" *ngIf="caseData.description">
+                <div class="cell-label">Description</div>
+                <div class="cell-value narrative">{{ caseData.description }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Form Data -->
+          <div class="detail-section" *ngIf="hasParsedCaseData()">
+            <div class="section-header">
+              <div class="section-icon"><mat-icon>assignment</mat-icon></div>
+              <span class="section-title">Form Data</span>
+            </div>
+            <div class="detail-grid">
+              <div class="detail-cell" *ngFor="let item of parsedCaseData | keyvalue">
+                <div class="cell-label">{{ item.key | titlecase }}</div>
+                <div class="cell-value">{{ item.value }}</div>
+              </div>
+            </div>
+          </div>
+
         </div>
       </mat-tab>
 
-      <!-- Hearing Form Tab (Conditional) -->
+      <!-- ── Conditional Tabs ── -->
       <mat-tab label="Hearing" *ngIf="requiredModules.hearing">
         <div class="tab-content">
-          <app-hearing-form 
-            [caseId]="caseData.id"
-            (formSubmitted)="onHearingFormSubmitted()">
-          </app-hearing-form>
+          <app-hearing-form [caseId]="caseData.id" (formSubmitted)="onHearingFormSubmitted()"></app-hearing-form>
         </div>
       </mat-tab>
 
-      <!-- Notice Document Tab (Conditional) -->
       <mat-tab label="Notice" *ngIf="requiredModules.notice">
         <div class="tab-content">
-          <app-document-editor 
-            [caseId]="caseData.id" 
-            [caseData]="caseData"
-            [documentType]="'NOTICE'">
-          </app-document-editor>
+          <app-document-editor [caseId]="caseData.id" [caseData]="caseData" [documentType]="'NOTICE'"></app-document-editor>
         </div>
       </mat-tab>
 
-      <!-- Order Sheet Document Tab (Conditional) -->
       <mat-tab label="Order Sheet" *ngIf="requiredModules.ordersheet">
         <div class="tab-content">
-          <app-document-editor 
-            [caseId]="caseData.id" 
-            [caseData]="caseData"
-            [documentType]="'ORDERSHEET'">
-          </app-document-editor>
+          <app-document-editor [caseId]="caseData.id" [caseData]="caseData" [documentType]="'ORDERSHEET'"></app-document-editor>
         </div>
       </mat-tab>
 
-      <!-- Judgement Document Tab (Conditional) -->
       <mat-tab label="Judgement" *ngIf="requiredModules.judgement">
         <div class="tab-content">
-          <app-document-editor 
-            [caseId]="caseData.id" 
-            [caseData]="caseData"
-            [documentType]="'JUDGEMENT'">
-          </app-document-editor>
+          <app-document-editor [caseId]="caseData.id" [caseData]="caseData" [documentType]="'JUDGEMENT'"></app-document-editor>
         </div>
       </mat-tab>
 
-      <!-- Field Report Tab (Show when submitted or when field report is required) -->
       <mat-tab label="Field Report" *ngIf="requiredModules.fieldReport || hasFieldReportSubmitted || showSubmitFieldReportButton">
         <div class="tab-content">
           <app-field-report-view [caseId]="caseData.id"></app-field-report-view>
         </div>
       </mat-tab>
 
-      <!-- Workflow Actions Tab -->
+      <!-- ── Actions Tab ── -->
       <mat-tab label="Actions">
         <div class="tab-content">
-          <!-- Field Report Request Card (for Tehsildar) -->
-          <mat-card *ngIf="showRequestFieldReportButton" class="info-card action-card">
-            <mat-card-header>
-              <mat-card-title>
-                <mat-icon>assignment</mat-icon>
-                Field Report Request
-              </mat-card-title>
-            </mat-card-header>
-            <mat-card-content>
-              <p>Request a field report from a field officer for this case.</p>
-              <button 
-                mat-raised-button 
-                color="primary"
-                (click)="openRequestFieldReportDialog()"
-                [disabled]="loading || executing || !caseData">
-                <mat-icon>send</mat-icon>
-                Request Field Report
-              </button>
-            </mat-card-content>
-          </mat-card>
 
-          <!-- Field Report Submission Card (for Field Officers) -->
-          <mat-card *ngIf="showSubmitFieldReportButton" class="info-card action-card">
-            <mat-card-header>
-              <mat-card-title>
-                <mat-icon>description</mat-icon>
-                Field Report Submission
-              </mat-card-title>
-            </mat-card-header>
-            <mat-card-content>
-              <p>Submit field report for this case.</p>
-              <button 
-                mat-raised-button 
-                color="primary"
-                (click)="openFieldReportForm()"
-                [disabled]="loading || executing">
-                <mat-icon>send</mat-icon>
-                Submit Field Report
-              </button>
-            </mat-card-content>
-          </mat-card>
+          <!-- Field Report Request -->
+          <div class="detail-section action-section" *ngIf="showRequestFieldReportButton">
+            <div class="section-header">
+              <div class="section-icon accent-amber"><mat-icon>assignment_late</mat-icon></div>
+              <span class="section-title">Field Report Request</span>
+            </div>
+            <p class="action-description">Request a field report from a field officer for this case.</p>
+            <button mat-flat-button class="action-btn-primary" (click)="openRequestFieldReportDialog()"
+              [disabled]="loading || executing || !caseData">
+              <mat-icon>send</mat-icon>
+              Request Field Report
+            </button>
+          </div>
 
-          <!-- Attendance Marking Card -->
-          <mat-card *ngIf="showMarkAttendanceButton" class="info-card action-card">
-            <mat-card-header>
-              <mat-card-title>
-                <mat-icon>event_available</mat-icon>
-                Attendance Marking
-              </mat-card-title>
-            </mat-card-header>
-            <mat-card-content>
-              <p>Mark attendance of parties for this case proceeding.</p>
-              <button 
-                mat-raised-button 
-                color="primary"
-                (click)="openAttendanceForm()"
-                [disabled]="loading || executing">
-                <mat-icon>check_circle</mat-icon>
-                Mark Attendance
-              </button>
-            </mat-card-content>
-          </mat-card>
+          <!-- Field Report Submission -->
+          <div class="detail-section action-section" *ngIf="showSubmitFieldReportButton">
+            <div class="section-header">
+              <div class="section-icon accent-blue"><mat-icon>description</mat-icon></div>
+              <span class="section-title">Field Report Submission</span>
+            </div>
+            <p class="action-description">Submit field report for this case.</p>
+            <button mat-flat-button class="action-btn-primary" (click)="openFieldReportForm()" [disabled]="loading || executing">
+              <mat-icon>upload_file</mat-icon>
+              Submit Field Report
+            </button>
+          </div>
 
-          <!-- Workflow Actions Card -->
-    <mat-card class="info-card actions-card">
-      <mat-card-header>
-        <mat-card-title>
-          <mat-icon>play_circle</mat-icon>
-          Available Actions
-        </mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <div *ngIf="loadingTransitions" class="loading-small">
-          <mat-spinner diameter="30"></mat-spinner>
-          <span>Loading actions...</span>
-        </div>
-        <div *ngIf="!loadingTransitions && transitionError" class="error-message">
-          <mat-icon color="warn">error</mat-icon>
-          <p>{{ transitionError }}</p>
-          <button mat-button (click)="loadAvailableTransitions()" class="retry-btn">
-            <mat-icon>refresh</mat-icon>
-            Retry
-          </button>
-        </div>
-        <div *ngIf="!loadingTransitions && !transitionError && transitions.length === 0" class="no-actions">
-          <mat-icon>info</mat-icon>
-          <p>No actions available at this time</p>
-          <small>All required actions for this case have been completed, or no actions are available in the current workflow state.</small>
-        </div>
-        <div *ngIf="!loadingTransitions && !transitionError && transitions.length > 0" class="action-buttons">
-          <button
-            *ngFor="let transition of transitions"
-            mat-raised-button
-            [class]="'action-btn ' + getActionClass(transition.transitionCode)"
-            (click)="handleActionClick(transition)"
-            [disabled]="executing || !isTransitionExecutable(transition)"
-            [matTooltip]="getBlockingReasons(transition)">
-            <mat-icon>
-              {{ transition.transitionCode.includes('APPROVE') ? 'check_circle' : 
-                 transition.transitionCode.includes('REJECT') ? 'cancel' : 
-                 transition.transitionCode.includes('RETURN') ? 'undo' : 'play_arrow' }}
-            </mat-icon>
-            {{ transition.transitionName }}
-            <span *ngIf="transition.requiresComment" class="comment-required">*</span>
-            <mat-icon *ngIf="!isTransitionExecutable(transition)" class="blocked-icon" color="warn">lock</mat-icon>
-          </button>
-          <!-- Show blocking reasons for disabled actions -->
-          <div *ngIf="hasBlockedTransitions()" class="blocking-reasons">
-            <mat-icon color="warn">info</mat-icon>
-            <div class="reasons-list">
-              <div *ngFor="let transition of getBlockedTransitions()">
-                <div>
-                  <strong>{{ transition.transitionName }}:</strong> {{ getBlockingReasons(transition) }}
+          <!-- Attendance Marking -->
+          <div class="detail-section action-section" *ngIf="showMarkAttendanceButton">
+            <div class="section-header">
+              <div class="section-icon accent-green"><mat-icon>event_available</mat-icon></div>
+              <span class="section-title">Attendance Marking</span>
+            </div>
+            <p class="action-description">Mark attendance of parties for this case proceeding.</p>
+            <button mat-flat-button class="action-btn-primary" (click)="openAttendanceForm()" [disabled]="loading || executing">
+              <mat-icon>check_circle_outline</mat-icon>
+              Mark Attendance
+            </button>
+          </div>
+
+          <!-- Available Workflow Actions -->
+          <div class="detail-section">
+            <div class="section-header">
+              <div class="section-icon"><mat-icon>bolt</mat-icon></div>
+              <span class="section-title">Available Actions</span>
+            </div>
+
+            <div *ngIf="loadingTransitions" class="loading-inline">
+              <mat-spinner diameter="22"></mat-spinner>
+              <span>Loading actions...</span>
+            </div>
+
+            <div *ngIf="!loadingTransitions && !transitionError && transitions.length === 0" class="empty-state">
+              <mat-icon>check_circle_outline</mat-icon>
+              <p>No actions available at this time</p>
+              <small>All required actions have been completed, or no actions are available in the current workflow state.</small>
+            </div>
+
+            <div *ngIf="!loadingTransitions && !transitionError && transitions.length > 0" class="workflow-actions">
+              <button
+                *ngFor="let transition of transitions"
+                mat-flat-button
+                [class]="'workflow-btn ' + getActionClass(transition.transitionCode)"
+                (click)="handleActionClick(transition)"
+                [disabled]="executing || !isTransitionExecutable(transition)"
+                [matTooltip]="getBlockingReasons(transition)">
+                <mat-icon>
+                  {{ transition.transitionCode.includes('APPROVE') ? 'check_circle' :
+                     transition.transitionCode.includes('REJECT')  ? 'cancel' :
+                     transition.transitionCode.includes('RETURN')  ? 'undo' : 'play_arrow' }}
+                </mat-icon>
+                {{ transition.transitionName }}
+                <span *ngIf="transition.requiresComment" class="required-star">*</span>
+                <mat-icon *ngIf="!isTransitionExecutable(transition)" class="lock-icon">lock</mat-icon>
+              </button>
+
+              <div *ngIf="hasBlockedTransitions()" class="blocking-notice">
+                <mat-icon>info_outline</mat-icon>
+                <div class="blocking-list">
+                  <div *ngFor="let transition of getBlockedTransitions()" class="blocking-item">
+                    <strong>{{ transition.transitionName }}:</strong> {{ getBlockingReasons(transition) }}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </mat-card-content>
-    </mat-card>
 
         </div>
       </mat-tab>
 
-      <!-- Workflow History Tab -->
+      <!-- ── History Tab ── -->
       <mat-tab label="History">
         <div class="tab-content">
-          <!-- Workflow History Card -->
-          <mat-card class="info-card">
-            <mat-card-header>
-              <mat-card-title>
-                <mat-icon>history</mat-icon>
-                Workflow History
-              </mat-card-title>
-            </mat-card-header>
-            <mat-card-content>
-              <div *ngIf="loadingHistory" class="loading-small">
-                <mat-spinner diameter="30"></mat-spinner>
-                <span>Loading history...</span>
-              </div>
-              <div *ngIf="!loadingHistory && history.length === 0" class="no-history">
-                <p>No history available</p>
-              </div>
-              <div *ngIf="!loadingHistory && history.length > 0" class="history-timeline">
-                <div *ngFor="let entry of history" class="history-entry">
-                  <div class="history-icon">
-                    <mat-icon>arrow_forward</mat-icon>
+          <div class="detail-section">
+            <div class="section-header">
+              <div class="section-icon"><mat-icon>history</mat-icon></div>
+              <span class="section-title">Workflow History</span>
+            </div>
+
+            <div *ngIf="loadingHistory" class="loading-inline">
+              <mat-spinner diameter="22"></mat-spinner>
+              <span>Loading history...</span>
+            </div>
+
+            <div *ngIf="!loadingHistory && history.length === 0" class="empty-state">
+              <mat-icon>history_toggle_off</mat-icon>
+              <p>No history available</p>
+            </div>
+
+            <div *ngIf="!loadingHistory && history.length > 0" class="timeline">
+              <div *ngFor="let entry of history; let last = last"
+                   class="timeline-item" [class.last]="last">
+                <div class="timeline-connector">
+                  <div class="timeline-dot"></div>
+                  <div class="timeline-line" *ngIf="!last"></div>
+                </div>
+                <div class="timeline-body">
+                  <div class="timeline-header">
+                    <span class="timeline-action">{{ entry.transitionName }}</span>
+                    <span class="timeline-date">{{ entry.performedAt | date: 'dd MMM yyyy · HH:mm' }}</span>
                   </div>
-                  <div class="history-content">
-                    <div class="history-header">
-                      <strong>{{ entry.transitionName }}</strong>
-                      <span class="history-date">{{ entry.performedAt | date: 'dd/MM/yyyy HH:mm' }}</span>
-                    </div>
-                    <div class="history-details">
-                      <span class="performed-by">
-                        by {{ entry.performedByOfficerName }} ({{ entry.performedByRole }})
-                      </span>
-                      <span class="state-change">
-                        {{ entry.fromStateCode }} → {{ entry.toStateCode }}
-                      </span>
-                    </div>
-                    <div class="history-comments" *ngIf="entry.comments">
-                      <mat-icon>comment</mat-icon>
-                      <span>{{ entry.comments }}</span>
-                    </div>
+                  <div class="timeline-meta">
+                    <span class="meta-officer">{{ entry.performedByOfficerName }}</span>
+                    <span class="meta-role">{{ entry.performedByRole }}</span>
+                    <span class="meta-divider">·</span>
+                    <span class="meta-states">{{ entry.fromStateCode }} → {{ entry.toStateCode }}</span>
+                  </div>
+                  <div class="timeline-comment" *ngIf="entry.comments">
+                    <mat-icon>format_quote</mat-icon>
+                    <span>{{ entry.comments }}</span>
                   </div>
                 </div>
               </div>
-            </mat-card-content>
-          </mat-card>
+            </div>
+
+          </div>
         </div>
       </mat-tab>
 
