@@ -23,9 +23,6 @@ export class OfficerCaseDetailComponent implements OnInit {
   userRoleCode: string = '';
   userRoleName: string = '';
 
-  // Latest Notice document status (DRAFT / FINAL / SIGNED)
-  latestNoticeStatus: 'DRAFT' | 'FINAL' | 'SIGNED' | null = null;
-
   loading = false;
   loadingTransitions = false;
   loadingHistory = false;
@@ -304,31 +301,6 @@ export class OfficerCaseDetailComponent implements OnInit {
     this.checkFieldReportSubmission();
 
     console.log('Required modules:', this.requiredModules);
-
-    // Load latest Notice status when Notice module is relevant
-    if (this.requiredModules.notice && this.caseId) {
-      this.loadLatestNoticeStatus();
-    }
-  }
-
-  /**
-   * Load latest Notice document status for the case
-   */
-  private loadLatestNoticeStatus(): void {
-    this.latestNoticeStatus = null;
-    this.caseService.getLatestDocument(this.caseId, 'NOTICE').subscribe({
-      next: (response) => {
-        if (response.success && response.data) {
-          const status = String(response.data.status || '').toUpperCase();
-          if (status === 'DRAFT' || status === 'FINAL' || status === 'SIGNED') {
-            this.latestNoticeStatus = status as 'DRAFT' | 'FINAL' | 'SIGNED';
-          }
-        }
-      },
-      error: (err) => {
-        console.warn('Failed to load latest Notice status for case', this.caseId, err);
-      }
-    });
   }
 
   /**
@@ -393,16 +365,13 @@ export class OfficerCaseDetailComponent implements OnInit {
    * Check if transition can be executed (not blocked by conditions)
    */
   isTransitionExecutable(transition: WorkflowTransitionDTO): boolean {
-    // If checklist explicitly blocks the transition, apply custom overrides
-    if (transition.checklist?.canExecute === false) {
-      // Custom rule: For Reader role, if latest Notice is in DRAFT status,
-      // allow executing transitions even if checklist reports canExecute = false.
-      // This matches requirement: "on Reader login, if document is in DRAFT mode,
-      // transition should be enabled."
-      if (this.isReader() && this.latestNoticeStatus === 'DRAFT') {
-        return true;
-      }
+    // For Reader role, always enable actions (ignore checklist blocking)
+    if (this.isReader()) {
+      return true;
+    }
 
+    // For other roles, respect checklist canExecute flag
+    if (transition.checklist?.canExecute === false) {
       return false;
     }
 
