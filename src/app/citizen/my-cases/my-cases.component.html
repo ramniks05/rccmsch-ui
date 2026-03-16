@@ -65,6 +65,21 @@
             </td>
           </ng-container>
 
+          <!-- Action required badge -->
+          <ng-container matColumnDef="actionRequired">
+            <th mat-header-cell *matHeaderCellDef>
+              <mat-icon class="header-icon">warning</mat-icon>
+              Action
+            </th>
+            <td mat-cell *matCellDef="let caseItem">
+              <span *ngIf="needsAction(caseItem)" class="action-required-badge" [matTooltip]="getActionRequiredLabel(caseItem)">
+                <mat-icon>campaign</mat-icon>
+                {{ getActionRequiredLabel(caseItem) }}
+              </span>
+              <span *ngIf="!needsAction(caseItem)" class="no-action">—</span>
+            </td>
+          </ng-container>
+
           <!-- Priority Column -->
           <ng-container matColumnDef="priority">
             <th mat-header-cell *matHeaderCellDef>

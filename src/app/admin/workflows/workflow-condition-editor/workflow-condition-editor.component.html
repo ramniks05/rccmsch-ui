@@ -1,51 +1,27 @@
 <div class="condition-editor">
+  <!-- Single source: workflow data keys from API -->
   <section class="condition-section">
     <h4 class="section-title">
       <mat-icon>assignment</mat-icon>
-      Module forms
+      Workflow data required
     </h4>
-    <div class="checkbox-list">
-      <label *ngFor="let flag of formFlags" class="checkbox-item">
-        <mat-checkbox
-          [checked]="isFormFlagChecked(flag.value)"
-          (change)="onFormFlagChange(flag.value, $event.checked)"
-        >
-          {{ flag.label }}
-        </mat-checkbox>
-      </label>
+    <p class="section-hint">Select keys that must exist in workflow data. Use only keys returned by the API (single source of truth).</p>
+    <div *ngIf="loadingKeys" class="loading-keys">
+      <mat-spinner diameter="24"></mat-spinner>
+      <span>Loading workflow data keys...</span>
     </div>
-  </section>
-
-  <section class="condition-section">
-    <h4 class="section-title">
-      <mat-icon>description</mat-icon>
-      Documents
-    </h4>
-    <div class="checkbox-list">
-      <label *ngFor="let flag of docFlags" class="checkbox-item">
-        <mat-checkbox
-          [checked]="isDocFlagChecked(flag.value)"
-          (change)="onDocFlagChange(flag.value, $event.checked)"
-        >
-          {{ flag.label }}
-        </mat-checkbox>
-      </label>
+    <div *ngIf="keysLoadError && !loadingKeys" class="keys-error">
+      <mat-icon color="warn">error</mat-icon>
+      <span>{{ keysLoadError }}</span>
     </div>
-  </section>
-
-  <section class="condition-section">
-    <h4 class="section-title">
-      <mat-icon>draw</mat-icon>
-      Digital signature (only for finalize, not drafting)
-    </h4>
-    <p class="section-hint">Add these only to the transition that <strong>finalizes</strong> Notice/Ordersheet/Judgement. Drafting does not require signature.</p>
-    <div class="checkbox-list">
-      <label *ngFor="let flag of docSignedFlags" class="checkbox-item">
+    <div *ngIf="!loadingKeys && keysWithBinding.length > 0" class="checkbox-list">
+      <label *ngFor="let item of keysWithBinding" class="checkbox-item">
         <mat-checkbox
-          [checked]="isDocSignedFlagChecked(flag.value)"
-          (change)="onDocSignedFlagChange(flag.value, $event.checked)"
+          [checked]="isDataKeyChecked(item.key)"
+          (change)="onDataKeyChange(item.key, $event.checked)"
         >
-          {{ flag.label }}
+          <span class="key-label">{{ item.label }}</span>
+          <span class="kind-badge" [ngClass]="getKindBadgeClass(item.kind)">{{ item.kind }}</span>
         </mat-checkbox>
       </label>
     </div>

@@ -36,6 +36,8 @@ export class ViewTransitionConditionsDialogComponent implements OnInit {
   transitionData: any = null;
   permissions: PermissionCondition[] = [];
   isLoading = true;
+  /** Labels from GET /api/admin/workflow/data-keys (single source) */
+  keyLabels: Record<string, string> = {};
 
   constructor(
     private workflowService: WorkflowConfigService,
@@ -50,6 +52,13 @@ export class ViewTransitionConditionsDialogComponent implements OnInit {
       this.isLoading = false;
       return;
     }
+    this.workflowService.getWorkflowDataKeys().subscribe({
+      next: (res) => {
+        if (res.success && res.data?.keysWithLabels) {
+          this.keyLabels = res.data.keysWithLabels;
+        }
+      }
+    });
     this.workflowService.getTransitionConditions(id).subscribe({
       next: (res) => {
         this.isLoading = false;
@@ -79,11 +88,14 @@ export class ViewTransitionConditionsDialogComponent implements OnInit {
     );
   }
 
+  /** Single source: prefer API keysWithLabels; fallback to WORKFLOW_FLAGS */
   getWorkflowFlagLabel(flag: string): string {
+    if (this.keyLabels[flag]) return this.keyLabels[flag];
     const allFlags = [
       ...WORKFLOW_FLAGS.formSubmitted,
       ...WORKFLOW_FLAGS.documentReady,
-      ...WORKFLOW_FLAGS.documentSigned
+      ...WORKFLOW_FLAGS.documentSigned,
+      ...WORKFLOW_FLAGS.special
     ];
     const found = allFlags.find(f => f.value === flag);
     return found ? found.label : flag;

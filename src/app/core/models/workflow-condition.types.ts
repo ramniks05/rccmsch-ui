@@ -1,6 +1,6 @@
 /**
  * Workflow condition types for admin configuration and checklist display.
- * See docs WORKFLOW_DOCUMENTATION.md / Workflow Condition Configuration Guide.
+ * Single source of truth: valid keys come from GET /api/admin/workflow/data-keys.
  */
 
 export type WorkflowConditionType =
@@ -9,7 +9,22 @@ export type WorkflowConditionType =
   | 'CASE_DATA_FIELD'
   | 'CASE_FILTER';
 
-export type ModuleType = 'HEARING' | 'NOTICE' | 'ORDERSHEET' | 'JUDGEMENT';
+export type ModuleType = 'HEARING' | 'NOTICE' | 'ORDERSHEET' | 'JUDGEMENT' | 'ATTENDANCE' | 'FIELD_REPORT';
+
+/** One item from GET /api/admin/workflow/data-keys data.keysWithBinding */
+export interface WorkflowDataKeyBinding {
+  key: string;
+  label: string;
+  moduleType: string;
+  kind: 'FORM' | 'DOCUMENT' | 'SPECIAL';
+}
+
+/** Response shape from GET /api/admin/workflow/data-keys */
+export interface WorkflowDataKeysResponse {
+  keys: string[];
+  keysWithLabels: Record<string, string>;
+  keysWithBinding: WorkflowDataKeyBinding[];
+}
 
 /** Admin API: single condition config for a transition (from GET conditions). */
 export interface WorkflowCondition {
@@ -43,6 +58,12 @@ export interface TransitionChecklist {
   canExecute: boolean;
   conditions: ConditionChecklistItem[];
   blockingReasons: string[];
+  /** IDs of document templates that this transition is about (e.g. draft/sign notice) */
+  allowedDocumentIds?: number[] | null;
+  /** Whether this transition allows drafting the document */
+  allowDocumentDraft?: boolean | null;
+  /** Whether this transition allows saving & signing the document */
+  allowDocumentSaveAndSign?: boolean | null;
 }
 
 /** Case transitions API: transition with checklist summary. */
@@ -61,6 +82,12 @@ export interface TransitionWithChecklist {
   description?: string;
   canExecute: boolean;
   blockingConditions?: BlockingConditionSummary[];
+  /** IDs of document templates this action is tied to (from checklist) */
+  allowedDocumentIds?: number[] | null;
+  /** Whether this action is specifically for drafting the document */
+  allowDocumentDraft?: boolean | null;
+  /** Whether this action is specifically for saving & signing the document */
+  allowDocumentSaveAndSign?: boolean | null;
 }
 
 /** Structured conditions payload for permission create/update. */
@@ -73,25 +100,34 @@ export interface ConditionsPayload {
   casePriorityIn?: string[];
 }
 
-/** Predefined workflow flags (form submitted / document ready / document signed). */
+/**
+ * Fallback labels when data-keys API is not available (e.g. view-only).
+ * Prefer keysWithLabels from GET /api/admin/workflow/data-keys.
+ */
 export const WORKFLOW_FLAGS = {
   formSubmitted: [
-    { value: 'HEARING_SUBMITTED', label: 'Require Hearing form submitted' },
-    { value: 'NOTICE_SUBMITTED', label: 'Require Notice form submitted' },
-    { value: 'ORDERSHEET_SUBMITTED', label: 'Require Ordersheet form submitted' },
-    { value: 'JUDGEMENT_SUBMITTED', label: 'Require Judgement form submitted' }
+    { value: 'HEARING_SUBMITTED', label: 'Hearing form submitted' },
+    { value: 'NOTICE_SUBMITTED', label: 'Notice form submitted' },
+    { value: 'ORDERSHEET_SUBMITTED', label: 'Ordersheet form submitted' },
+    { value: 'JUDGEMENT_SUBMITTED', label: 'Judgement form submitted' },
+    { value: 'ATTENDANCE_SUBMITTED', label: 'Attendance form submitted' },
+    { value: 'FIELD_REPORT_SUBMITTED', label: 'Field report form submitted' }
   ] as const,
   documentReady: [
-    { value: 'NOTICE_READY', label: 'Require Notice document ready' },
-    { value: 'ORDERSHEET_READY', label: 'Require Ordersheet document ready' },
-    { value: 'JUDGEMENT_READY', label: 'Require Judgement document ready' }
+    { value: 'NOTICE_READY', label: 'Notice document ready' },
+    { value: 'ORDERSHEET_READY', label: 'Ordersheet document ready' },
+    { value: 'JUDGEMENT_READY', label: 'Judgement document ready' }
   ] as const,
-  /** Digital signature required only when finalizing (not for drafting). Add to the transition that finalizes. */
   documentSigned: [
-    { value: 'NOTICE_SIGNED', label: 'Require Notice signed before finalize (not for draft)' },
-    { value: 'ORDERSHEET_SIGNED', label: 'Require Ordersheet signed before finalize (not for draft)' },
-    { value: 'JUDGEMENT_SIGNED', label: 'Require Judgement signed before finalize (not for draft)' }
-  ] as const
+    { value: 'NOTICE_DRAFT_CREATED', label: 'Draft notice created' },
+    { value: 'NOTICE_SIGNED', label: 'Notice document signed' },
+    { value: 'ORDERSHEET_DRAFT_CREATED', label: 'Draft ordersheet created' },
+    { value: 'ORDERSHEET_SIGNED', label: 'Ordersheet document signed' },
+    { value: 'JUDGEMENT_DRAFT_CREATED', label: 'Draft judgement created' },
+    { value: 'JUDGEMENT_SIGNED', label: 'Judgement document signed' }
+  ] as const,
+  /** Not shown in workflow data required – user selects from module forms/documents in permission only */
+  special: [] as const
 };
 
 /** Module types for form field conditions. */
@@ -99,7 +135,9 @@ export const MODULE_TYPES: { value: ModuleType; label: string }[] = [
   { value: 'HEARING', label: 'Hearing' },
   { value: 'NOTICE', label: 'Notice' },
   { value: 'ORDERSHEET', label: 'Ordersheet' },
-  { value: 'JUDGEMENT', label: 'Judgement' }
+  { value: 'JUDGEMENT', label: 'Judgement' },
+  { value: 'ATTENDANCE', label: 'Attendance' },
+  { value: 'FIELD_REPORT', label: 'Field Report' }
 ];
 
 /** Common form fields per module (fallback when schema API not available). */
@@ -125,6 +163,14 @@ export const MODULE_FIELDS: Record<ModuleType, { value: string; label: string }[
   JUDGEMENT: [
     { value: 'judgementNumber', label: 'Judgement number' },
     { value: 'judgementDate', label: 'Judgement date' },
+    { value: 'remarks', label: 'Remarks' }
+  ],
+  ATTENDANCE: [
+    { value: 'present', label: 'Present' },
+    { value: 'remarks', label: 'Remarks' }
+  ],
+  FIELD_REPORT: [
+    { value: 'reportDate', label: 'Report date' },
     { value: 'remarks', label: 'Remarks' }
   ]
 };

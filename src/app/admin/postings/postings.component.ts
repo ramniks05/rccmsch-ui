@@ -125,25 +125,25 @@ export class PostingsComponent implements OnInit, AfterViewInit {
    * Load roles for dropdown
    */
   loadRoles(): void {
-    this.adminService.getAllRoles()
-      .pipe(
-        catchError(error => {
-          console.error('Failed to load roles:', error);
-          // Fallback to default roles if API fails
-          this.roles = [
-            { roleCode: 'ADMIN', roleName: 'Administrator' },
-            { roleCode: 'OFFICER', roleName: 'Officer' },
-            { roleCode: 'CLERK', roleName: 'Clerk' }
-          ];
-          return throwError(() => error);
-        })
-      )
+    // For postings we only need officer roles
+    this.adminService.getAllOfficerRoles()
+      .pipe(catchError(error => {
+        console.error('Failed to load roles:', error);
+        // Fallback to default roles if API fails
+        this.roles = [
+          { roleId: 0, roleCode: 'ADMIN', roleName: 'Administrator' },
+          { roleId: 0, roleCode: 'OFFICER', roleName: 'Officer' },
+          { roleId: 0, roleCode: 'CLERK', roleName: 'Clerk' }
+        ];
+        return throwError(() => error);
+      }))
       .subscribe({
         next: (response) => {
           const apiResponse = response?.success !== undefined ? response : { success: true, data: response };
           if (apiResponse.success && apiResponse.data) {
             // Map API response to component format
             this.roles = apiResponse.data.map((role: any) => ({
+              roleId: role.roleId ?? role.id,
               roleCode: role.roleCode,
               roleName: role.roleName,
               unitLevel: role.unitLevel,
@@ -277,17 +277,23 @@ export class PostingsComponent implements OnInit, AfterViewInit {
           <mat-error *ngIf="postingForm.get('unitId')?.hasError('required')">Administrative unit is required</mat-error>
         </mat-form-field>
 
-        <!-- Role Selection -->
+        <!-- Role Selection (by roleId from role master) -->
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Role *</mat-label>
-          <mat-select formControlName="roleCode">
+          <mat-select formControlName="roleId">
             <mat-option [value]="null">-- Select Role --</mat-option>
-            <mat-option *ngFor="let role of availableRoles" [value]="role.roleCode">
+            <mat-option *ngFor="let role of availableRoles" [value]="role.roleId">
               <mat-icon class="role-option-icon">{{ getRoleIcon(role.roleCode) }}</mat-icon>
               {{ role.roleName }} ({{ role.roleCode }})
             </mat-option>
           </mat-select>
-          <mat-error *ngIf="postingForm.get('roleCode')?.hasError('required')">Role is required</mat-error>
+          <mat-error *ngIf="postingForm.get('roleId')?.hasError('required')">Role is required</mat-error>
+        </mat-form-field>
+
+        <!-- Post Name textbox (editable, defaults from selected role code) -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Post Name</mat-label>
+          <input matInput formControlName="roleCode" placeholder="Enter post name">
         </mat-form-field>
       </form>
     </mat-dialog-content>
@@ -370,7 +376,8 @@ export class PostingDialogComponent {
       officerId: ['', Validators.required],
       courtId: [null],
       unitId: [null],
-      roleCode: ['', Validators.required]
+      roleId: [null, Validators.required],
+      roleCode: ['']
     });
 
     // Load administrative units
@@ -378,6 +385,16 @@ export class PostingDialogComponent {
 
     // Load all roles (no filtering as per documentation)
     this.availableRoles = this.data.roles || [];
+
+    // Keep roleCode in sync with selected roleId
+    this.postingForm.get('roleId')?.valueChanges.subscribe((roleId) => {
+      const selected = this.availableRoles.find((r: any) => r.roleId === roleId);
+      if (selected) {
+        this.postingForm.get('roleCode')?.setValue(selected.roleCode || '');
+      } else {
+        this.postingForm.get('roleCode')?.setValue('');
+      }
+    });
 
     // Watch posting type changes to update validation
     this.postingForm.get('postingType')?.valueChanges.subscribe(type => {
@@ -441,6 +458,7 @@ export class PostingDialogComponent {
       // Prepare payload based on posting type
       const payload: any = {
         officerId: formValue.officerId,
+        roleId: formValue.roleId,
         roleCode: formValue.roleCode,
         courtId: formValue.postingType === 'COURT' ? formValue.courtId : null,
         unitId: formValue.postingType === 'UNIT' ? formValue.unitId : null

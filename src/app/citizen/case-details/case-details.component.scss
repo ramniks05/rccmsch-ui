@@ -6,6 +6,38 @@
   padding: 40px 20px;
 }
 
+.application-details-section {
+  margin-bottom: 24px;
+}
+
+.available-actions-section {
+  margin-bottom: 28px;
+
+  .actions-card {
+    border-left: 4px solid #667eea;
+    background: #fafbff;
+
+    mat-card-header mat-card-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      mat-icon {
+        color: #667eea;
+      }
+    }
+
+    mat-card-subtitle {
+      margin-top: 4px;
+      color: #666;
+    }
+  }
+
+  ::ng-deep .available-actions {
+    margin-top: 0;
+  }
+}
+
 .case-info-section {
   margin-bottom: 24px;
 }
@@ -50,6 +82,53 @@
   color: #667eea;
 }
 
+.info-value.pending-with-value {
+  font-weight: 700;
+  color: #bf360c;
+}
+
+.pending-with-card {
+  margin-bottom: 20px;
+  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+  border: 2px solid #ff9800;
+  border-left: 6px solid #e65100;
+
+  mat-card-content {
+    padding: 16px 20px !important;
+  }
+
+  .pending-with-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .pending-with-content mat-icon {
+    color: #e65100;
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+  }
+
+  .pending-with-label {
+    display: block;
+    font-size: 0.9rem;
+    color: #bf360c;
+    margin-bottom: 2px;
+  }
+
+  .pending-with-role {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #bf360c;
+    background: rgba(230, 81, 0, 0.15);
+    padding: 6px 12px;
+    border-radius: 8px;
+    display: inline-block;
+    border: 1px solid #ff9800;
+  }
+}
+
 .warning-card {
   background: #fff3cd;
   border-left: 4px solid #ffc107;
@@ -66,6 +145,40 @@
 
 .resubmit-btn {
   margin-top: 8px;
+}
+
+/* Compact correction notice inside Available Actions */
+.correction-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+
+  .correction-notice__message {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: #424242;
+
+    mat-icon {
+      flex-shrink: 0;
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+      color: #1976d2;
+    }
+  }
+
+  .correction-notice__btn {
+    flex-shrink: 0;
+  }
 }
 
 .form-data-groups {

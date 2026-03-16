@@ -11,7 +11,7 @@ import { CitizenCaseService, Case } from '../services/citizen-case.service';
   styleUrls: ['./my-cases.component.scss']
 })
 export class MyCasesComponent implements OnInit {
-  displayedColumns: string[] = ['caseNumber', 'subject', 'status', 'priority', 'createdAt', 'actions'];
+  displayedColumns: string[] = ['caseNumber', 'subject', 'status', 'actionRequired', 'priority', 'createdAt', 'actions'];
   dataSource = new MatTableDataSource<Case>([]);
   
   cases: Case[] = [];
@@ -37,17 +37,16 @@ export class MyCasesComponent implements OnInit {
 
   loadCases(): void {
     this.isLoading = true;
-    // Use new API endpoint - no need to pass userId as it's extracted from token/header
     this.caseService.getCitizenCases().subscribe({
       next: (response) => {
         this.isLoading = false;
         if (response.success) {
           this.cases = response.data || [];
-          // Sort by application date (newest first)
+          // Last in, first out: newest application on top
           this.cases.sort((a, b) => {
-            const dateA = new Date(a.createdAt || a.applicationDate || 0).getTime();
-            const dateB = new Date(b.createdAt || b.applicationDate || 0).getTime();
-            return dateB - dateA;
+            const dateA = new Date(a.createdAt || a.applicationDate || '').getTime();
+            const dateB = new Date(b.createdAt || b.applicationDate || '').getTime();
+            return dateB - dateA; // descending = newest first
           });
           this.dataSource.data = this.cases;
         } else {
@@ -89,5 +88,26 @@ export class MyCasesComponent implements OnInit {
 
   canResubmit(status: string): boolean {
     return status === 'RETURNED_FOR_CORRECTION';
+  }
+
+  /** True if this case needs citizen action (e.g. resubmit, acknowledge notice) */
+  needsAction(caseItem: Case): boolean {
+    const s = (caseItem.status || '').toUpperCase();
+    const code = ((caseItem as any).currentStateCode || '').toUpperCase();
+    return (
+      s === 'RETURNED_FOR_CORRECTION' ||
+      code === 'RETURNED_FOR_CORRECTION' ||
+      s === 'NOTICE_ISSUED' ||
+      code === 'NOTICE_ISSUED'
+    );
+  }
+
+  /** Short label for the type of action required */
+  getActionRequiredLabel(caseItem: Case): string {
+    const s = (caseItem.status || '').toUpperCase();
+    const code = ((caseItem as any).currentStateCode || '').toUpperCase();
+    if (s === 'RETURNED_FOR_CORRECTION' || code === 'RETURNED_FOR_CORRECTION') return 'Correction required';
+    if (s === 'NOTICE_ISSUED' || code === 'NOTICE_ISSUED') return 'Acknowledge notice';
+    return 'Action required';
   }
 }

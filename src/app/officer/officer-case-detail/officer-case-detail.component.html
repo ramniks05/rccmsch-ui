@@ -76,12 +76,33 @@
             <div class="summary-label">Application Date</div>
             <div class="summary-value">{{ caseData.applicationDate | date: 'dd/MM/yyyy' }}</div>
           </div>
+          <div class="summary-item" *ngIf="caseData.nextHearingDate">
+            <div class="summary-label">Next Hearing Date</div>
+            <div class="summary-value">{{ caseData.nextHearingDate | date: 'dd/MM/yyyy' }}</div>
+          </div>
+          <div class="summary-item summary-item-pending" *ngIf="pendingWithDisplay">
+            <div class="summary-label">Pending with</div>
+            <div class="summary-value pending-with-value">{{ pendingWithDisplay }}</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Pending with role – highlighted so user knows where case is pending -->
+    <mat-card *ngIf="pendingWithDisplay" class="pending-with-card">
+      <mat-card-content>
+        <div class="pending-with-content">
+          <mat-icon>person_pin</mat-icon>
+          <div>
+            <span class="pending-with-label">Case pending with</span>
+            <span class="pending-with-role">{{ pendingWithDisplay }}</span>
+          </div>
         </div>
       </mat-card-content>
     </mat-card>
 
     <!-- Tabs for different sections -->
-    <mat-tab-group class="case-tabs" animationDuration="300ms">
+    <mat-tab-group class="case-tabs" [(selectedIndex)]="selectedTabIndex" animationDuration="300ms">
       
       <!-- Case Info Tab -->
       <mat-tab label="Case Info">
@@ -123,6 +144,10 @@
                 <div class="info-item">
                   <label>Application Date:</label>
                   <span class="value">{{ caseData.applicationDate | date: 'dd/MM/yyyy' }}</span>
+                </div>
+                <div class="info-item" *ngIf="caseData.nextHearingDate">
+                  <label>Next Hearing Date:</label>
+                  <span class="value">{{ caseData.nextHearingDate | date: 'dd/MM/yyyy' }}</span>
                 </div>
                 <div class="info-item" *ngIf="caseData.assignedToOfficerName">
                   <label>Assigned To:</label>
@@ -212,35 +237,35 @@
         </div>
       </mat-tab>
 
-      <!-- Notice Document Tab (Conditional) -->
-      <mat-tab label="Notice" *ngIf="requiredModules.notice">
+      <!-- Notice Document Tab (by template ID when available) -->
+      <mat-tab label="Notice" *ngIf="requiredModules.notice && getTemplateIdForModuleType('NOTICE')">
         <div class="tab-content">
           <app-document-editor 
             [caseId]="caseData.id" 
             [caseData]="caseData"
-            [documentType]="'NOTICE'">
+            [templateId]="getTemplateIdForModuleType('NOTICE')!">
           </app-document-editor>
         </div>
       </mat-tab>
 
-      <!-- Order Sheet Document Tab (Conditional) -->
-      <mat-tab label="Order Sheet" *ngIf="requiredModules.ordersheet">
+      <!-- Order Sheet Document Tab (by template ID when available) -->
+      <mat-tab label="Order Sheet" *ngIf="requiredModules.ordersheet && getTemplateIdForModuleType('ORDERSHEET')">
         <div class="tab-content">
           <app-document-editor 
             [caseId]="caseData.id" 
             [caseData]="caseData"
-            [documentType]="'ORDERSHEET'">
+            [templateId]="getTemplateIdForModuleType('ORDERSHEET')!">
           </app-document-editor>
         </div>
       </mat-tab>
 
-      <!-- Judgement Document Tab (Conditional) -->
-      <mat-tab label="Judgement" *ngIf="requiredModules.judgement">
+      <!-- Judgement Document Tab (by template ID when available) -->
+      <mat-tab label="Judgement" *ngIf="requiredModules.judgement && getTemplateIdForModuleType('JUDGEMENT')">
         <div class="tab-content">
           <app-document-editor 
             [caseId]="caseData.id" 
             [caseData]="caseData"
-            [documentType]="'JUDGEMENT'">
+            [templateId]="getTemplateIdForModuleType('JUDGEMENT')!">
           </app-document-editor>
         </div>
       </mat-tab>
@@ -344,33 +369,54 @@
           <p>No actions available at this time</p>
           <small>All required actions for this case have been completed, or no actions are available in the current workflow state.</small>
         </div>
-        <div *ngIf="!loadingTransitions && !transitionError && transitions.length > 0" class="action-buttons">
-          <button
-            *ngFor="let transition of transitions"
-            mat-raised-button
-            [class]="'action-btn ' + getActionClass(transition.transitionCode)"
-            (click)="handleActionClick(transition)"
-            [disabled]="executing || !isTransitionExecutable(transition)"
-            [matTooltip]="getBlockingReasons(transition)">
-            <mat-icon>
-              {{ transition.transitionCode.includes('APPROVE') ? 'check_circle' : 
-                 transition.transitionCode.includes('REJECT') ? 'cancel' : 
-                 transition.transitionCode.includes('RETURN') ? 'undo' : 'play_arrow' }}
-            </mat-icon>
-            {{ transition.transitionName }}
-            <span *ngIf="transition.requiresComment" class="comment-required">*</span>
-            <mat-icon *ngIf="!isTransitionExecutable(transition)" class="blocked-icon" color="warn">lock</mat-icon>
-          </button>
-          <!-- Show blocking reasons for disabled actions -->
-          <div *ngIf="hasBlockedTransitions()" class="blocking-reasons">
-            <mat-icon color="warn">info</mat-icon>
-            <div class="reasons-list">
-              <div *ngFor="let transition of getBlockedTransitions()">
-                <div>
-                  <strong>{{ transition.transitionName }}:</strong> {{ getBlockingReasons(transition) }}
+        <div *ngIf="!loadingTransitions && !transitionError && transitions.length > 0" class="action-list">
+          <div *ngFor="let transition of transitions" class="action-item-card">
+            <div class="action-item-header">
+              <mat-icon [class]="'action-icon ' + getActionClass(transition.transitionCode)">
+                {{ transition.transitionCode.includes('APPROVE') ? 'check_circle' : 
+                   transition.transitionCode.includes('REJECT') ? 'cancel' : 
+                   transition.transitionCode.includes('RETURN') ? 'undo' : 'play_arrow' }}
+              </mat-icon>
+              <span class="action-name">{{ transition.transitionName }}</span>
+              <span *ngIf="transition.requiresComment" class="comment-required">*</span>
+              <span *ngIf="canExecuteTransition(transition)" class="action-badge ready">Ready</span>
+              <span *ngIf="!canExecuteTransition(transition)" class="action-badge blocked">Blocked</span>
+            </div>
+            <div *ngIf="!canExecuteTransition(transition) && getFormattedBlockingReasons(transition).length" class="action-blocking">
+              <span class="blocking-label">Requirements not met:</span>
+              <ul>
+                <li *ngFor="let reason of getFormattedBlockingReasons(transition)">{{ reason }}</li>
+              </ul>
+            </div>
+            <div *ngIf="transition.description" class="action-description">{{ transition.description }}</div>
+            <!-- Forms & documents for this action: clear names, each clickable to open that form/document -->
+            <div *ngIf="hasFormsOrDocuments(transition)" class="action-forms-docs">
+              <div *ngIf="getTransitionFormIds(transition).length" class="action-meta-row">
+                <span class="meta-label"><mat-icon>dynamic_form</mat-icon> Forms:</span>
+                <div class="action-chips">
+                  <button type="button" *ngFor="let formId of getTransitionFormIds(transition)" mat-stroked-button color="primary" class="action-chip" (click)="openFormById(formId, transition)">
+                    <mat-icon>open_in_new</mat-icon> {{ getFormName(formId) }}
+                  </button>
                 </div>
               </div>
+              <div *ngIf="getTransitionDocumentIds(transition).length" class="action-meta-row">
+                <span class="meta-label"><mat-icon>description</mat-icon> Documents:</span>
+                <div class="action-chips">
+                  <button type="button" *ngFor="let docId of getTransitionDocumentIds(transition)" mat-stroked-button color="primary" class="action-chip" (click)="openDocumentById(docId, transition)">
+                    <mat-icon>open_in_new</mat-icon> {{ getDocumentName(docId) }}<span *ngIf="getTransitionDocumentActions(transition)" class="chip-actions"> ({{ getTransitionDocumentActions(transition) }})</span>
+                  </button>
+                </div>
+              </div>
+              <p class="where-hint">Click a form or document name to open it in a dialog, complete and submit, then return here to execute the action.</p>
             </div>
+            <button
+              mat-raised-button
+              [class]="'action-btn ' + getActionClass(transition.transitionCode)"
+              (click)="handleActionClick(transition)"
+              [disabled]="executing || !canExecuteTransition(transition)">
+              <mat-icon>play_arrow</mat-icon>
+              Execute
+            </button>
           </div>
         </div>
       </mat-card-content>

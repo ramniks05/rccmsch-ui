@@ -1,0 +1,25 @@
+.forms-dialog-content {
+  min-width: 320px;
+  max-width: 95vw;
+  width: 700px;
+  max-height: 85vh;
+  overflow: auto;
+  padding-bottom: 16px;
+
+  .dialog-hint {
+    margin-bottom: 16px;
+    color: #555;
+    font-size: 0.9rem;
+  }
+
+  .form-tabs .tab-panel,
+  .single-form {
+    padding-top: 8px;
+    min-height: 300px;
+  }
+}
+
+mat-dialog-actions {
+  border-top: 1px solid #eee;
+  padding: 12px 24px;
+}

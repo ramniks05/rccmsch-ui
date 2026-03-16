@@ -13,6 +13,34 @@
       <p><strong>Case Number:</strong> {{ caseNumber }}</p>
     </div>
 
+    <!-- Checklist: can execute or blocking reasons -->
+    <div *ngIf="!canExecute() && getBlockingReasons().length" class="checklist-blocked">
+      <mat-icon>warning</mat-icon>
+      <div>
+        <strong>Requirements not met</strong>
+        <p class="blocking-hint">Complete the following before this action can be executed:</p>
+        <ul>
+          <li *ngFor="let reason of getBlockingReasons()">{{ reason }}</li>
+        </ul>
+      </div>
+    </div>
+    <div *ngIf="canExecute()" class="checklist-ready">
+      <mat-icon>check_circle</mat-icon>
+      <span>All requirements met. You can proceed.</span>
+    </div>
+
+    <div *ngIf="hasFormsOrDocuments()" class="forms-docs-section">
+      <strong>Forms &amp; documents for this action</strong>
+      <div *ngIf="getFormIds().length" class="meta-row">
+        <mat-icon>dynamic_form</mat-icon>
+        <span>Forms: {{ getFormLabelsList().join(', ') }}</span>
+      </div>
+      <div *ngIf="getDocumentIds().length" class="meta-row">
+        <mat-icon>description</mat-icon>
+        <span>Documents: {{ getDocumentLabelsList().join(', ') }}<span *ngIf="getDocumentActions()"> ({{ getDocumentActions() }})</span></span>
+      </div>
+    </div>
+
     <div class="info-section">
       <p><strong>Action:</strong> {{ transition.transitionName }}</p>
       <p *ngIf="transition.description" class="description">{{ transition.description }}</p>
@@ -52,7 +80,7 @@
     mat-raised-button
     [color]="getActionColor()"
     (click)="onSubmit()"
-    [disabled]="actionForm.invalid">
+    [disabled]="actionForm.invalid || !canExecute()">
     {{ transition.transitionName }}
   </button>
 </mat-dialog-actions>

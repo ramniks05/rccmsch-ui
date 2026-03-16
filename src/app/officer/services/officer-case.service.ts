@@ -1,7 +1,19 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { Observable, of, throwError } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
+
+/** Form or document detail returned by action-forms / action-documents APIs (fetch from DB for display). */
+export interface ActionFormDetail {
+  id: number;
+  name: string;
+  moduleType: string;
+}
+export interface ActionDocumentDetail {
+  id: number;
+  name: string;
+  moduleType: string;
+}
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/services/auth.service';
 
@@ -13,7 +25,7 @@ export interface ApiResponse<T> {
   data: T;
 }
 
-// Case DTO
+// Case DTO (matches backend case detail; role is from role master via assignedToRoleId)
 export interface CaseDTO {
   id: number;
   caseNumber: string;
@@ -23,10 +35,16 @@ export interface CaseDTO {
   caseNatureId: number;
   caseNatureName: string;
   caseNatureCode: string;
+  courtId?: number;
+  courtName?: string;
+  courtCode?: string;
   applicantId: number;
   applicantName: string;
   applicantMobile: string;
   applicantEmail?: string;
+  unitId?: number;
+  unitName?: string;
+  unitCode?: string;
   subject: string;
   description?: string;
   status: string;
@@ -38,18 +56,30 @@ export interface CaseDTO {
   caseData?: string; // JSON string
   currentStateCode: string;
   currentStateName: string;
+  currentStateId?: number;
   assignedToOfficerId?: number;
   assignedToOfficerName?: string;
+  /** Role code for display (from role master) */
   assignedToRole?: string;
+  /** Role master id – use this for any role reference, not role code comparison */
+  assignedToRoleId?: number;
   assignedToUnitId?: number;
   assignedToUnitName?: string;
   workflowInstanceId?: number;
   workflowCode?: string;
+  /** Case form data with labels for display (from backend) */
+  formDataWithLabels?: Array<{ fieldName: string; fieldLabel: string; fieldGroup?: string; groupLabel?: string; value: string | number | null; displayOrder?: number; groupDisplayOrder?: number }>;
+  /** Role(s) with which the case is pending (from available transitions / permissions); for highlighted display */
+  pendingWithRoleNames?: string[];
+  /** Pre-formatted string for "Pending with X" display, e.g. "Dealing Assistant" or "Reader, Presiding Officer" */
+  pendingWithRolesDisplay?: string;
+  /** Next scheduled hearing date (YYYY-MM-DD) from case details API */
+  nextHearingDate?: string;
   createdAt: string;
   updatedAt: string;
 }
 
-// Workflow Transition DTO
+// Workflow Transition DTO (role from transition permission – who can execute this transition)
 export interface WorkflowTransitionDTO {
   id: number;
   transitionCode: string;
@@ -58,6 +88,9 @@ export interface WorkflowTransitionDTO {
   toStateCode: string;
   requiresComment: boolean;
   description?: string;
+  /** Role that can execute this transition (from workflow permission); for "Pending with [Role]" display */
+  allowedRoleId?: number;
+  allowedRoleName?: string;
   checklist?: {
     transitionCode: string;
     transitionName: string;
@@ -71,6 +104,18 @@ export interface WorkflowTransitionDTO {
       message: string;
     }>;
     blockingReasons?: string[];
+    /** Form IDs this transition allows / requires (used in API payloads) */
+    allowedFormIds?: number[] | null;
+    /** IDs of document templates this action is tied to (used in API payloads) */
+    allowedDocumentIds?: number[] | null;
+    /** Optional: form id → display name (from backend for readable condition labels) */
+    allowedForms?: Array<{ id: number; name: string }> | null;
+    /** Optional: document id → display name (from backend for readable condition labels) */
+    allowedDocuments?: Array<{ id: number; name: string }> | null;
+    /** Whether this action allows drafting the document */
+    allowDocumentDraft?: boolean | null;
+    /** Whether this action allows saving & signing the document */
+    allowDocumentSaveAndSign?: boolean | null;
   };
   formSchema?: {
     caseNatureId: number;
@@ -204,12 +249,35 @@ export class OfficerCaseService {
   /**
    * Get case details by ID
    * GET /api/cases/{caseId}
+   * Supports response shape: data as CaseDTO or data: { caseInfo: CaseDTO, history?, documents? }
    */
   getCaseById(caseId: number): Observable<ApiResponse<CaseDTO>> {
-    return this.http.get<ApiResponse<CaseDTO>>(
+    return this.http.get<ApiResponse<CaseDTO | { caseInfo: CaseDTO; history?: any[]; documents?: any[] }>>(
       `${this.apiUrl}/${caseId}`,
       { headers: this.getAuthHeaders() }
     ).pipe(
+      map((response: any) => {
+        if (!response?.success || !response?.data) return response;
+        const data = response.data as any;
+        let caseObj: any;
+        if (data.caseInfo) {
+          const caseInfo = data.caseInfo;
+          caseObj = {
+            ...caseInfo,
+            pendingWithRoleNames: caseInfo.pendingWithRoleNames ?? caseInfo.pending_with_role_names ?? data.pendingWithRoleNames ?? data.pending_with_role_names,
+            pendingWithRolesDisplay: caseInfo.pendingWithRolesDisplay ?? caseInfo.pending_with_roles_display ?? data.pendingWithRolesDisplay ?? data.pending_with_roles_display,
+            nextHearingDate: caseInfo.nextHearingDate ?? caseInfo.next_hearing_date ?? data.nextHearingDate ?? data.next_hearing_date
+          };
+        } else {
+          caseObj = {
+            ...data,
+            pendingWithRoleNames: data.pendingWithRoleNames ?? data.pending_with_role_names,
+            pendingWithRolesDisplay: data.pendingWithRolesDisplay ?? data.pending_with_roles_display,
+            nextHearingDate: data.nextHearingDate ?? data.next_hearing_date
+          };
+        }
+        return { ...response, data: caseObj };
+      }),
       catchError(error => {
         console.error(`Error fetching case ${caseId}:`, error);
         return throwError(() => error);
@@ -267,10 +335,12 @@ export class OfficerCaseService {
   }
 
   // ==================== Module Forms APIs ====================
+  // Use these for getting form schema and form schema + data (canonical endpoints).
 
   /**
-   * Get form schema for a case and module type
+   * Retrieve form schema only.
    * GET /api/cases/{caseId}/module-forms/{moduleType}
+   * Response: ModuleFormSchemaDTO in data.
    */
   getModuleFormSchema(caseId: number, moduleType: string): Observable<ApiResponse<any>> {
     return this.http.get<ApiResponse<any>>(
@@ -285,8 +355,26 @@ export class OfficerCaseService {
   }
 
   /**
-   * Get module form schema and existing data (combined)
+   * Get latest module form submission.
+   * GET /api/cases/{caseId}/module-forms/{moduleType}/latest
+   * Response: ApiResponse<ModuleFormSubmissionDTO> (latest submission or null).
+   */
+  getModuleFormLatest(caseId: number, moduleType: string): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.apiUrl}/${caseId}/module-forms/${moduleType}/latest`,
+      { headers: this.getAuthHeaders() }
+    ).pipe(
+      catchError(error => {
+        console.error(`Error fetching latest module form for case ${caseId}, ${moduleType}:`, error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Retrieve form schema + existing data (use this for getting form and schema).
    * GET /api/cases/{caseId}/module-forms/{moduleType}/data
+   * Response: ModuleFormWithDataDTO in data (schema, formData, hasExistingData).
    */
   getModuleFormWithData(caseId: number, moduleType: string): Observable<ApiResponse<{
     schema: any;
@@ -303,6 +391,30 @@ export class OfficerCaseService {
     ).pipe(
       catchError(error => {
         console.error(`Error fetching module form data for case ${caseId}:`, error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Get module form schema + data by form ID (for action forms – fetches the correct form for formId 5 vs 7 etc).
+   * GET /api/cases/{caseId}/module-forms/by-form/{formId}
+   */
+  getModuleFormWithDataByFormId(caseId: number, formId: number): Observable<ApiResponse<{
+    schema: any;
+    formData: any;
+    hasExistingData: boolean;
+  }>> {
+    return this.http.get<ApiResponse<{
+      schema: any;
+      formData: any;
+      hasExistingData: boolean;
+    }>>(
+      `${this.apiUrl}/${caseId}/module-forms/by-form/${formId}`,
+      { headers: this.getAuthHeaders() }
+    ).pipe(
+      catchError(error => {
+        console.error(`Error fetching module form by formId ${formId} for case ${caseId}:`, error);
         return throwError(() => error);
       })
     );
@@ -330,6 +442,27 @@ export class OfficerCaseService {
     ).pipe(
       catchError(error => {
         console.error(`Error submitting module form for case ${caseId}:`, error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Submit module form by form ID (for action forms – submits to the correct form 5 vs 7 etc).
+   * POST /api/cases/{caseId}/module-forms/{formId}/submit
+   */
+  submitModuleFormByFormId(caseId: number, formId: number, formData: any, remarks?: string): Observable<ApiResponse<any>> {
+    const payload: any = {
+      formData: typeof formData === 'string' ? formData : JSON.stringify(formData),
+      remarks
+    };
+    return this.http.post<ApiResponse<any>>(
+      `${this.apiUrl}/${caseId}/module-forms/${formId}/submit`,
+      payload,
+      { headers: this.getAuthHeaders() }
+    ).pipe(
+      catchError(error => {
+        console.error(`Error submitting module form ${formId} for case ${caseId}:`, error);
         return throwError(() => error);
       })
     );
@@ -435,94 +568,104 @@ export class OfficerCaseService {
     );
   }
 
-  // ==================== Documents APIs ====================
+  /**
+   * Form/document details are derived from transition checklist (allowedFormIds, allowedDocumentIds).
+   * No separate action-forms or action-documents endpoint is called; use IDs with display names "Form {id}" / "Document {id}".
+   */
+  getActionFormDetails(_caseId: number, formIds: number[]): Observable<ApiResponse<ActionFormDetail[]>> {
+    if (!formIds?.length) return of({ success: true, message: '', data: [] });
+    const data: ActionFormDetail[] = formIds.map(id => ({ id, name: `Form ${id}`, moduleType: 'HEARING' }));
+    return of({ success: true, message: '', data });
+  }
 
   /**
-   * Get active template for a case and document type
-   * GET /api/cases/{caseId}/documents/{moduleType}/template
+   * Document details are derived from transition checklist (allowedDocumentIds).
+   * No separate action-documents endpoint is called; use template ID with display name "Document {id}".
    */
-  getDocumentTemplate(caseId: number, moduleType: string): Observable<ApiResponse<any>> {
+  getActionDocumentDetails(_caseId: number, documentIds: number[]): Observable<ApiResponse<ActionDocumentDetail[]>> {
+    if (!documentIds?.length) return of({ success: true, message: '', data: [] });
+    const data: ActionDocumentDetail[] = documentIds.map(id => ({ id, name: `Document ${id}`, moduleType: '' }));
+    return of({ success: true, message: '', data });
+  }
+
+  // ==================== Documents APIs (by template ID) ====================
+  // RCCMS: All officer document endpoints use template ID (from GET /api/admin/workflow/permission-documents).
+  // Get template: GET .../documents/{templateId}/template → DocumentTemplateDTO
+  // Get latest:   GET .../documents/{templateId} or .../latest → CaseDocumentDTO
+  // Create/update: POST .../documents/{templateId} (CreateCaseDocumentDTO), PUT .../documents/{templateId}/{documentId}
+
+  /**
+   * Get document template by ID.
+   * GET /api/cases/{caseId}/documents/{templateId}/template
+   * Response: ApiResponse<DocumentTemplateDTO>
+   */
+  getDocumentTemplate(caseId: number, templateId: number): Observable<ApiResponse<any>> {
     return this.http.get<ApiResponse<any>>(
-      `${this.apiUrl}/${caseId}/documents/${moduleType}/template`,
+      `${this.apiUrl}/${caseId}/documents/${templateId}/template`,
       { headers: this.getAuthHeaders() }
     ).pipe(
       catchError(error => {
-        console.error(`Error fetching document template for case ${caseId}:`, error);
+        console.error(`Error fetching document template for case ${caseId}, template ${templateId}:`, error);
         return throwError(() => error);
       })
     );
   }
 
   /**
-   * Create or update document (use for sign by sending status: 'SIGNED').
-   * POST /api/cases/{caseId}/documents/{moduleType}
-   * Body: CreateCaseDocumentDTO { templateId?, contentHtml (required), contentData?, status: 'DRAFT'|'FINAL'|'SIGNED', remarks? }
+   * Get latest document for case + template (for edit/sign flow).
+   * GET /api/cases/{caseId}/documents/{templateId}
+   * Response: ApiResponse<CaseDocumentDTO>
    */
-  saveDocument(caseId: number, moduleType: string, documentData: {
-    templateId?: number;
+  getLatestDocument(caseId: number, templateId: number): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.apiUrl}/${caseId}/documents/${templateId}`,
+      { headers: this.getAuthHeaders() }
+    ).pipe(
+      catchError(error => {
+        console.error(`Error fetching latest document for case ${caseId}, template ${templateId}:`, error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Create or update document (save draft / save and sign).
+   * POST /api/cases/{caseId}/documents/{templateId}
+   * Body: CreateCaseDocumentDTO { contentHtml (required), contentData?, status?: DRAFT|FINAL|SIGNED, remarks? }
+   * Response: ApiResponse<CaseDocumentDTO>
+   */
+  saveDocument(caseId: number, templateId: number, documentData: {
     contentHtml: string;
     contentData?: string;
-    status: 'DRAFT' | 'FINAL' | 'SIGNED';
+    status?: 'DRAFT' | 'FINAL' | 'SIGNED';
     remarks?: string;
   }): Observable<ApiResponse<any>> {
     return this.http.post<ApiResponse<any>>(
-      `${this.apiUrl}/${caseId}/documents/${moduleType}`,
+      `${this.apiUrl}/${caseId}/documents/${templateId}`,
       documentData,
       { headers: this.getAuthHeaders() }
     ).pipe(
       catchError(error => {
-        console.error(`Error saving document for case ${caseId}:`, error);
+        console.error(`Error saving document for case ${caseId}, template ${templateId}:`, error);
         return throwError(() => error);
       })
     );
   }
 
   /**
-   * Get saved document (list or single by module type)
-   * GET /api/cases/{caseId}/documents/{moduleType}
+   * Update existing document by ID.
+   * PUT /api/cases/{caseId}/documents/{templateId}/{documentId}
+   * Body: CreateCaseDocumentDTO (same as save)
+   * Response: ApiResponse<CaseDocumentDTO>
    */
-  getSavedDocument(caseId: number, moduleType: string): Observable<ApiResponse<any>> {
-    return this.http.get<ApiResponse<any>>(
-      `${this.apiUrl}/${caseId}/documents/${moduleType}`,
-      { headers: this.getAuthHeaders() }
-    ).pipe(
-      catchError(error => {
-        console.error(`Error fetching saved document for case ${caseId}:`, error);
-        return throwError(() => error);
-      })
-    );
-  }
-
-  /**
-   * Get latest document for a module type (for edit/sign flow).
-   * GET /api/cases/{caseId}/documents/{moduleType}/latest
-   * Response: CaseDocumentDTO (id, caseId, moduleType, contentHtml, contentData, status, signedByOfficerId?, signedAt?, ...)
-   */
-  getLatestDocument(caseId: number, moduleType: string): Observable<ApiResponse<any>> {
-    return this.http.get<ApiResponse<any>>(
-      `${this.apiUrl}/${caseId}/documents/${moduleType}/latest`,
-      { headers: this.getAuthHeaders() }
-    ).pipe(
-      catchError(error => {
-        console.error(`Error fetching latest document for case ${caseId}, ${moduleType}:`, error);
-        return throwError(() => error);
-      })
-    );
-  }
-
-  /**
-   * Update specific document (use for sign by sending status: 'SIGNED').
-   * PUT /api/cases/{caseId}/documents/{moduleType}/{documentId}
-   * Body: { contentHtml?, contentData?, status?: 'DRAFT'|'FINAL'|'SIGNED', remarks? }
-   */
-  updateDocument(caseId: number, moduleType: string, documentId: number, documentData: {
+  updateDocument(caseId: number, templateId: number, documentId: number, documentData: {
     contentHtml?: string;
     contentData?: string;
     status?: 'DRAFT' | 'FINAL' | 'SIGNED';
     remarks?: string;
   }): Observable<ApiResponse<any>> {
     return this.http.put<ApiResponse<any>>(
-      `${this.apiUrl}/${caseId}/documents/${moduleType}/${documentId}`,
+      `${this.apiUrl}/${caseId}/documents/${templateId}/${documentId}`,
       documentData,
       { headers: this.getAuthHeaders() }
     ).pipe(

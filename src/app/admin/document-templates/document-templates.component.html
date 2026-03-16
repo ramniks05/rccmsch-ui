@@ -119,21 +119,21 @@
                       Updated: {{ template.updatedAt | date:'short' }}
                     </div>
                   </div>
-                  <div class="card-footer bg-transparent">
-                    <button class="btn btn-sm btn-info me-1" (click)="viewTemplate(template)" title="Preview HTML">
-                      <i class="bi bi-eye"></i>
+                  <div class="card-footer bg-transparent d-flex flex-wrap gap-1">
+                    <button class="btn btn-sm btn-info" (click)="viewTemplate(template)" title="Preview HTML">
+                      <i class="bi bi-eye"></i> Preview
                     </button>
-                    <button class="btn btn-sm btn-success me-1" (click)="exportAsWord(template)" title="Export as Word">
-                      <i class="bi bi-file-word"></i>
+                    <button class="btn btn-sm btn-success" (click)="exportAsWord(template)" title="Export as Word">
+                      <i class="bi bi-file-word"></i> Word
                     </button>
-                    <button class="btn btn-sm btn-primary me-1" (click)="editTemplate(template)" title="Edit">
-                      <i class="bi bi-pencil"></i>
+                    <button class="btn btn-sm btn-primary" (click)="editTemplate(template)" title="Edit template">
+                      <i class="bi bi-pencil"></i> Edit
                     </button>
-                    <button class="btn btn-sm btn-secondary me-1" (click)="duplicateTemplate(template)" title="Duplicate">
-                      <i class="bi bi-files"></i>
+                    <button class="btn btn-sm btn-secondary" (click)="duplicateTemplate(template)" title="Duplicate">
+                      <i class="bi bi-files"></i> Duplicate
                     </button>
                     <button class="btn btn-sm btn-danger" (click)="deleteTemplate(template)" title="Delete">
-                      <i class="bi bi-trash"></i>
+                      <i class="bi bi-trash"></i> Delete
                     </button>
                   </div>
                 </div>
@@ -193,8 +193,16 @@
                   </span>
                   <button 
                     type="button" 
+                    class="btn btn-sm btn-primary me-1"
+                    (click)="previewInBrowser()"
+                    title="Open template in new tab to see how it looks">
+                    <i class="bi bi-eye"></i> Preview
+                  </button>
+                  <button 
+                    type="button" 
                     class="btn btn-sm btn-success"
-                    (click)="previewAsWord()">
+                    (click)="previewAsWord()"
+                    title="Download as Word document">
                     <i class="bi bi-file-word"></i> Preview as Word
                   </button>
                 </div>

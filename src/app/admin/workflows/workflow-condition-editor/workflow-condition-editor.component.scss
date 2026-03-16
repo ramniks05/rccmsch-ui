@@ -40,6 +40,19 @@
   gap: 4px;
 }
 
+.loading-keys,
+.keys-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  font-size: 0.9rem;
+}
+
+.keys-error {
+  color: #c62828;
+}
+
 .checkbox-item {
   display: flex;
   align-items: center;
@@ -47,6 +60,30 @@
 
   mat-checkbox {
     margin-right: 8px;
+  }
+
+  .key-label {
+    margin-right: 8px;
+  }
+
+  .kind-badge {
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 500;
+
+    &.badge-form {
+      background: #e3f2fd;
+      color: #1565c0;
+    }
+    &.badge-document {
+      background: #f3e5f5;
+      color: #6a1b9a;
+    }
+    &.badge-special {
+      background: #fff3e0;
+      color: #e65100;
+    }
   }
 }
 

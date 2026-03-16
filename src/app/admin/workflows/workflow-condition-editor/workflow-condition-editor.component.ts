@@ -10,10 +10,11 @@ import {
 import {
   ConditionsPayload,
   ModuleType,
-  WORKFLOW_FLAGS,
   MODULE_TYPES,
-  MODULE_FIELDS
+  MODULE_FIELDS,
+  WorkflowDataKeyBinding
 } from '../../../core/models/workflow-condition.types';
+import { WorkflowConfigService } from '../../services/workflow-config.service';
 
 @Component({
   selector: 'app-workflow-condition-editor',
@@ -24,22 +25,25 @@ export class WorkflowConditionEditorComponent implements OnInit, OnChanges {
   @Input() initialConditions: ConditionsPayload | string | null = null;
   @Output() conditionsChange = new EventEmitter<ConditionsPayload>();
 
-  readonly formFlags = WORKFLOW_FLAGS.formSubmitted;
-  readonly docFlags = WORKFLOW_FLAGS.documentReady;
-  readonly docSignedFlags = WORKFLOW_FLAGS.documentSigned;
+  /** Single source: from GET /api/admin/workflow/data-keys */
+  keysWithBinding: WorkflowDataKeyBinding[] = [];
+  loadingKeys = true;
+  keysLoadError: string | null = null;
+
   readonly moduleTypes = MODULE_TYPES;
 
-  selectedFormFlags: Set<string> = new Set();
-  selectedDocFlags: Set<string> = new Set();
-  selectedDocSignedFlags: Set<string> = new Set();
+  /** Selected workflow data keys (workflowDataFieldsRequired) */
+  selectedDataKeys = new Set<string>();
   formFields: Array<{ moduleType: ModuleType; fieldName: string }> = [];
+
+  constructor(private workflowConfigService: WorkflowConfigService) {}
 
   getFieldOptions(moduleType: ModuleType): { value: string; label: string }[] {
     return MODULE_FIELDS[moduleType] ?? [];
   }
 
   ngOnInit(): void {
-    this.applyInitial();
+    this.loadWorkflowDataKeys();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -48,16 +52,38 @@ export class WorkflowConditionEditorComponent implements OnInit, OnChanges {
     }
   }
 
-  private readonly formFlagValues = ['HEARING_SUBMITTED', 'NOTICE_SUBMITTED', 'ORDERSHEET_SUBMITTED', 'JUDGEMENT_SUBMITTED'];
-  private readonly docFlagValues = ['NOTICE_READY', 'ORDERSHEET_READY', 'JUDGEMENT_READY'];
-  private readonly docSignedFlagValues = ['NOTICE_SIGNED', 'ORDERSHEET_SIGNED', 'JUDGEMENT_SIGNED'];
+  private loadWorkflowDataKeys(): void {
+    this.loadingKeys = true;
+    this.keysLoadError = null;
+    this.workflowConfigService.getWorkflowDataKeys().subscribe({
+      next: (res) => {
+        this.loadingKeys = false;
+        if (res.success && res.data?.keysWithBinding?.length) {
+          // Only FORM and DOCUMENT – exclude SPECIAL (e.g. Notice accepted by applicant); user selects from module forms/documents in permission only
+          const binding = res.data.keysWithBinding || [];
+          this.keysWithBinding = binding.filter(
+            (b: WorkflowDataKeyBinding) => b.kind === 'FORM' || b.kind === 'DOCUMENT'
+          );
+          this.applyInitial();
+        } else {
+          this.keysWithBinding = [];
+          this.keysLoadError = res.message || 'No workflow data keys returned';
+          this.applyInitial();
+        }
+      },
+      error: (err) => {
+        this.loadingKeys = false;
+        this.keysWithBinding = [];
+        this.keysLoadError = err?.error?.message || 'Failed to load workflow data keys';
+        this.applyInitial();
+      }
+    });
+  }
 
   private applyInitial(): void {
     const payload = this.parsePayload(this.initialConditions);
     const all = payload?.workflowDataFieldsRequired ?? [];
-    this.selectedFormFlags = new Set(all.filter((f: string) => this.formFlagValues.includes(f)));
-    this.selectedDocFlags = new Set(all.filter((f: string) => this.docFlagValues.includes(f)));
-    this.selectedDocSignedFlags = new Set(all.filter((f: string) => this.docSignedFlagValues.includes(f)));
+    this.selectedDataKeys = new Set(all);
     this.formFields = payload?.moduleFormFieldsRequired?.length
       ? [...payload.moduleFormFieldsRequired]
       : [];
@@ -74,43 +100,23 @@ export class WorkflowConditionEditorComponent implements OnInit, OnChanges {
     }
   }
 
-  isFormFlagChecked(value: string): boolean {
-    return this.selectedFormFlags.has(value);
+  isDataKeyChecked(key: string): boolean {
+    return this.selectedDataKeys.has(key);
   }
 
-  isDocFlagChecked(value: string): boolean {
-    return this.selectedDocFlags.has(value);
-  }
-
-  onFormFlagChange(value: string, checked: boolean): void {
+  onDataKeyChange(key: string, checked: boolean): void {
     if (checked) {
-      this.selectedFormFlags.add(value);
+      this.selectedDataKeys.add(key);
     } else {
-      this.selectedFormFlags.delete(value);
+      this.selectedDataKeys.delete(key);
     }
     this.emitChange();
   }
 
-  onDocFlagChange(value: string, checked: boolean): void {
-    if (checked) {
-      this.selectedDocFlags.add(value);
-    } else {
-      this.selectedDocFlags.delete(value);
-    }
-    this.emitChange();
-  }
-
-  isDocSignedFlagChecked(value: string): boolean {
-    return this.selectedDocSignedFlags.has(value);
-  }
-
-  onDocSignedFlagChange(value: string, checked: boolean): void {
-    if (checked) {
-      this.selectedDocSignedFlags.add(value);
-    } else {
-      this.selectedDocSignedFlags.delete(value);
-    }
-    this.emitChange();
+  getKindBadgeClass(kind: string): string {
+    if (kind === 'FORM') return 'badge-form';
+    if (kind === 'DOCUMENT') return 'badge-document';
+    return 'badge-special';
   }
 
   addFormField(): void {
@@ -138,11 +144,12 @@ export class WorkflowConditionEditorComponent implements OnInit, OnChanges {
   }
 
   private emitChange(): void {
-    const workflowDataFieldsRequired = [
-      ...this.selectedFormFlags,
-      ...this.selectedDocFlags,
-      ...this.selectedDocSignedFlags
-    ];
+    const validKeys = this.keysWithBinding.length
+      ? this.keysWithBinding.map(b => b.key)
+      : [];
+    const workflowDataFieldsRequired = [...this.selectedDataKeys].filter(k =>
+      validKeys.length ? validKeys.includes(k) : true
+    );
     const moduleFormFieldsRequired = this.formFields
       .filter((f) => f.moduleType && f.fieldName)
       .map((f) => ({ moduleType: f.moduleType, fieldName: f.fieldName }));

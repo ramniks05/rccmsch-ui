@@ -5,17 +5,44 @@
 
 <mat-dialog-content>
   <form [formGroup]="stateForm" class="state-form">
-    <mat-form-field appearance="outline" class="full-width">
-      <mat-label>State Code *</mat-label>
-      <input matInput formControlName="stateCode" placeholder="e.g., CITIZEN_APPLICATION" [readonly]="data.mode === 'edit'">
-      <mat-icon matPrefix>code</mat-icon>
-      <mat-error *ngIf="stateForm.get('stateCode')?.hasError('required')">State code is required</mat-error>
-      <mat-error *ngIf="stateForm.get('stateCode')?.hasError('pattern')">Only uppercase letters and underscores allowed</mat-error>
+    <!-- 1. First: choose from list (optional). Selecting fills State Code and State Name below. -->
+    <mat-form-field *ngIf="data.mode === 'create' && reportingOptions.length > 0" appearance="outline" class="full-width">
+      <mat-label>Choose from list</mat-label>
+      <mat-select
+        formControlName="stateCodePicker"
+        placeholder="Select to fill State Code and State Name below"
+        (selectionChange)="onStateCodeSelected($event)">
+        <mat-option [value]="null">— Or type in the fields below —</mat-option>
+        <mat-option *ngFor="let item of reportingOptions" [value]="item.stateCode">
+          {{ item.stateName || item.stateCode }} ({{ item.stateCode }})
+        </mat-option>
+      </mat-select>
+      <mat-icon matPrefix>list</mat-icon>
+      <mat-hint>Select one to fill State Code and State Name below.</mat-hint>
     </mat-form-field>
 
+    <!-- 2. State Code: type here or it gets filled when you select from list above -->
+    <mat-form-field appearance="outline" class="full-width state-code-field">
+      <mat-label>State Code *</mat-label>
+      <input
+        matInput
+        formControlName="stateCode"
+        placeholder="e.g. CASE_INITIATED, HEARING_SCHEDULED"
+        [readonly]="data.mode === 'edit'"
+        (blur)="onStateCodeBlur()">
+      <mat-icon matPrefix>code</mat-icon>
+      <p class="participates-hint" *ngIf="isStateCodeInReportingList()">
+        <mat-icon>check_circle</mat-icon>
+        This state will count in Dashboard "Hearing scheduled"
+      </p>
+      <mat-error *ngIf="stateForm.get('stateCode')?.hasError('required')">State code is required</mat-error>
+      <mat-error *ngIf="stateForm.get('stateCode')?.hasError('pattern')">Only uppercase letters and underscores</mat-error>
+    </mat-form-field>
+
+    <!-- 3. State Name: type here or it gets filled when you select from list above -->
     <mat-form-field appearance="outline" class="full-width">
       <mat-label>State Name *</mat-label>
-      <input matInput formControlName="stateName" placeholder="e.g., Citizen Application">
+      <input matInput formControlName="stateName" placeholder="e.g. Case Initiated, Hearing Scheduled">
       <mat-icon matPrefix>description</mat-icon>
       <mat-error *ngIf="stateForm.get('stateName')?.hasError('required')">State name is required</mat-error>
     </mat-form-field>
@@ -41,7 +68,7 @@
       </mat-checkbox>
       <mat-checkbox formControlName="isFinalState">
         <mat-icon>stop</mat-icon>
-        Final State
+        Final State (case closed/disposed — counts as Disposed in stats)
       </mat-checkbox>
     </div>
   </form>

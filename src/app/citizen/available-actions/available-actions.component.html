@@ -1,5 +1,5 @@
 <div class="available-actions" *ngIf="caseId">
-  <h3 class="section-title">
+  <h3 class="section-title" *ngIf="showSectionTitle">
     <mat-icon>play_circle</mat-icon>
     Available actions
     <span *ngIf="!isLoading && !loadError && transitions.length > 0" class="action-count-badge">
@@ -35,7 +35,6 @@
     <div
       *ngFor="let t of transitions"
       class="action-item"
-      [class.disabled]="!t.canExecute"
       [matTooltip]="tooltipText(t)"
       matTooltipPosition="above"
     >
@@ -54,7 +53,7 @@
       <button
         mat-raised-button
         color="primary"
-        [disabled]="!t.canExecute || executingTransition === t.transitionCode"
+        [disabled]="executingTransition === t.transitionCode"
         (click)="executeTransition(t)"
         class="execute-btn"
       >

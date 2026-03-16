@@ -23,6 +23,9 @@ interface DocumentData {
 export class DocumentEditorComponent implements OnInit {
   @Input() caseId!: number;
   @Input() caseData!: CaseDTO;
+  /** Template ID (from permission-documents / allowedDocumentIds). Required for officer document APIs. */
+  @Input() templateId!: number;
+  /** Optional: module type for display only when template doesn't provide it (e.g. NOTICE, ORDERSHEET, JUDGEMENT). */
   @Input() documentType: ModuleType = 'NOTICE';
   
   // Template & Document data
@@ -37,6 +40,9 @@ export class DocumentEditorComponent implements OnInit {
   saving = false;
   editMode = false;
   previewMode = false;
+  // Workflow-based action permissions for this document template
+  allowDraftFromWorkflow = false;
+  allowSaveAndSignFromWorkflow = false;
   
   // Placeholders for replacement
   placeholderValues: Record<string, string> = {};
@@ -69,36 +75,8 @@ export class DocumentEditorComponent implements OnInit {
     }
   }
   
-  /**
-   * Check if current user is Reader
-   */
-  isReader(): boolean {
-    return this.userRoleCode?.toUpperCase() === 'READER';
-  }
-  
-  /**
-   * Check if current user is Tehsildar
-   */
-  isTehsildar(): boolean {
-    return this.userRoleCode?.toUpperCase() === 'TEHSILDAR';
-  }
-  
-  /**
-   * Check if user can save as final (Tehsildar only)
-   */
-  canSaveAsFinal(): boolean {
-    return this.isTehsildar();
-  }
-  
-  /**
-   * Check if user can sign document (Tehsildar only)
-   */
-  canSignDocument(): boolean {
-    return this.isTehsildar();
-  }
-
   ngOnInit(): void {
-    if (this.caseId) {
+    if (this.caseId && this.templateId != null) {
       this.loadUserRole(); // Ensure role is loaded
       this.initializePlaceholders();
       this.loadTemplate();
@@ -187,11 +165,12 @@ export class DocumentEditorComponent implements OnInit {
   }
 
   /**
-   * Load template for the document type
+   * Load template by template ID (GET /api/cases/{caseId}/documents/{templateId}/template).
    */
   loadTemplate(): void {
+    if (this.templateId == null) return;
     this.loading = true;
-    this.officerCaseService.getDocumentTemplate(this.caseId, this.documentType).subscribe({
+    this.officerCaseService.getDocumentTemplate(this.caseId, this.templateId).subscribe({
       next: (response) => {
         this.template = response.data;
         if (this.template && !this.document) {
@@ -199,6 +178,10 @@ export class DocumentEditorComponent implements OnInit {
           this.contentHtml = this.replacePlaceholders(this.template.templateHtml);
         }
         this.loading = false;
+        // Once we know the template (and its ID), load workflow permissions for this document
+        if (this.template && this.template.id) {
+          this.loadWorkflowDocumentPermissions();
+        }
       },
       error: (error) => {
         console.error('Error loading template:', error);
@@ -209,12 +192,54 @@ export class DocumentEditorComponent implements OnInit {
   }
 
   /**
-   * Load latest document (for edit/sign). Uses GET .../documents/{moduleType}/latest.
+   * Load workflow-based permissions (Draft / Save & Sign) for this document template
+   * by inspecting available transitions checklist.allowedDocumentIds and flags.
+   */
+  private loadWorkflowDocumentPermissions(): void {
+    // Default to no actions until workflow explicitly allows them
+    this.allowDraftFromWorkflow = false;
+    this.allowSaveAndSignFromWorkflow = false;
+
+    const templateId: number | undefined = this.template?.id;
+    if (!templateId || !this.caseId) {
+      return;
+    }
+
+    this.officerCaseService.getAvailableTransitions(this.caseId).subscribe({
+      next: (response) => {
+        if (!response.success || !response.data) {
+          return;
+        }
+        response.data.forEach((t: any) => {
+          const checklist = t.checklist;
+          if (!checklist || !Array.isArray(checklist.allowedDocumentIds)) {
+            return;
+          }
+          if (!checklist.allowedDocumentIds.includes(templateId)) {
+            return;
+          }
+          if (checklist.allowDocumentDraft === true) {
+            this.allowDraftFromWorkflow = true;
+          }
+          if (checklist.allowDocumentSaveAndSign === true) {
+            this.allowSaveAndSignFromWorkflow = true;
+          }
+        });
+      },
+      error: () => {
+        // On error, keep defaults (no extra actions); backend controls availability
+      }
+    });
+  }
+
+  /**
+   * Load latest document (for edit/sign). GET /api/cases/{caseId}/documents/{templateId}/latest.
    * When status === 'SIGNED', editing is blocked unless template.allowEditAfterSign is true.
    */
   loadDocument(): void {
+    if (this.templateId == null) return;
     this.loading = true;
-    this.officerCaseService.getLatestDocument(this.caseId, this.documentType).subscribe({
+    this.officerCaseService.getLatestDocument(this.caseId, this.templateId).subscribe({
       next: (response) => {
         if (response.data) {
           const doc = response.data;
@@ -332,40 +357,26 @@ export class DocumentEditorComponent implements OnInit {
     // Ensure status is exactly as expected (uppercase, no whitespace)
     const normalizedStatus = status.trim().toUpperCase() as 'DRAFT' | 'FINAL' | 'SIGNED';
     
-    const documentData: any = {
-      templateId: this.template.id,
+    const templateId = this.templateId ?? this.template?.id;
+    if (templateId == null) {
+      alert('Template ID is required to save document.');
+      this.saving = false;
+      return;
+    }
+    const documentPayload = {
       contentHtml: this.contentHtml,
       contentData: JSON.stringify(this.contentData),
-      status: normalizedStatus // Explicitly set normalized status
+      status: normalizedStatus,
+      remarks: undefined as string | undefined
     };
-    
-    // Double-check status before sending
-    if (normalizedStatus !== status.toUpperCase()) {
-      console.warn('Status was normalized:', status, '->', normalizedStatus);
-    }
-
-    console.log('=== Document Save Debug ===');
-    console.log('Document Type:', this.documentType);
-    console.log('Case ID:', this.caseId);
-    console.log('Requested Status:', status);
-    console.log('Document data being sent:', { 
-      templateId: documentData.templateId,
-      status: documentData.status,
-      contentData: documentData.contentData,
-      contentHtml: '[HTML content - length: ' + documentData.contentHtml.length + ']'
-    });
 
     if (this.document && this.document.id) {
-      // Update existing document
-      console.log('Updating existing document ID:', this.document.id);
-      console.log('Current document status:', this.document.status);
-      console.log('API Endpoint: PUT /api/cases/' + this.caseId + '/documents/' + this.documentType + '/' + this.document.id);
-      
+      // Update existing document: PUT /api/cases/{caseId}/documents/{templateId}/{documentId}
       this.officerCaseService.updateDocument(
         this.caseId,
-        this.documentType,
+        templateId,
         this.document.id,
-        documentData
+        documentPayload
       ).subscribe({
         next: (response) => {
           console.log('=== Document Update Response ===');
@@ -390,41 +401,24 @@ export class DocumentEditorComponent implements OnInit {
           this.saving = false;
         },
         error: (error) => {
-          console.error('=== Document Update Error ===');
-          console.error('Error details:', error);
-          console.error('Request payload was:', documentData);
-          console.error('Document Type:', this.documentType);
-          console.error('Status sent:', status);
+          console.error('Document update error:', error);
+          console.error('Request payload:', documentPayload);
           alert('Failed to update document. Check console for details.');
           this.saving = false;
         }
       });
     } else {
-      // Create new document
-      console.log('Creating new document');
-      console.log('API Endpoint: POST /api/cases/' + this.caseId + '/documents/' + this.documentType);
-      
+      // Create new document: POST /api/cases/{caseId}/documents/{templateId}
       this.officerCaseService.saveDocument(
         this.caseId,
-        this.documentType,
-        documentData
+        templateId,
+        documentPayload
       ).subscribe({
         next: (response) => {
-          console.log('=== Document Save Response ===');
-          console.log('Full response:', response);
-          console.log('Response data:', response.data);
           const returnedStatus = response.data?.status || status;
-          console.log('Requested status:', status);
-          console.log('Returned status from backend:', returnedStatus);
-          
           if (returnedStatus !== status) {
-            console.warn('⚠️ WARNING: Status mismatch!');
-            console.warn('Requested:', status, 'but backend returned:', returnedStatus);
-            alert(`⚠️ Status mismatch: Requested "${status}" but backend returned "${returnedStatus}". Please check backend logic.`);
-          } else {
-            console.log('✅ Status matches correctly');
+            console.warn('Status mismatch: requested', status, 'backend returned', returnedStatus);
           }
-          
           alert(`Document saved successfully. Status: ${returnedStatus}`);
           this.document = response.data;
           this.documentStatus = returnedStatus as 'DRAFT' | 'FINAL' | 'SIGNED';
@@ -432,11 +426,8 @@ export class DocumentEditorComponent implements OnInit {
           this.saving = false;
         },
         error: (error) => {
-          console.error('=== Document Save Error ===');
-          console.error('Error details:', error);
-          console.error('Request payload was:', documentData);
-          console.error('Document Type:', this.documentType);
-          console.error('Status sent:', status);
+          console.error('Document save error:', error);
+          console.error('Request payload:', documentPayload);
           alert('Failed to save document. Check console for details.');
           this.saving = false;
         }
@@ -520,12 +511,7 @@ export class DocumentEditorComponent implements OnInit {
       return false;
     }
 
-    // Reader role: allow editing only when document is in DRAFT status
-    if (this.isReader()) {
-      return this.document.status === 'DRAFT';
-    }
-
-    // Other roles follow default rules above
+    // Edit allowed; backend will reject save/sign if user lacks permission (role_id–based)
     return true;
   }
 }

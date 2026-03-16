@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef, NgZone } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, ChangeDetectorRef, NgZone } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -7,12 +7,27 @@ import { Subscription } from 'rxjs';
 import { CitizenCaseService, CaseSubmissionRequest } from '../services/citizen-case.service';
 import { AuthService } from '../../core/services/auth.service';
 
+/** Prefill data when form is used in resubmit (edit) mode */
+export interface ResubmitPrefill {
+  caseTypeId: number;
+  caseNatureId: number;
+  caseNatureName?: string;
+  caseTypeName?: string;
+  caseData: Record<string, any>;
+  unitId: number;
+  courtId: number;
+  subject?: string;
+}
+
 @Component({
   selector: 'app-dynamic-case-form',
   templateUrl: './dynamic-case-form.component.html',
   styleUrls: ['./dynamic-case-form.component.scss'],
 })
 export class DynamicCaseFormComponent implements OnInit, OnDestroy {
+  @Input() resubmitCaseId?: number;
+  @Input() resubmitPrefill?: ResubmitPrefill;
+
   form!: FormGroup;
   fields: any[] = [];
   caseTypeName = '';
@@ -44,6 +59,8 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
   /** Debounce timer per field to avoid duplicate external API calls when multiple parents trigger reload */
   private loadDataSourceDebounce = new Map<string, ReturnType<typeof setTimeout>>();
   citizenUnitId: number | null = null; // From registration data
+  /** True when form is used for edit & resubmit (same UI as new application, prefilled) */
+  isResubmitMode = false;
 
   constructor(
     private fb: FormBuilder,
@@ -57,25 +74,35 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    // Initialize form so template (*ngIf="form") renders — Case Type dropdown and layout show immediately
+    // Initialize form so template (*ngIf="form") renders
     this.form = this.fb.group({});
 
-    // Route parameter is caseNatureId (legal matter: MUTATION_GIFT_SALE, PARTITION, etc.)
+    const routeIcon = this.route.snapshot.paramMap.get('icon');
+    if (routeIcon) this.icon = routeIcon;
+
+    this.getCitizenUnitId();
+
+    // Resubmit mode: same form as new application, prefilled from existing case
+    if (this.resubmitCaseId && this.resubmitPrefill) {
+      this.isResubmitMode = true;
+      const p = this.resubmitPrefill;
+      this.caseTypeId = p.caseTypeId;
+      this.caseNatureId = p.caseNatureId;
+      this.caseNatureName = p.caseNatureName ?? '';
+      this.caseTypeName = p.caseTypeName ?? 'Edit & Resubmit';
+      this.selectedUnitId = p.unitId;
+      this.courtId = p.courtId;
+      this.loadUnits();
+      this.loadSchema(p.caseTypeId);
+      return;
+    }
+
+    // New application: route param is caseNatureId
     const routeParam = this.route.snapshot.paramMap.get('caseTypeId');
     this.caseNatureId = routeParam ? Number(routeParam) : null;
 
-    // icon from route param
-    const routeIcon = this.route.snapshot.paramMap.get('icon');
-    if (routeIcon) {
-      this.icon = routeIcon;
-    }
-
-    // Get citizen unitId from registration data
-    this.getCitizenUnitId();
-
     if (this.caseNatureId && !isNaN(this.caseNatureId)) {
       console.log('Loading form for case nature ID:', this.caseNatureId);
-      // Load case types (dropdown, not auto-select) - case nature name will come from case types response
       this.loadCaseTypes();
       this.loadUnits();
     } else {
@@ -391,6 +418,12 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
 
           // Stop loading immediately after form is built
           this.stopLoading();
+
+          // Resubmit mode: load courts and prefill form with case data
+          if (this.resubmitCaseId && this.resubmitPrefill?.caseData) {
+            this.loadCourts();
+            setTimeout(() => this.patchFormWithResubmitData(), 0);
+          }
         } catch (e) {
           console.error('Form schema processing error:', e);
           this.snackBar.open('Failed to process form schema', 'Close', { duration: 4000 });
@@ -1381,6 +1414,48 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Prefill form with existing case data (resubmit mode). Handles DATE and SELECT/RADIO value types.
+   */
+  patchFormWithResubmitData(): void {
+    const data = this.resubmitPrefill?.caseData;
+    if (!data || !this.form || typeof data !== 'object') return;
+
+    const patched: any = { ...data };
+    this.fields.forEach(field => {
+      if (!field?.fieldName) return;
+      const raw = patched[field.fieldName];
+      if (raw === null || raw === undefined) return;
+
+      const ft = (field.fieldType || '').toUpperCase();
+      if (ft === 'DATE') {
+        try {
+          const d = new Date(raw);
+          if (!isNaN(d.getTime())) patched[field.fieldName] = d;
+        } catch (_) {}
+      } else if (ft === 'NUMBER') {
+        const n = Number(raw);
+        if (!isNaN(n)) patched[field.fieldName] = n;
+      } else if ((ft === 'SELECT' || ft === 'RADIO') && field.fieldOptions) {
+        try {
+          const options = typeof field.fieldOptions === 'string' ? JSON.parse(field.fieldOptions) : field.fieldOptions;
+          if (Array.isArray(options)) {
+            const match = options.find((o: any) => {
+              const v = o?.value ?? o?.id ?? o?.nvcode ?? o?.code;
+              return v != null && String(v) === String(raw);
+            });
+            if (match) patched[field.fieldName] = match.value ?? match.id ?? match.nvcode ?? match.code ?? raw;
+          }
+        } catch (_) {}
+      } else if (ft === 'CHECKBOX') {
+        patched[field.fieldName] = raw === true || raw === 'true' || raw === '1' || raw === 1;
+      }
+    });
+
+    this.form.patchValue(patched, { emitEvent: false });
+    this.cdr.markForCheck();
+  }
+
+  /**
    * Parse validation rules string like "min:0.01,max:1000"
    */
   parseValidationRules(rules: string): any {
@@ -1445,48 +1520,58 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Submit the case to the backend
+   * Submit the case to the backend (new application or resubmit)
    */
   private submitCase(): void {
     this.isSubmitting = true;
 
-    // Prepare form data - convert dates and files to strings
     const formValues: any = {};
     Object.entries(this.form.value).forEach(([key, value]) => {
       if (value !== null && value !== undefined) {
-        // Handle Date objects
         if (value instanceof Date) {
           formValues[key] = value.toISOString().split('T')[0];
         } else if (value instanceof File) {
-          // For files, we'll store the file name for now
-          // In production, you might want to upload files separately
           formValues[key] = value.name;
         } else {
           formValues[key] = value;
         }
       }
     });
-
-    // Convert form data to JSON string
     const caseDataJson = JSON.stringify(formValues);
 
-    // Get applicant ID from authenticated user
-    const userData = this.authService.getUserData();
-    const applicantId = userData?.userId || userData?.id;
-
-    if (!applicantId) {
-      this.isSubmitting = false;
-      this.snackBar.open('User not authenticated. Please login again.', 'Close', { duration: 5000 });
-      console.error('No applicantId found in user data:', userData);
+    if (this.resubmitCaseId) {
+      this.caseService.resubmitCase(this.resubmitCaseId, { caseData: caseDataJson }).subscribe({
+        next: (response) => {
+          this.isSubmitting = false;
+          if (response.success) {
+            this.snackBar.open('Case resubmitted successfully!', 'Close', { duration: 5000 });
+            setTimeout(() => {
+              this.router.navigate(['/citizen/cases', this.resubmitCaseId]);
+            }, 1500);
+          } else {
+            this.snackBar.open(response.message || 'Failed to resubmit case', 'Close', { duration: 5000 });
+          }
+        },
+        error: (error) => {
+          this.isSubmitting = false;
+          const msg = error?.error?.message || error?.message || 'Failed to resubmit case';
+          this.snackBar.open(msg, 'Close', { duration: 6000 });
+        }
+      });
       return;
     }
 
-    // Use citizen's unitId from registration if available, otherwise use selected unit
-    const unitIdToUse = this.citizenUnitId || this.selectedUnitId;
+    const userData = this.authService.getUserData();
+    const applicantId = userData?.userId || userData?.id;
+    if (!applicantId) {
+      this.isSubmitting = false;
+      this.snackBar.open('User not authenticated. Please login again.', 'Close', { duration: 5000 });
+      return;
+    }
 
-    // Prepare submission request (per documentation: POST /api/citizen/cases)
+    const unitIdToUse = this.citizenUnitId || this.selectedUnitId;
     const submissionRequest: CaseSubmissionRequest = {
-      applicantId: applicantId,
+      applicantId,
       caseNatureId: this.caseNatureId!,
       caseTypeId: this.caseTypeId!,
       unitId: unitIdToUse!,
@@ -1497,32 +1582,20 @@ export class DynamicCaseFormComponent implements OnInit, OnDestroy {
       caseData: caseDataJson
     };
 
-    // Submit case
     this.caseService.submitCase(submissionRequest).subscribe({
       next: (response) => {
         this.isSubmitting = false;
         if (response.success) {
           this.snackBar.open('Case submitted successfully!', 'Close', { duration: 5000 });
-          // Redirect to my cases after 2 seconds
-          setTimeout(() => {
-            this.router.navigate(['/citizen/my-cases']);
-          }, 2000);
+          setTimeout(() => this.router.navigate(['/citizen/my-cases']), 2000);
         } else {
           this.snackBar.open(response.message || 'Failed to submit case', 'Close', { duration: 5000 });
         }
       },
       error: (error) => {
         this.isSubmitting = false;
-        let errorMessage = 'Failed to submit case';
-
-        if (error?.error?.message) {
-          errorMessage = error.error.message;
-        } else if (error?.message) {
-          errorMessage = error.message;
-        }
-
-        this.snackBar.open(errorMessage, 'Close', { duration: 6000 });
-        console.error('Case submission error:', error);
+        const msg = error?.error?.message || error?.message || 'Failed to submit case';
+        this.snackBar.open(msg, 'Close', { duration: 6000 });
       }
     });
   }

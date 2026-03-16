@@ -111,14 +111,23 @@ export interface Case {
   applicantId: number;
   unitId: number;
   status: string;
+  /** Current workflow state code (may equal status); used for canResubmit etc. */
+  currentStateCode?: string;
+  currentStateName?: string;
+  statusName?: string;
   subject: string;
   description?: string;
   priority?: string;
   /** YYYY-MM-DD - present in "Get All My Cases" API */
   applicationDate?: string;
+  /** Next scheduled hearing date (YYYY-MM-DD) from case details API */
+  nextHearingDate?: string;
   caseData?: string;
   /** When present, use this for organized display (grouped by groupLabel) instead of parsing caseData */
   formDataWithLabels?: FormDataWithLabelsItem[];
+  /** Role(s) with which the case is pending; for "Pending with X" display */
+  pendingWithRoleNames?: string[];
+  pendingWithRolesDisplay?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -409,7 +418,7 @@ export class CitizenCaseService {
 
   /**
    * GET /api/citizen/cases/{caseId}/detail - Get complete case detail with history and documents
-   * Per API documentation
+   * Merges pendingWithRolesDisplay / pendingWithRoleNames (camel or snake_case) onto caseInfo.
    */
   getCaseDetail(caseId: number): Observable<ApiResponse<{
     caseInfo: Case;
@@ -425,7 +434,7 @@ export class CitizenCaseService {
     }>;
   }>> {
     return this.http.get<ApiResponse<{
-      caseInfo: Case;
+      caseInfo: Case & { pending_with_role_names?: string[]; pending_with_roles_display?: string };
       history: CaseHistory[];
       documents: Array<{
         documentId: number;
@@ -439,6 +448,23 @@ export class CitizenCaseService {
     }>>(
       `${this.apiUrl}/citizen/cases/${caseId}/detail`,
       { headers: this.getHeaders() }
+    ).pipe(
+      map((response: any) => {
+        if (!response?.success || !response?.data?.caseInfo) return response;
+        const data = response.data;
+        const caseInfo = data.caseInfo as any;
+        const merged = {
+          ...caseInfo,
+          status: caseInfo.status ?? caseInfo.current_state_code ?? caseInfo.currentStateCode,
+          currentStateCode: caseInfo.currentStateCode ?? caseInfo.current_state_code ?? caseInfo.status,
+          currentStateName: caseInfo.currentStateName ?? caseInfo.current_state_name ?? caseInfo.status_name ?? caseInfo.statusName,
+          statusName: caseInfo.statusName ?? caseInfo.status_name ?? caseInfo.currentStateName ?? caseInfo.current_state_name,
+          pendingWithRoleNames: caseInfo.pendingWithRoleNames ?? caseInfo.pending_with_role_names ?? data.pendingWithRoleNames ?? data.pending_with_role_names,
+          pendingWithRolesDisplay: caseInfo.pendingWithRolesDisplay ?? caseInfo.pending_with_roles_display ?? data.pendingWithRolesDisplay ?? data.pending_with_roles_display,
+          nextHearingDate: caseInfo.nextHearingDate ?? caseInfo.next_hearing_date ?? data.nextHearingDate ?? data.next_hearing_date
+        };
+        return { ...response, data: { ...data, caseInfo: merged } };
+      })
     );
   }
 

@@ -109,6 +109,9 @@ export class CaseDetailsComponent implements OnInit {
   // Track which notice is being acknowledged (for multiple notices)
   acknowledgingNoticeId: number | null = null;
 
+  /** Pending-with value from case detail API (e.g. "Dealing Assistant"); set when case loads */
+  pendingWithDisplay = '';
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -136,6 +139,7 @@ export class CaseDetailsComponent implements OnInit {
         if (response.success && response.data) {
           // Set case info
           this.case = response.data.caseInfo;
+          this.pendingWithDisplay = this.getPendingWithDisplay();
           console.log(this.case);
 
           // Set history
@@ -166,6 +170,7 @@ export class CaseDetailsComponent implements OnInit {
           // Load documents that are available
           this.loadAvailableDocuments();
         } else {
+          this.pendingWithDisplay = '';
           this.snackBar.open(
             response.message || 'Failed to load case details',
             'Close',
@@ -175,6 +180,7 @@ export class CaseDetailsComponent implements OnInit {
       },
       error: (error) => {
         this.isLoading = false;
+        this.pendingWithDisplay = '';
         const errorMessage =
           error?.error?.message ||
           error?.message ||
@@ -223,6 +229,19 @@ export class CaseDetailsComponent implements OnInit {
     // History is now loaded with case detail
   }
 
+  /**
+   * Pending-with display from case (camelCase or snake_case from API).
+   */
+  getPendingWithDisplay(): string {
+    if (!this.case) return '';
+    const d = this.case as any;
+    const display = d.pendingWithRolesDisplay ?? d.pending_with_roles_display;
+    if (display != null && String(display).trim()) return String(display).trim();
+    const names = d.pendingWithRoleNames ?? d.pending_with_role_names;
+    if (Array.isArray(names) && names.length) return names.map((n: string) => String(n)).join(', ');
+    return '';
+  }
+
   getStatusBadgeClass(status: string): string {
     if (status === 'RETURNED_FOR_CORRECTION') {
       return 'badge-warning';
@@ -239,7 +258,15 @@ export class CaseDetailsComponent implements OnInit {
   }
 
   canResubmit(): boolean {
-    return this.case?.status === 'RETURNED_FOR_CORRECTION';
+    if (!this.case) return false;
+    const s = (this.case.status || '').toUpperCase();
+    const code = (this.case as any).currentStateCode || '';
+    const name = ((this.case as any).currentStateName || (this.case as any).statusName || '').toLowerCase();
+    return (
+      s === 'RETURNED_FOR_CORRECTION' ||
+      code.toUpperCase() === 'RETURNED_FOR_CORRECTION' ||
+      name.includes('returned') && name.includes('correction')
+    );
   }
 
   navigateToResubmit(): void {
@@ -270,15 +297,32 @@ export class CaseDetailsComponent implements OnInit {
       if (!groupLabelOrder.has(k))
         groupLabelOrder.set(k, item.groupDisplayOrder ?? 999);
     });
+    // Global dedupe: each field (by fieldName/fieldLabel) appears only once across all groups
+    const seenFieldId = new Set<string>();
     const groups: FormDataGroup[] = [];
-    byGroup.forEach((items, fieldGroup) => {
-      const first = items[0];
-      groups.push({
-        groupLabel: first?.groupLabel || fieldGroup,
-        groupDisplayOrder: first?.groupDisplayOrder ?? 999,
-        items: items.map((i) => ({ fieldLabel: i.fieldLabel, value: i.value })),
-      });
-    });
+    const sortedGroupKeys = Array.from(byGroup.keys()).sort(
+      (a, b) => (groupLabelOrder.get(a) ?? 999) - (groupLabelOrder.get(b) ?? 999)
+    );
+    for (const fieldGroup of sortedGroupKeys) {
+      const items = byGroup.get(fieldGroup) ?? [];
+      const dedupedItems: { fieldLabel: string; value: string | number | null }[] = [];
+      for (const i of items) {
+        const id = (i.fieldName || i.fieldLabel || '').trim().toLowerCase().replace(/\s+/g, ' ');
+        if (id) {
+          if (seenFieldId.has(id)) continue;
+          seenFieldId.add(id);
+        }
+        dedupedItems.push({ fieldLabel: i.fieldLabel, value: i.value });
+      }
+      if (dedupedItems.length > 0) {
+        const first = items[0];
+        groups.push({
+          groupLabel: first?.groupLabel || fieldGroup,
+          groupDisplayOrder: first?.groupDisplayOrder ?? 999,
+          items: dedupedItems,
+        });
+      }
+    }
     groups.sort((a, b) => a.groupDisplayOrder - b.groupDisplayOrder);
     return groups;
   }

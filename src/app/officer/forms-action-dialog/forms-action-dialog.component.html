@@ -1,0 +1,47 @@
+<h2 mat-dialog-title>
+  <mat-icon>dynamic_form</mat-icon>
+  {{ formItem ? formItem.name : 'Forms – Complete and Submit' }}
+</h2>
+
+<mat-dialog-content class="forms-dialog-content">
+  <p class="dialog-hint">Complete the form below and submit. Close when done to return to the action.</p>
+  <!-- Open by form ID: single form so Form 5 and Form 7 load the correct form -->
+  <div *ngIf="formItem" class="single-form">
+    <app-hearing-form
+      [caseId]="caseId"
+      [formId]="formItem.formId"
+      (formSubmitted)="onFormSubmitted()">
+    </app-hearing-form>
+  </div>
+  <!-- Open by form types (e.g. from "Open Forms" tab) -->
+  <mat-tab-group *ngIf="!formItem && formTypes.length > 1" class="form-tabs">
+    <mat-tab *ngIf="formTypes.includes('HEARING')" label="Hearing">
+      <div class="tab-panel">
+        <app-hearing-form
+          [caseId]="caseId"
+          (formSubmitted)="onFormSubmitted()">
+        </app-hearing-form>
+      </div>
+    </mat-tab>
+    <mat-tab *ngIf="formTypes.includes('FIELD_REPORT')" label="Field Report">
+      <div class="tab-panel">
+        <app-field-report-view [caseId]="caseId"></app-field-report-view>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+  <div *ngIf="!formItem && formTypes.length === 1" class="single-form">
+    <app-hearing-form
+      *ngIf="formTypes[0] === 'HEARING'"
+      [caseId]="caseId"
+      (formSubmitted)="onFormSubmitted()">
+    </app-hearing-form>
+    <app-field-report-view
+      *ngIf="formTypes[0] === 'FIELD_REPORT'"
+      [caseId]="caseId">
+    </app-field-report-view>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onClose()">Close</button>
+</mat-dialog-actions>

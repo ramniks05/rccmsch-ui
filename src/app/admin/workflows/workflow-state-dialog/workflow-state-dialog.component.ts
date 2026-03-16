@@ -2,7 +2,7 @@ import { Component, OnInit, Inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { WorkflowConfigService, WorkflowState } from '../../services/workflow-config.service';
+import { WorkflowConfigService, WorkflowState, WorkflowStatusHints, StateCodeWithLabel } from '../../services/workflow-config.service';
 
 @Component({
   selector: 'app-workflow-state-dialog',
@@ -12,6 +12,10 @@ import { WorkflowConfigService, WorkflowState } from '../../services/workflow-co
 export class WorkflowStateDialogComponent implements OnInit {
   stateForm: FormGroup;
   isSubmitting = false;
+  statusHints: WorkflowStatusHints | null = null;
+  loadingHints = true;
+  /** Options for "Choose from list" dropdown; set when status hints load */
+  reportingOptions: StateCodeWithLabel[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -31,7 +35,9 @@ export class WorkflowStateDialogComponent implements OnInit {
       stateOrder: [null, [Validators.required, Validators.min(1)]],
       isInitialState: [null],
       isFinalState: [null],
-      description: ['']
+      description: [''],
+      /** Helper: choose from list to fill stateCode + stateName; not submitted */
+      stateCodePicker: [null as string | null]
     });
   }
 
@@ -51,6 +57,77 @@ export class WorkflowStateDialogComponent implements OnInit {
         stateOrder: this.data.defaultOrder
       });
     }
+    this.loadStatusHints();
+  }
+
+  /**
+   * Load status hints so the user can choose meaningful state_code (e.g. for Dashboard "Hearing scheduled") and final state.
+   */
+  loadStatusHints(): void {
+    this.loadingHints = true;
+    this.workflowService.getWorkflowStatusHints().subscribe({
+      next: (res) => {
+        this.loadingHints = false;
+        if (res.data) {
+          this.statusHints = res.data;
+          this.reportingOptions = this.getReportingOptionsList();
+        }
+      },
+      error: () => {
+        this.loadingHints = false;
+      }
+    });
+  }
+
+  /**
+   * Build the full list for autocomplete: reportingStatesList, or from reportingStatesWithLabels, then stateCodesWithLabels, then hearingScheduledStateCodes.
+   */
+  getReportingOptionsList(): StateCodeWithLabel[] {
+    const h = this.statusHints;
+    if (!h) return [];
+    if (h.reportingStatesList?.length) return h.reportingStatesList;
+    const withLabelsMap = h.reportingStatesWithLabels;
+    if (withLabelsMap && Object.keys(withLabelsMap).length) {
+      return Object.entries(withLabelsMap).map(([stateCode, stateName]) => ({ stateCode, stateName }));
+    }
+    const withLabels = h.stateCodesWithLabels;
+    if (withLabels?.length) return withLabels;
+    const codes = h.hearingScheduledStateCodes ?? [];
+    const labels = h.reportingStatesWithLabels ?? {};
+    return codes.map(code => ({ stateCode: code, stateName: labels[code] ?? code }));
+  }
+
+  /**
+   * When user selects from "Choose from list" dropdown, fill State Code and State Name, then reset the picker.
+   */
+  onStateCodeSelected(event: { value: string | null }): void {
+    const code = event?.value;
+    if (code == null || code === '') return;
+    const item = this.reportingOptions.find(s => (s.stateCode || '').toUpperCase() === String(code).toUpperCase());
+    this.stateForm.get('stateCode')?.setValue(code, { emitEvent: true });
+    this.stateForm.get('stateName')?.setValue(item?.stateName ?? '', { emitEvent: true });
+    this.stateForm.get('stateCodePicker')?.setValue(null, { emitEvent: false });
+  }
+
+  /** Whether this state code counts as "Hearing scheduled" on dashboard. */
+  isCodeHearingScheduled(code: string): boolean {
+    if (!code || !this.statusHints?.hearingScheduledStateCodes?.length) return false;
+    return this.statusHints.hearingScheduledStateCodes.some(c => c.toUpperCase() === code.toUpperCase().trim());
+  }
+
+  /** Whether the current state code counts in Dashboard "Hearing scheduled". */
+  isStateCodeInReportingList(): boolean {
+    const code = this.stateForm.get('stateCode')?.value;
+    return this.isCodeHearingScheduled(code ?? '');
+  }
+
+  /** Normalize typed value to uppercase on blur so it matches pattern (A-Z, _). */
+  onStateCodeBlur(): void {
+    const control = this.stateForm.get('stateCode');
+    const v = control?.value;
+    if (typeof v === 'string' && v.trim()) {
+      control?.setValue(v.trim().toUpperCase(), { emitEvent: true });
+    }
   }
 
   onSubmit(): void {
@@ -68,6 +145,7 @@ export class WorkflowStateDialogComponent implements OnInit {
       isFinalState: formValue.isFinalState ?? undefined,
       description: formValue.description
     };
+    // stateCodePicker is not sent to API
 
     if (this.data.mode === 'create') {
       this.workflowService.createState(this.data.workflowId, state).subscribe({

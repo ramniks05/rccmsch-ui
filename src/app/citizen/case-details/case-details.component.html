@@ -37,8 +37,8 @@
       <p>Loading case details...</p>
     </div>
 
-    <!-- Case Information -->
-    <div *ngIf="!isLoading && case" class="case-info-section">
+    <!-- Application / Case details (separate from actions) -->
+    <div *ngIf="!isLoading && case" class="application-details-section">
       <mat-card class="info-card">
         <mat-card-header>
           <mat-card-title>
@@ -83,16 +83,61 @@
                 case.createdAt | date: "medium"
               }}</span>
             </div>
+            <div class="info-item" *ngIf="case.nextHearingDate">
+              <span class="info-label">Next Hearing Date:</span>
+              <span class="info-value">{{ case.nextHearingDate | date: "dd/MM/yyyy" }}</span>
+            </div>
+            <div class="info-item" *ngIf="pendingWithDisplay">
+              <span class="info-label">Pending with:</span>
+              <span class="info-value pending-with-value">{{ pendingWithDisplay }}</span>
+            </div>
           </div>
         </mat-card-content>
       </mat-card>
 
-      <!-- Available Actions (workflow transitions + checklist) -->
-      <app-available-actions
-        *ngIf="caseId"
-        [caseId]="caseId"
-      ></app-available-actions>
+      <!-- Pending with role – highlighted so citizen knows where case is pending -->
+      <mat-card *ngIf="pendingWithDisplay" class="pending-with-card">
+        <mat-card-content>
+          <div class="pending-with-content">
+            <mat-icon>person_pin</mat-icon>
+            <div>
+              <span class="pending-with-label">Case pending with</span>
+              <span class="pending-with-role">{{ pendingWithDisplay }}</span>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
 
+    <!-- Available Actions – separate section from application details -->
+    <div *ngIf="!isLoading && case && caseId" class="available-actions-section">
+      <mat-card class="actions-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>play_circle</mat-icon>
+            Available Actions
+          </mat-card-title>
+          <mat-card-subtitle>Workflow actions you can take for this case</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <!-- Returned for Correction – compact notice under Available Actions -->
+          <div *ngIf="canResubmit()" class="correction-notice">
+            <span class="correction-notice__message">
+              <mat-icon>info</mat-icon>
+              {{ returnComment || 'Please correct your application.' }}
+            </span>
+            <button mat-stroked-button color="primary" (click)="navigateToResubmit()" class="correction-notice__btn">
+              <mat-icon>edit</mat-icon>
+              Edit & Resubmit
+            </button>
+          </div>
+          <app-available-actions [caseId]="caseId" [showSectionTitle]="false"></app-available-actions>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Documents and rest of content (stay in same flow) -->
+    <div *ngIf="!isLoading && case" class="case-info-section">
       <!-- Documents Section with Tabs -->
       <mat-card
         *ngIf="
@@ -501,28 +546,6 @@
               </div>
             </mat-tab>
           </mat-tab-group>
-        </mat-card-content>
-      </mat-card>
-
-      <!-- Return for Correction Notice -->
-      <mat-card *ngIf="canResubmit() && returnComment" class="warning-card">
-        <mat-card-header>
-          <mat-card-title>
-            <mat-icon color="warn">warning</mat-icon>
-            Returned for Correction
-          </mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <p class="return-comment">{{ returnComment }}</p>
-          <button
-            mat-raised-button
-            color="accent"
-            (click)="navigateToResubmit()"
-            class="resubmit-btn"
-          >
-            <mat-icon>edit</mat-icon>
-            Edit & Resubmit
-          </button>
         </mat-card-content>
       </mat-card>
 

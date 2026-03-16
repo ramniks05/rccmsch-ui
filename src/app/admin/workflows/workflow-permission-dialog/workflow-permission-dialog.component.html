@@ -6,14 +6,14 @@
 <mat-dialog-content>
   <form [formGroup]="permissionForm" class="permission-form">
     <mat-form-field appearance="outline" class="full-width">
-      <mat-label>Role Code *</mat-label>
-      <mat-select formControlName="roleCode">
-        <mat-option *ngFor="let role of data.roleCodes" [value]="role">
-          {{ role }}
+      <mat-label>Role *</mat-label>
+      <mat-select formControlName="roleId">
+        <mat-option *ngFor="let role of data.roles" [value]="role.roleId">
+          {{ role.roleName || role.roleCode }} ({{ role.roleCode }})
         </mat-option>
       </mat-select>
       <mat-icon matPrefix>person</mat-icon>
-      <mat-error *ngIf="permissionForm.get('roleCode')?.hasError('required')">Role code is required</mat-error>
+      <mat-error *ngIf="permissionForm.get('roleId')?.hasError('required')">Role is required</mat-error>
     </mat-form-field>
 
     <mat-form-field appearance="outline" class="full-width">
@@ -55,15 +55,67 @@
       </mat-checkbox>
     </div>
 
-    <div class="conditions-section">
-      <h4 class="conditions-heading">
+    <!-- Select conditional form or document -->
+    <div class="conditions-block" *ngIf="permissionForms.length > 0 || permissionDocuments.length > 0 || loadingFormsAndDocs">
+      <h4 class="conditions-block-title">
         <mat-icon>rule</mat-icon>
-        Transition conditions
+        Select conditional form or document
       </h4>
-      <app-workflow-condition-editor
-        [initialConditions]="data.mode === 'edit' && data.permission ? (data.permission.conditions ?? null) : null"
-        (conditionsChange)="onConditionsChange($event)"
-      ></app-workflow-condition-editor>
+      <p class="conditions-block-hint">Check the forms and documents required for this transition. Only admin-created items are listed.</p>
+
+    <!-- Forms (admin-created only) -->
+    <div class="permission-section" *ngIf="permissionForms.length > 0 || loadingFormsAndDocs">
+      <h4 class="section-heading">
+        <mat-icon>dynamic_form</mat-icon>
+        Forms
+      </h4>
+      <p class="section-hint">Only forms created by admin are listed. Check those this permission allows.</p>
+      <div *ngIf="loadingFormsAndDocs" class="loading-inline">
+        <mat-spinner diameter="24"></mat-spinner>
+        <span>Loading forms...</span>
+      </div>
+      <div *ngIf="!loadingFormsAndDocs && permissionForms.length > 0" class="checkbox-list">
+        <mat-checkbox
+          *ngFor="let f of permissionForms"
+          [checked]="isFormSelected(f.id)"
+          (change)="toggleForm(f.id)">
+          {{ f.name }}
+        </mat-checkbox>
+      </div>
+      <div *ngIf="!loadingFormsAndDocs && permissionForms.length === 0" class="empty-hint">No admin-created forms available.</div>
+    </div>
+
+    <!-- Documents (admin-created only) + per-document stages -->
+    <div class="permission-section" *ngIf="permissionDocuments.length > 0 || loadingFormsAndDocs">
+      <h4 class="section-heading">
+        <mat-icon>description</mat-icon>
+        Documents
+      </h4>
+      <p class="section-hint">Only document templates created by admin are listed. Check the document and which stages (Draft, Save & Sign) this permission allows.</p>
+      <div *ngIf="loadingFormsAndDocs" class="loading-inline">
+        <mat-spinner diameter="24"></mat-spinner>
+        <span>Loading documents...</span>
+      </div>
+      <div *ngIf="!loadingFormsAndDocs && permissionDocuments.length > 0" class="document-list">
+        <div *ngFor="let d of permissionDocuments" class="document-row">
+          <mat-checkbox
+            [checked]="isDocumentSelected(d.id)"
+            (change)="toggleDocument(d.id)">
+            {{ d.name }}{{ d.moduleType ? ' (' + d.moduleType + ')' : '' }}
+          </mat-checkbox>
+          <div *ngIf="d.stages?.length" class="document-stages">
+            <mat-checkbox
+              *ngFor="let stage of getDocumentStageOptions(d)"
+              [checked]="isDocumentStageSelected(d.id, stage.value)"
+              (change)="toggleDocumentStage(d.id, stage.value)"
+              class="stage-cb">
+              {{ stage.label }}
+            </mat-checkbox>
+          </div>
+        </div>
+      </div>
+      <div *ngIf="!loadingFormsAndDocs && permissionDocuments.length === 0" class="empty-hint">No admin-created documents available.</div>
+    </div>
     </div>
   </form>
 </mat-dialog-content>

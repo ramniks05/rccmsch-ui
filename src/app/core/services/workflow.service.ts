@@ -64,7 +64,7 @@ export class WorkflowService {
           return response as ApiResponse<TransitionWithChecklist[]>;
         }
         
-        // Normalize the response: extract canExecute and blockingConditions from checklist
+        // Normalize the response: extract canExecute, blockingConditions and document actions from checklist
         const normalizedData: TransitionWithChecklist[] = response.data.map((transition: any) => {
           const normalized: TransitionWithChecklist = {
             id: transition.id,
@@ -85,7 +85,11 @@ export class WorkflowService {
             })) || transition.checklist?.conditions?.filter((c: any) => !c.passed).map((c: any) => ({
               label: c.label || c.message || 'Condition not met',
               passed: false
-            })) || transition.blockingConditions || []
+            })) || transition.blockingConditions || [],
+            // Pass through document-related checklist info when present
+            allowedDocumentIds: transition.checklist?.allowedDocumentIds ?? transition.allowedDocumentIds ?? null,
+            allowDocumentDraft: transition.checklist?.allowDocumentDraft ?? transition.allowDocumentDraft ?? null,
+            allowDocumentSaveAndSign: transition.checklist?.allowDocumentSaveAndSign ?? transition.allowDocumentSaveAndSign ?? null
           };
           return normalized;
         });

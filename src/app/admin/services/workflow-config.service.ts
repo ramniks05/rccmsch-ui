@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import type { WorkflowCondition } from '../../core/models/workflow-condition.types';
+import type { WorkflowCondition, WorkflowDataKeysResponse } from '../../core/models/workflow-condition.types';
 
 export interface WorkflowDefinition {
   id?: number;
@@ -43,6 +44,8 @@ export interface WorkflowPermission {
   id?: number;
   transitionId?: number;
   transitionCode?: string;
+  /** Reference to role master (officer role) */
+  roleId?: number;
   roleCode: string;
   unitLevel?: 'STATE' | 'DISTRICT' | 'SUB_DIVISION' | 'CIRCLE' | null;
   canInitiate: boolean;
@@ -50,6 +53,40 @@ export interface WorkflowPermission {
   hierarchyRule?: string;
   conditions?: string;
   isActive?: boolean;
+  /** Form IDs (admin-created forms) this permission allows */
+  allowedFormIds?: number[];
+  /** Document IDs (admin-created document templates) this permission allows */
+  allowedDocumentIds?: number[];
+  /** Allow draft for documents (legacy; prefer allowedDocumentStages) */
+  allowDocumentDraft?: boolean;
+  /** Allow save & sign for documents (legacy; prefer allowedDocumentStages) */
+  allowDocumentSaveAndSign?: boolean;
+  /** Per-document stages this permission allows (from API stages/stageLabels) */
+  allowedDocumentStages?: { documentId: number; stages: string[] }[];
+}
+
+/** One document stage for display (value from API, label for UI) */
+export interface DocumentStageOption {
+  value: string;
+  label: string;
+}
+
+/** Option for permission form dropdown/checkboxes – from admin-created forms */
+export interface PermissionFormOption {
+  id: number;
+  name: string;
+  code?: string;
+}
+
+/** Option for permission document – from admin-created document templates; stages per document */
+export interface PermissionDocumentOption {
+  id: number;
+  name: string;
+  moduleType?: string;
+  /** Stage codes e.g. ["DRAFT", "SAVE_AND_SIGN"] */
+  stages?: string[];
+  /** Display labels e.g. ["Draft", "Save & Sign"] */
+  stageLabels?: string[];
 }
 
 interface ApiResponse<T> {
@@ -254,6 +291,32 @@ export class WorkflowConfigService {
     );
   }
 
+  /**
+   * GET /api/admin/workflow/permission-forms
+   * Returns admin-created forms for the Forms section (id, name, code).
+   */
+  getPermissionForms(): Observable<ApiResponse<PermissionFormOption[]>> {
+    return this.http.get<ApiResponse<PermissionFormOption[]>>(
+      `${this.apiUrl}/permission-forms`,
+      { headers: this.getHeaders() }
+    ).pipe(
+      catchError(() => of({ success: false, message: 'Failed to load forms', data: [] }))
+    );
+  }
+
+  /**
+   * GET /api/admin/workflow/permission-documents
+   * Returns admin-created document templates for the Documents section (id, name, moduleType).
+   */
+  getPermissionDocuments(): Observable<ApiResponse<PermissionDocumentOption[]>> {
+    return this.http.get<ApiResponse<PermissionDocumentOption[]>>(
+      `${this.apiUrl}/permission-documents`,
+      { headers: this.getHeaders() }
+    ).pipe(
+      catchError(() => of({ success: false, message: 'Failed to load documents', data: [] }))
+    );
+  }
+
   // ==================== Transition Conditions (Admin) ====================
 
   /**
@@ -266,4 +329,122 @@ export class WorkflowConfigService {
       { headers: this.getHeaders() }
     );
   }
+
+  // ==================== Workflow Data Keys (Single Source of Truth) ====================
+
+  private dataKeysCache: WorkflowDataKeysResponse | null = null;
+
+  /**
+   * GET /api/admin/workflow/data-keys
+   * Returns valid workflow data keys for workflowDataFieldsRequired.
+   * Use keysWithBinding to bind each key to form (module-forms) or document (documents).
+   */
+  getWorkflowDataKeys(): Observable<ApiResponse<WorkflowDataKeysResponse>> {
+    return this.http.get<ApiResponse<WorkflowDataKeysResponse>>(
+      `${this.apiUrl}/data-keys`,
+      { headers: this.getHeaders() }
+    ).pipe(
+      map(res => {
+        if (res.success && res.data) {
+          this.dataKeysCache = res.data;
+        }
+        return res;
+      }),
+      catchError(() => of({ success: false, message: 'Failed to load workflow data keys', data: null! }))
+    );
+  }
+
+  /**
+   * Cached data keys (set after getWorkflowDataKeys() succeeds). Use for labels and binding.
+   */
+  getCachedWorkflowDataKeys(): WorkflowDataKeysResponse | null {
+    return this.dataKeysCache;
+  }
+
+  /**
+   * Resolve a workflow data key to label (from cache or API). For use in view/checklist.
+   */
+  getWorkflowDataKeyLabel(key: string): string {
+    if (this.dataKeysCache?.keysWithLabels?.[key]) {
+      return this.dataKeysCache.keysWithLabels[key];
+    }
+    const binding = this.dataKeysCache?.keysWithBinding?.find(b => b.key === key);
+    return binding?.label ?? key;
+  }
+
+  /**
+   * Get action info for a condition key: form (module-forms) or document (documents) and moduleType.
+   */
+  getActionForConditionKey(conditionKey: string, caseId: number): { type: 'form' | 'document' | 'special'; label: string; moduleType?: string } {
+    const binding = this.dataKeysCache?.keysWithBinding?.find(b => b.key === conditionKey);
+    if (!binding) {
+      return { type: 'special', label: this.getWorkflowDataKeyLabel(conditionKey) };
+    }
+    if (binding.kind === 'FORM') {
+      return { type: 'form', label: binding.label, moduleType: binding.moduleType };
+    }
+    if (binding.kind === 'DOCUMENT') {
+      return { type: 'document', label: binding.label, moduleType: binding.moduleType };
+    }
+    return { type: 'special', label: binding.label };
+  }
+
+  // ==================== Workflow Status Hints (Meaningful State Codes) ====================
+
+  /**
+   * GET /api/admin/workflow/status-hints
+   * Returns full reporting state list, DB state codes, hearing-scheduled codes, and hints.
+   * Use on Add/Edit workflow state so user can choose from list or type a new code.
+   */
+  getWorkflowStatusHints(): Observable<ApiResponse<WorkflowStatusHints>> {
+    return this.http.get<ApiResponse<WorkflowStatusHints>>(
+      `${this.apiUrl}/status-hints`,
+      { headers: this.getHeaders() }
+    ).pipe(
+      catchError(() =>
+        of({
+          success: false,
+          message: 'Failed to load status hints',
+          data: {
+            stateCodesForChoice: [],
+            stateCodesWithLabels: [],
+            reportingStatesWithLabels: {},
+            reportingStatesList: [],
+            hearingScheduledStateCodes: [],
+            hints: {
+              stateCode: 'Choose a state code from the list (for reporting) or type a new code. Use uppercase and underscores.',
+              hearingScheduled: 'Use one of the configured state_code values so cases count in Dashboard "Hearing scheduled". Add new codes to app.dashboard.hearing-scheduled-statuses in application.yml.',
+              finalState: 'Set is_final_state = true on states that mean case closed/disposed. Those cases count as Disposed in officer stats and dashboard.'
+            }
+          }
+        })
+      )
+    );
+  }
+}
+
+/** One state code + label for dropdown/list */
+export interface StateCodeWithLabel {
+  stateCode: string;
+  stateName: string;
+}
+
+/** Response from GET /api/admin/workflow/status-hints */
+export interface WorkflowStatusHints {
+  /** State codes already in use in workflows (from DB) – for "reuse existing" */
+  stateCodesForChoice?: string[];
+  /** Same as above with display labels */
+  stateCodesWithLabels?: StateCodeWithLabel[];
+  /** All possible reporting/dashboard state codes with labels – main dropdown source */
+  reportingStatesWithLabels?: Record<string, string>;
+  /** Same as list of { stateCode, stateName } for UI */
+  reportingStatesList?: StateCodeWithLabel[];
+  /** Codes that count as "Hearing scheduled" on dashboard (from config) */
+  hearingScheduledStateCodes?: string[];
+  /** Short texts for state code field and final-state checkbox */
+  hints?: {
+    stateCode?: string;
+    hearingScheduled?: string;
+    finalState?: string;
+  };
 }
