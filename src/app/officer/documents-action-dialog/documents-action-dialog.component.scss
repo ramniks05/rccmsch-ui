@@ -1,0 +1,25 @@
+.documents-dialog-content {
+  min-width: 320px;
+  max-width: 95vw;
+  width: 900px;
+  max-height: 85vh;
+  overflow: auto;
+  padding-bottom: 16px;
+
+  .dialog-hint {
+    margin-bottom: 16px;
+    color: #555;
+    font-size: 0.9rem;
+  }
+
+  .doc-tabs .tab-panel,
+  .single-doc {
+    padding-top: 8px;
+    min-height: 400px;
+  }
+}
+
+mat-dialog-actions {
+  border-top: 1px solid #eee;
+  padding: 12px 24px;
+}

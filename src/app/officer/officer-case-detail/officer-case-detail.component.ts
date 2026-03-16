@@ -1,9 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
-import { OfficerCaseService, CaseDTO, WorkflowTransitionDTO, WorkflowHistory } from '../services/officer-case.service';
+import { OfficerCaseService, CaseDTO, WorkflowTransitionDTO, WorkflowHistory, ActionFormDetail, ActionDocumentDetail } from '../services/officer-case.service';
+import { forkJoin, of } from 'rxjs';
 import { WorkflowActionDialogComponent } from '../workflow-action-dialog/workflow-action-dialog.component';
+import { DocumentsActionDialogComponent } from '../documents-action-dialog/documents-action-dialog.component';
+import { FormsActionDialogComponent } from '../forms-action-dialog/forms-action-dialog.component';
 import { FieldReportRequestDialogComponent } from '../field-report-request-dialog/field-report-request-dialog.component';
 import { FieldReportFormComponent } from '../field-report-form/field-report-form.component';
 import { AttendanceFormComponent } from '../attendance-form/attendance-form.component';
@@ -19,7 +22,7 @@ export class OfficerCaseDetailComponent implements OnInit {
   transitions: WorkflowTransitionDTO[] = [];
   history: WorkflowHistory[] = [];
 
-  // Current officer role (for Reader/Tehsildar specific behaviour)
+  // Current officer role (display only; which transitions show is from backend)
   userRoleCode: string = '';
   userRoleName: string = '';
 
@@ -52,12 +55,30 @@ export class OfficerCaseDetailComponent implements OnInit {
   // Attendance functionality
   showMarkAttendanceButton = false;
 
+  /** Pending-with value from case details API; set when case loads so it always shows when present */
+  pendingWithDisplay = '';
+
+  /** Bound to mat-tab-group selectedIndex so we can switch tabs (e.g. "Go to Documents"). */
+  selectedTabIndex = 0;
+
+  /** Form ID → name and moduleType (fetched from API for display and opening). */
+  formDetailsMap: Record<number, ActionFormDetail> = {};
+  /** Document ID → name and moduleType (fetched from API for display and opening). */
+  documentDetailsMap: Record<number, ActionDocumentDetail> = {};
+
+  /** Fallback display names for document template IDs when backend does not send allowedDocuments or DOCUMENT_CONDITION.moduleType. Extend as needed (e.g. 5: 'Order Sheet'). */
+  private static DOCUMENT_DISPLAY_NAMES_FALLBACK: Record<number, string> = {
+    5: 'Order Sheet',
+    // Add more: 6: 'Notice', 7: 'Judgement', etc.
+  };
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private caseService: OfficerCaseService,
     private snackBar: MatSnackBar,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -90,13 +111,6 @@ export class OfficerCaseDetailComponent implements OnInit {
   }
 
   /**
-   * Convenience check for Reader role
-   */
-  private isReader(): boolean {
-    return this.userRoleCode?.toUpperCase() === 'READER';
-  }
-
-  /**
    * Load case details
    */
   loadCaseDetails(): void {
@@ -108,15 +122,18 @@ export class OfficerCaseDetailComponent implements OnInit {
         this.loading = false;
         if (response.success && response.data) {
           this.caseData = response.data;
+          this.pendingWithDisplay = this.getPendingWithDisplay();
           this.parseCaseData();
           // Update attendance button visibility based on case state
           this.updateAttendanceButtonVisibility();
         } else {
+          this.pendingWithDisplay = '';
           this.error = response.message || 'Failed to load case details';
         }
       },
       error: (err) => {
         this.loading = false;
+        this.pendingWithDisplay = '';
         this.error = err.error?.message || 'Failed to load case details';
         this.snackBar.open(this.error ?? 'Failed to load case details', 'Close', { duration: 5000 });
       }
@@ -154,6 +171,7 @@ export class OfficerCaseDetailComponent implements OnInit {
         if (response.success && response.data) {
           this.transitions = response.data;
           this.determineRequiredModules();
+          this.loadActionFormAndDocumentDetails();
           
           // Check if REQUEST_FIELD_REPORT transition is available (for Tehsildar)
           this.showRequestFieldReportButton = this.transitions.some(
@@ -295,6 +313,17 @@ export class OfficerCaseDetailComponent implements OnInit {
           }
         });
       }
+
+      // If a transition is a NOTICE-related document action with allowedDocumentIds,
+      // ensure the Notice tab is available so officer can draft the notice in its own tab.
+      if (
+        transition.transitionCode &&
+        transition.transitionCode.toUpperCase().includes('NOTICE') &&
+        transition.checklist?.allowedDocumentIds &&
+        transition.checklist.allowedDocumentIds.length > 0
+      ) {
+        this.requiredModules.notice = true;
+      }
     });
 
     // Check if field report has been submitted (case is in "Field Report Submitted" state or later)
@@ -359,84 +388,372 @@ export class OfficerCaseDetailComponent implements OnInit {
   }
 
   /**
-   * Handle action button click
+   * Whether this transition can be executed (checklist.canExecute !== false).
    */
-  /**
-   * Check if transition can be executed (not blocked by conditions)
-   */
-  isTransitionExecutable(transition: WorkflowTransitionDTO): boolean {
-    // For Reader role, always enable actions (ignore checklist blocking)
-    if (this.isReader()) {
-      return true;
-    }
-
-    // For other roles, respect checklist canExecute flag
-    if (transition.checklist?.canExecute === false) {
-      return false;
-    }
-
-    // Default to true if no checklist or canExecute is not explicitly false
-    return true;
+  canExecuteTransition(transition: WorkflowTransitionDTO): boolean {
+    return transition.checklist?.canExecute !== false;
   }
 
   /**
-   * Get blocking reasons for a transition
+   * Blocking reasons for this transition (when canExecute is false).
    */
-  getBlockingReasons(transition: WorkflowTransitionDTO): string {
-    if (this.isTransitionExecutable(transition)) {
-      return '';
-    }
-    
-    // Get blocking reasons from checklist
-    const reasons: string[] = [];
-    
-    if (transition.checklist?.blockingReasons && transition.checklist.blockingReasons.length > 0) {
-      reasons.push(...transition.checklist.blockingReasons);
-    }
-    
-    // Also check conditions that failed
-    if (transition.checklist?.conditions) {
-      const failedConditions = transition.checklist.conditions
-        .filter(c => !c.passed && c.required)
-        .map(c => c.label || c.message);
-      reasons.push(...failedConditions);
-    }
-    
-    return reasons.length > 0 
-      ? reasons.join('. ') 
-      : 'This action cannot be performed. Required conditions are not met.';
+  getBlockingReasons(transition: WorkflowTransitionDTO): string[] {
+    const reasons = transition.checklist?.blockingReasons;
+    return Array.isArray(reasons) ? reasons : [];
   }
 
   /**
-   * Check if there are any blocked transitions
+   * Form IDs allowed/required for this transition (for display per action).
    */
-  hasBlockedTransitions(): boolean {
-    return this.transitions.some(t => !this.isTransitionExecutable(t));
+  getTransitionFormIds(transition: WorkflowTransitionDTO): number[] {
+    const ids = transition.checklist?.allowedFormIds;
+    return Array.isArray(ids) ? ids : [];
   }
 
   /**
-   * Get list of blocked transitions
+   * Document IDs allowed/required for this transition (for display per action).
    */
-  getBlockedTransitions(): WorkflowTransitionDTO[] {
-    return this.transitions.filter(t => !this.isTransitionExecutable(t) && this.getBlockingReasons(t));
+  getTransitionDocumentIds(transition: WorkflowTransitionDTO): number[] {
+    const ids = transition.checklist?.allowedDocumentIds;
+    return Array.isArray(ids) ? ids : [];
   }
 
-  handleActionClick(transition: WorkflowTransitionDTO): void {
-    // Prevent execution if blocked
-    if (!this.isTransitionExecutable(transition)) {
-      const reasons = this.getBlockingReasons(transition);
-      this.snackBar.open(
-        reasons || 'This action cannot be performed. Required conditions are not met.',
-        'Close',
-        { duration: 5000, panelClass: ['error-snackbar'] }
-      );
+  /**
+   * Human-readable document actions for this transition (e.g. "Draft", "Save & Sign").
+   */
+  getTransitionDocumentActions(transition: WorkflowTransitionDTO): string {
+    const c = transition.checklist;
+    if (!c) return '';
+    const parts: string[] = [];
+    if (c.allowDocumentDraft === true) parts.push('Draft');
+    if (c.allowDocumentSaveAndSign === true) parts.push('Save & Sign');
+    return parts.join(', ');
+  }
+
+  /**
+   * Whether this transition has any forms or documents to show.
+   */
+  hasFormsOrDocuments(transition: WorkflowTransitionDTO): boolean {
+    return this.getTransitionFormIds(transition).length > 0 ||
+           this.getTransitionDocumentIds(transition).length > 0;
+  }
+
+  /**
+   * Index of the first document tab (Notice / Order Sheet / Judgement) in the tab group.
+   * Tabs order: Case Info (0), Hearing?, Notice?, Order Sheet?, Judgement?, Field Report?, Actions, History.
+   */
+  getFirstDocumentTabIndex(): number {
+    let i = 1; // after Case Info (0)
+    if (this.requiredModules.hearing) i++;
+    return i; // next is first document tab (Notice) or Order Sheet or Judgement
+  }
+
+  /**
+   * Index of the first form tab (Hearing or Field Report) in the tab group.
+   */
+  getFirstFormTabIndex(): number {
+    if (this.requiredModules.hearing) return 1;
+    let i = 1;
+    if (this.requiredModules.notice) i++;
+    if (this.requiredModules.ordersheet) i++;
+    if (this.requiredModules.judgement) i++;
+    return i; // Field Report tab
+  }
+
+  /** Load form and document details: prefer names from transition (allowedForms/allowedDocuments), else from conditions (moduleType), else stub. */
+  private loadActionFormAndDocumentDetails(): void {
+    const formIds = new Set<number>();
+    const documentIds = new Set<number>();
+    this.transitions.forEach(t => {
+      (t.checklist?.allowedFormIds ?? []).forEach((id: number) => formIds.add(id));
+      (t.checklist?.allowedDocumentIds ?? []).forEach((id: number) => documentIds.add(id));
+    });
+    // 1) Prefer names from transition checklist if backend sent allowedForms/allowedDocuments
+    this.transitions.forEach(t => {
+      (t.checklist?.allowedForms ?? []).forEach((f: { id: number; name: string }) => {
+        this.formDetailsMap[f.id] = { id: f.id, name: f.name, moduleType: f.name };
+      });
+      (t.checklist?.allowedDocuments ?? []).forEach((d: { id: number; name: string }) => {
+        this.documentDetailsMap[d.id] = { id: d.id, name: d.name, moduleType: d.name };
+      });
+    });
+    // 2) Derive form/document names from conditions (FORM_CONDITION / DOCUMENT_CONDITION with moduleType) when we don't have a name yet
+    this.deriveFormNamesFromConditions();
+    this.deriveDocumentNamesFromConditions();
+    // 3) Stub for any remaining (so we have an entry for getFormName/getDocumentName)
+    const fIds = Array.from(formIds).filter(id => !this.formDetailsMap[id]);
+    const dIds = Array.from(documentIds).filter(id => !this.documentDetailsMap[id]);
+    if (fIds.length === 0 && dIds.length === 0) {
+      this.cdr.detectChanges();
       return;
     }
+    forkJoin({
+      forms: fIds.length ? this.caseService.getActionFormDetails(this.caseId, fIds) : of({ success: true, message: '', data: [] as ActionFormDetail[] }),
+      documents: dIds.length ? this.caseService.getActionDocumentDetails(this.caseId, dIds) : of({ success: true, message: '', data: [] as ActionDocumentDetail[] })
+    }).subscribe(({ forms, documents }) => {
+      (forms.data ?? []).forEach(f => {
+        // Keep stub only if we didn't derive a better name from conditions
+        if (!this.formDetailsMap[f.id] || this.formDetailsMap[f.id].name === `Form ${f.id}`) {
+          this.formDetailsMap[f.id] = f;
+        }
+      });
+      (documents.data ?? []).forEach(d => {
+        if (!this.documentDetailsMap[d.id] || this.documentDetailsMap[d.id].name === `Document ${d.id}`) {
+          this.documentDetailsMap[d.id] = d;
+        }
+      });
+      // Re-derive so any form/document that got stub now gets name from conditions if we can
+      this.deriveFormNamesFromConditions();
+      this.deriveDocumentNamesFromConditions();
+      this.cdr.detectChanges();
+    });
+  }
+
+  /**
+   * Build document id → display name from transition conditions (DOCUMENT_CONDITION with moduleType).
+   * Pairs allowedDocumentIds with condition module types by order when counts match.
+   */
+  private deriveDocumentNamesFromConditions(): void {
+    this.transitions.forEach(t => {
+      const c = t.checklist;
+      if (!c) return;
+      const docIds = (c.allowedDocumentIds ?? []).slice().sort((a, b) => a - b);
+      const docModuleTypes = (c.conditions ?? [])
+        .filter(cond => cond.type === 'DOCUMENT_CONDITION' && cond.moduleType)
+        .map(cond => cond.moduleType!);
+      if (docIds.length === 0 || docModuleTypes.length === 0) return;
+      const len = Math.min(docIds.length, docModuleTypes.length);
+      for (let i = 0; i < len; i++) {
+        const id = docIds[i];
+        const existing = this.documentDetailsMap[id];
+        const name = this.humanizeModuleType(docModuleTypes[i]);
+        if (!existing || existing.name === `Document ${id}`) {
+          this.documentDetailsMap[id] = { id, name, moduleType: docModuleTypes[i] };
+        }
+      }
+    });
+  }
+
+  /**
+   * Build form id → display name from transition conditions (FORM_CONDITION with moduleType).
+   * Pairs allowedFormIds with condition module types by order when counts match; else keeps existing map.
+   */
+  private deriveFormNamesFromConditions(): void {
+    this.transitions.forEach(t => {
+      const c = t.checklist;
+      if (!c) return;
+      const formIds = (c.allowedFormIds ?? []).slice().sort((a, b) => a - b);
+      const formModuleTypes = (c.conditions ?? [])
+        .filter(cond => cond.type === 'FORM_CONDITION' && cond.moduleType)
+        .map(cond => cond.moduleType!);
+      if (formIds.length === 0 || formModuleTypes.length === 0) return;
+      // When counts match, assign first form id to first module type, etc.
+      const len = Math.min(formIds.length, formModuleTypes.length);
+      for (let i = 0; i < len; i++) {
+        const id = formIds[i];
+        const existing = this.formDetailsMap[id];
+        const name = this.humanizeModuleType(formModuleTypes[i]);
+        if (!existing || existing.name === `Form ${id}`) {
+          this.formDetailsMap[id] = { id, name, moduleType: formModuleTypes[i] };
+        }
+      }
+    });
+  }
+
+  getFormName(formId: number): string {
+    const d = this.formDetailsMap[formId];
+    return (d?.name && d.name.trim()) ? d.name : `Form ${formId}`;
+  }
+
+  getDocumentName(documentId: number): string {
+    const d = this.documentDetailsMap[documentId];
+    const fromMap = d?.name?.trim();
+    if (fromMap && fromMap !== `Document ${documentId}`) return fromMap;
+    const fallback = OfficerCaseDetailComponent.DOCUMENT_DISPLAY_NAMES_FALLBACK[documentId];
+    if (fallback) return fallback;
+    return d?.name ?? `Document ${documentId}`;
+  }
+
+  /** Human-readable module type for display (e.g. HEARING → Hearing, FIELD_REPORT → Field Report). */
+  humanizeModuleType(code: string): string {
+    if (!code || typeof code !== 'string') return code;
+    return code.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  /**
+   * Format condition/blocking label: show names instead of IDs/codes.
+   * Replaces "Document(s) [5]" with document name, "Form [HEARING]" with "Hearing", "Form [5]" with form name.
+   * API payloads continue to use IDs; this is display only.
+   */
+  formatConditionLabel(label: string, transition: WorkflowTransitionDTO): string {
+    if (!label || typeof label !== 'string') return label;
+    let out = label;
+    const docIds = transition.checklist?.allowedDocumentIds ?? [];
+    const formIds = transition.checklist?.allowedFormIds ?? [];
+    // Document(s) [5] → Document(s) {name}
+    out = out.replace(/Document\(s\)\s*\[(\d+)\]/g, (_, idStr) => {
+      const id = parseInt(idStr, 10);
+      return `Document(s) ${this.getDocumentName(id)}`;
+    });
+    // Form [HEARING] / Form [FIELD_REPORT] → Form {humanized}
+    out = out.replace(/Form\s*\[([A-Z_]+)\]/g, (_, code) => `Form ${this.humanizeModuleType(code)}`);
+    // Form [5] (form id) → Form {name}
+    formIds.forEach(id => {
+      const name = this.getFormName(id);
+      out = out.replace(new RegExp(`Form\\s*\\[${id}\\]`, 'g'), `Form ${name}`);
+    });
+    return out;
+  }
+
+  /** Blocking reasons with formatted labels (names instead of raw IDs/codes). */
+  getFormattedBlockingReasons(transition: WorkflowTransitionDTO): string[] {
+    const raw = transition.checklist?.blockingReasons;
+    if (!Array.isArray(raw)) return [];
+    return raw.map(r => this.formatConditionLabel(r, transition));
+  }
+
+  /** Single condition label formatted for display (name instead of id/code). */
+  getFormattedConditionLabel(transition: WorkflowTransitionDTO, condition: { label: string }): string {
+    return this.formatConditionLabel(condition.label, transition);
+  }
+
+  getFormModuleType(formId: number): string | null {
+    return this.formDetailsMap[formId]?.moduleType ?? null;
+  }
+
+  getDocumentModuleType(documentId: number): string | null {
+    return this.documentDetailsMap[documentId]?.moduleType ?? null;
+  }
+
+  /** First template ID in documentDetailsMap for the given module type (for officer document APIs by template ID). */
+  getTemplateIdForModuleType(moduleType: string): number | null {
+    for (const d of Object.values(this.documentDetailsMap)) {
+      if (d.moduleType === moduleType) return d.id;
+    }
+    return null;
+  }
+
+  /** All unique document template IDs from transitions (allowedDocumentIds). Use when no module-type mapping is available. */
+  getTemplateIds(): number[] {
+    const ids = new Set<number>();
+    this.transitions.forEach(t => (t.checklist?.allowedDocumentIds ?? []).forEach((id: number) => ids.add(id)));
+    return Array.from(ids);
+  }
+
+  /** Open a specific form by ID: pass formId so the correct form (5 vs 7) is fetched and shown. */
+  openFormById(formId: number, _transition: WorkflowTransitionDTO): void {
+    if (!this.caseData) return;
+    const name = this.getFormName(formId);
+    const formItem = { formId, name };
+    this.dialog.open(FormsActionDialogComponent, {
+      width: '740px',
+      maxWidth: '95vw',
+      maxHeight: '90vh',
+      data: { caseId: this.caseId, caseData: this.caseData, formItem },
+      disableClose: false
+    }).afterClosed().subscribe((submitted) => {
+      if (submitted) {
+        this.loadAvailableTransitions();
+        this.loadCaseDetails();
+      }
+    });
+  }
+
+  /** Open a specific document by template ID: call API on click to get name, then show document editor in dialog (APIs use template ID). */
+  openDocumentById(documentId: number, _transition: WorkflowTransitionDTO): void {
+    if (!this.caseData) return;
+    this.caseService.getActionDocumentDetails(this.caseId, [documentId]).subscribe({
+      next: (res) => {
+        const detail = res.data?.[0];
+        const name = detail?.name ?? this.getDocumentName(documentId);
+        const documentTemplates = [{ templateId: documentId, name }];
+        this.dialog.open(DocumentsActionDialogComponent, {
+          width: '920px',
+          maxWidth: '95vw',
+          maxHeight: '90vh',
+          data: { caseId: this.caseId, caseData: this.caseData, documentTemplates },
+          disableClose: false
+        }).afterClosed().subscribe(() => {
+          this.loadAvailableTransitions();
+          this.loadCaseDetails();
+        });
+      },
+      error: () => {
+        this.snackBar.open('Could not load document. Please try again.', 'Close', { duration: 4000 });
+      }
+    });
+  }
+
+  /** Open Documents in a modal so officer can edit and Save as Draft / Save & Sign (by template ID). */
+  goToDocumentsTab(): void {
+    if (!this.caseData) return;
+    const documentTemplates: { templateId: number; name: string }[] = [];
+    // Prefer template IDs by module type if we have them; otherwise use all allowedDocumentIds from transitions
+    const types: ('NOTICE' | 'ORDERSHEET' | 'JUDGEMENT')[] = [];
+    if (this.requiredModules.notice) types.push('NOTICE');
+    if (this.requiredModules.ordersheet) types.push('ORDERSHEET');
+    if (this.requiredModules.judgement) types.push('JUDGEMENT');
+    for (const mt of types) {
+      const tid = this.getTemplateIdForModuleType(mt);
+      if (tid != null) documentTemplates.push({ templateId: tid, name: this.getDocumentName(tid) });
+    }
+    if (documentTemplates.length === 0) {
+      const templateIds = this.getTemplateIds();
+      templateIds.forEach(tid => documentTemplates.push({ templateId: tid, name: this.getDocumentName(tid) }));
+    }
+    if (documentTemplates.length === 0) {
+      this.snackBar.open('No document templates available for this case.', 'Close', { duration: 4000 });
+      return;
+    }
+    this.dialog.open(DocumentsActionDialogComponent, {
+      width: '920px',
+      maxWidth: '95vw',
+      maxHeight: '90vh',
+      data: { caseId: this.caseId, caseData: this.caseData, documentTemplates },
+      disableClose: false
+    }).afterClosed().subscribe(() => {
+      this.loadAvailableTransitions();
+      this.loadCaseDetails();
+    });
+  }
+
+  /** Open Forms in a modal so officer can complete and submit. */
+  goToFormsTab(): void {
+    if (!this.caseData) return;
+    const formTypes: string[] = [];
+    if (this.requiredModules.hearing) formTypes.push('HEARING');
+    if (this.requiredModules.fieldReport || this.hasFieldReportSubmitted || this.showSubmitFieldReportButton) formTypes.push('FIELD_REPORT');
+    if (formTypes.length === 0) formTypes.push('HEARING');
+    this.dialog.open(FormsActionDialogComponent, {
+      width: '740px',
+      maxWidth: '95vw',
+      maxHeight: '90vh',
+      data: { caseId: this.caseId, caseData: this.caseData, formTypes },
+      disableClose: false
+    }).afterClosed().subscribe((submitted) => {
+      if (submitted) {
+        this.loadAvailableTransitions();
+        this.loadCaseDetails();
+      }
+    });
+  }
+
+  /**
+   * Handle action button click
+   */
+  handleActionClick(transition: WorkflowTransitionDTO): void {
+    const formLabels: Record<number, string> = {};
+    this.getTransitionFormIds(transition).forEach(id => { formLabels[id] = this.getFormName(id); });
+    const documentLabels: Record<number, string> = {};
+    this.getTransitionDocumentIds(transition).forEach(id => { documentLabels[id] = this.getDocumentName(id); });
     const dialogRef = this.dialog.open(WorkflowActionDialogComponent, {
       width: '500px',
       data: {
-        transition: transition,
-        caseNumber: this.caseData?.caseNumber
+        transition,
+        caseNumber: this.caseData?.caseNumber,
+        formLabels,
+        documentLabels,
+        formattedBlockingReasons: this.getFormattedBlockingReasons(transition)
       }
     });
 
@@ -536,6 +853,19 @@ export class OfficerCaseDetailComponent implements OnInit {
 
   clearTransitionError(): void {
     this.transitionError = null;
+  }
+
+  /**
+   * Pending-with display from case details (camelCase or snake_case from API).
+   */
+  getPendingWithDisplay(): string {
+    if (!this.caseData) return '';
+    const d = this.caseData as any;
+    const display = d.pendingWithRolesDisplay ?? d.pending_with_roles_display;
+    if (display != null && String(display).trim()) return String(display).trim();
+    const names = d.pendingWithRoleNames ?? d.pending_with_role_names;
+    if (Array.isArray(names) && names.length) return names.map((n: string) => String(n)).join(', ');
+    return '';
   }
 
   /**

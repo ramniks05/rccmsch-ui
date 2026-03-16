@@ -1,0 +1,31 @@
+<h2 mat-dialog-title>
+  <mat-icon>description</mat-icon>
+  Documents – Save as Draft / Save & Sign
+</h2>
+
+<mat-dialog-content class="documents-dialog-content">
+  <p class="dialog-hint">Complete the document below. Use <strong>Save as Draft</strong> or <strong>Save & Sign</strong> as allowed for this action, then close when done.</p>
+  <mat-tab-group *ngIf="documentTemplates.length > 1" class="doc-tabs">
+    <mat-tab *ngFor="let item of documentTemplates" [label]="item.name">
+      <div class="tab-panel">
+        <app-document-editor
+          [caseId]="caseId"
+          [caseData]="caseData"
+          [templateId]="item.templateId">
+        </app-document-editor>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+  <div *ngIf="documentTemplates.length === 1" class="single-doc">
+    <app-document-editor
+      [caseId]="caseId"
+      [caseData]="caseData"
+      [templateId]="documentTemplates[0].templateId">
+    </app-document-editor>
+  </div>
+  <p *ngIf="documentTemplates.length === 0" class="no-docs">No document templates provided.</p>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-raised-button color="primary" (click)="onClose()">Done</button>
+</mat-dialog-actions>

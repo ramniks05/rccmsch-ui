@@ -13,6 +13,8 @@ import type { OptionItem } from '../../core/models/form-builder.types';
 })
 export class HearingFormComponent implements OnInit {
   @Input() caseId!: number;
+  /** When set, load and submit form by this form ID (so Form 5 vs Form 7 fetch the correct form). */
+  @Input() formId?: number;
   @Output() formSubmitted = new EventEmitter<void>(); // Emit when form is successfully submitted
   
   // Form data
@@ -53,7 +55,10 @@ export class HearingFormComponent implements OnInit {
    */
   loadFormWithData(): void {
     this.loading = true;
-    this.officerCaseService.getModuleFormWithData(this.caseId, 'HEARING').subscribe({
+    const load$ = this.formId != null
+      ? this.officerCaseService.getModuleFormWithDataByFormId(this.caseId, this.formId)
+      : this.officerCaseService.getModuleFormWithData(this.caseId, 'HEARING');
+    load$.subscribe({
       next: (response) => {
         this.loading = false;
         
@@ -117,12 +122,10 @@ export class HearingFormComponent implements OnInit {
     }
 
     this.submitting = true;
-    this.officerCaseService.submitModuleForm(
-      this.caseId,
-      'HEARING',
-      this.formData,
-      this.remarks
-    ).subscribe({
+    const submit$ = this.formId != null
+      ? this.officerCaseService.submitModuleFormByFormId(this.caseId, this.formId, this.formData, this.remarks)
+      : this.officerCaseService.submitModuleForm(this.caseId, 'HEARING', this.formData, this.remarks);
+    submit$.subscribe({
       next: (response) => {
         alert('Hearing form submitted successfully');
         this.submittedData = response.data;

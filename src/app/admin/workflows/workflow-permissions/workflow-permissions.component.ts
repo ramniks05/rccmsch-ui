@@ -21,7 +21,8 @@ export class WorkflowPermissionsComponent implements OnInit, OnChanges {
   
   permissions: WorkflowPermission[] = [];
   isLoading = false;
-  roleCodes: string[] = [];
+  /** Roles loaded from /api/admin/officer/roles (role master) */
+  roles: { roleId: number; roleCode: string; roleName?: string; unitLevel?: string; description?: string }[] = [];
   loadingRoles = false;
 
   constructor(
@@ -39,7 +40,7 @@ export class WorkflowPermissionsComponent implements OnInit, OnChanges {
   }
 
   /**
-   * Load all roles from API
+   * Load all roles from API (role master)
    */
   loadRoles(): void {
     this.loadingRoles = true;
@@ -48,20 +49,28 @@ export class WorkflowPermissionsComponent implements OnInit, OnChanges {
         this.loadingRoles = false;
         const apiResponse = response?.success !== undefined ? response : { success: true, data: response };
         if (apiResponse.success && apiResponse.data) {
-          // Extract role codes from API response
-          this.roleCodes = apiResponse.data.map((role: any) => role.roleCode || role.code).filter((code: string) => code);
+          // Map roles from API (keep roleId + roleCode)
+          this.roles = apiResponse.data
+            .map((role: any) => ({
+              roleId: role.roleId ?? role.id,
+              roleCode: role.roleCode || role.code,
+              roleName: role.roleName,
+              unitLevel: role.unitLevel,
+              description: role.description
+            }))
+            .filter((r: any) => r.roleId != null && r.roleCode);
         } else {
           // Fallback to default roles if API fails
-          this.roleCodes = [
-            'CITIZEN',
-            'DEALING_ASSISTANT',
-            'CIRCLE_MANDOL',
-            'CIRCLE_OFFICER',
-            'SUB_DIVISION_OFFICER',
-            'DISTRICT_OFFICER',
-            'STATE_ADMIN',
-            'SUPER_ADMIN',
-            'ADJACENT'
+          this.roles = [
+            { roleId: 0, roleCode: 'CITIZEN', roleName: 'Citizen' },
+            { roleId: 0, roleCode: 'DEALING_ASSISTANT', roleName: 'Dealing Assistant' },
+            { roleId: 0, roleCode: 'CIRCLE_MANDOL', roleName: 'Circle Mandol' },
+            { roleId: 0, roleCode: 'CIRCLE_OFFICER', roleName: 'Circle Officer' },
+            { roleId: 0, roleCode: 'SUB_DIVISION_OFFICER', roleName: 'Sub Division Officer' },
+            { roleId: 0, roleCode: 'DISTRICT_OFFICER', roleName: 'District Officer' },
+            { roleId: 0, roleCode: 'STATE_ADMIN', roleName: 'State Admin' },
+            { roleId: 0, roleCode: 'SUPER_ADMIN', roleName: 'Super Admin' },
+            { roleId: 0, roleCode: 'ADJACENT', roleName: 'Adjacent Officer' }
           ];
         }
       },
@@ -69,16 +78,16 @@ export class WorkflowPermissionsComponent implements OnInit, OnChanges {
         this.loadingRoles = false;
         console.error('Failed to load roles:', error);
         // Fallback to default roles including ADJACENT
-        this.roleCodes = [
-          'CITIZEN',
-          'DEALING_ASSISTANT',
-          'CIRCLE_MANDOL',
-          'CIRCLE_OFFICER',
-          'SUB_DIVISION_OFFICER',
-          'DISTRICT_OFFICER',
-          'STATE_ADMIN',
-          'SUPER_ADMIN',
-          'ADJACENT'
+        this.roles = [
+          { roleId: 0, roleCode: 'CITIZEN', roleName: 'Citizen' },
+          { roleId: 0, roleCode: 'DEALING_ASSISTANT', roleName: 'Dealing Assistant' },
+          { roleId: 0, roleCode: 'CIRCLE_MANDOL', roleName: 'Circle Mandol' },
+          { roleId: 0, roleCode: 'CIRCLE_OFFICER', roleName: 'Circle Officer' },
+          { roleId: 0, roleCode: 'SUB_DIVISION_OFFICER', roleName: 'Sub Division Officer' },
+          { roleId: 0, roleCode: 'DISTRICT_OFFICER', roleName: 'District Officer' },
+          { roleId: 0, roleCode: 'STATE_ADMIN', roleName: 'State Admin' },
+          { roleId: 0, roleCode: 'SUPER_ADMIN', roleName: 'Super Admin' },
+          { roleId: 0, roleCode: 'ADJACENT', roleName: 'Adjacent Officer' }
         ];
       }
     });
@@ -120,7 +129,7 @@ export class WorkflowPermissionsComponent implements OnInit, OnChanges {
       data: { 
         mode: 'create',
         transitionId: this.transition.id,
-        roleCodes: this.roleCodes
+        roles: this.roles
       }
     });
 
@@ -138,7 +147,7 @@ export class WorkflowPermissionsComponent implements OnInit, OnChanges {
       data: { 
         mode: 'edit',
         transitionId: this.transition.id,
-        roleCodes: this.roleCodes,
+        roles: this.roles,
         permission: permission
       }
     });

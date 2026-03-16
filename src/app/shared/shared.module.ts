@@ -32,6 +32,7 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatListModule } from '@angular/material/list';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 
 // Quill Editor
 import { QuillModule } from 'ngx-quill';
@@ -152,9 +153,9 @@ import { JsonParsePipe } from '../core/pipes/json-parse.pipe';
     MatTabsModule,
     MatProgressSpinnerModule,
     MatSnackBarModule,
-    MatProgressSpinnerModule,
     MatTabsModule,
     MatListModule,
+    MatAutocompleteModule,
 
     // Quill Editor
     QuillModule,

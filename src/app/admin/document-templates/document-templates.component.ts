@@ -450,7 +450,42 @@ export class DocumentTemplatesComponent implements OnInit {
   }
 
   /**
-   * Preview template as Word
+   * Preview current template in browser (new window) – see how it looks while creating/editing
+   * Replaces placeholders with sample values so the preview is readable
+   */
+  previewInBrowser(): void {
+    const html = this.templateForm.templateHtml || '';
+    if (!this.hasMeaningfulContent(html)) {
+      alert('Please enter template content first');
+      return;
+    }
+    const sampleValues: Record<string, string> = {
+      '{{caseNumber}}': 'CN/2024/001',
+      '{{applicantName}}': 'Sample Applicant',
+      '{{caseNature}}': 'Mutation',
+      '{{caseType}}': 'New File',
+      '{{applicationDate}}': new Date().toLocaleDateString(),
+      '{{courtName}}': 'District Court, Sample',
+      '{{officerName}}': 'Sample Officer',
+      '{{currentDate}}': new Date().toLocaleDateString(),
+      '{{subject}}': 'Sample Subject',
+      '{{description}}': 'Sample description text for preview.'
+    };
+    let previewHtml = html;
+    Object.entries(sampleValues).forEach(([key, value]) => {
+      previewHtml = previewHtml.split(key).join(value);
+    });
+    const win = window.open('', '_blank');
+    if (win) {
+      win.document.write(previewHtml);
+      win.document.close();
+    } else {
+      alert('Please allow pop-ups to view the preview');
+    }
+  }
+
+  /**
+   * Preview template as Word (download)
    */
   previewAsWord(): void {
     if (!this.templateForm.templateHtml) {

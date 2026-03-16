@@ -69,11 +69,19 @@
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 24px;
   }
-  
+
   .summary-item {
     display: flex;
     flex-direction: column;
     gap: 8px;
+
+    &.summary-item-pending .pending-with-value {
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.3);
+      padding: 4px 10px;
+      border-radius: 6px;
+      display: inline-block;
+    }
     
     &.primary {
       grid-column: span 2;
@@ -144,6 +152,116 @@
 
   button[mat-icon-button] {
     flex-shrink: 0;
+  }
+}
+
+.pending-with-card {
+  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+  border: 2px solid #ff9800;
+  border-left: 6px solid #e65100;
+
+  mat-card-content {
+    padding: 16px 20px !important;
+  }
+
+  .pending-with-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .pending-with-content mat-icon {
+    color: #e65100;
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+  }
+
+  .pending-with-label {
+    display: block;
+    font-size: 0.9rem;
+    color: #bf360c;
+    margin-bottom: 2px;
+  }
+
+  .pending-with-role {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #bf360c;
+    background: rgba(230, 81, 0, 0.15);
+    padding: 6px 12px;
+    border-radius: 8px;
+    display: inline-block;
+    border: 1px solid #ff9800;
+  }
+}
+
+.pending-transitions-card {
+  border-left: 4px solid #1976d2;
+  background: #e3f2fd;
+
+  mat-card-content {
+    padding: 16px 20px !important;
+  }
+
+  .pending-transitions-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    color: #0d47a1;
+    margin-bottom: 4px;
+
+    mat-icon {
+      color: #1976d2;
+      font-size: 22px;
+      width: 22px;
+      height: 22px;
+    }
+  }
+
+  .pending-transitions-hint {
+    font-size: 0.85rem;
+    color: #1565c0;
+    margin: 0 0 12px 0;
+  }
+
+  .pending-transitions-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .pending-transition-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid #90caf9;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+
+  .transition-name {
+    font-weight: 500;
+    color: #333;
+  }
+
+  .pending-with-badge {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #0d47a1;
+    background: #bbdefb;
+    padding: 2px 8px;
+    border-radius: 6px;
+
+    &.no-role {
+      background: transparent;
+      color: #666;
+      font-weight: normal;
+    }
   }
 }
 
@@ -297,11 +415,143 @@
     }
   }
 
-  .action-buttons {
+  .action-list {
     display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
+    flex-direction: column;
+    gap: 16px;
+  }
 
+  .action-item-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 12px 16px;
+    background: #fafafa;
+
+    .action-item-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+
+      .action-icon {
+        font-size: 22px;
+        width: 22px;
+        height: 22px;
+      }
+      .action-name {
+        font-weight: 600;
+        flex: 1;
+      }
+      .action-badge {
+        font-size: 11px;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-weight: 500;
+        &.ready {
+          background: #e8f5e9;
+          color: #2e7d32;
+        }
+        &.blocked {
+          background: #ffebee;
+          color: #c62828;
+        }
+      }
+    }
+    .action-blocking {
+      margin-bottom: 8px;
+      padding: 8px 12px;
+      background: #fff8e1;
+      border-left: 4px solid #ffc107;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      .blocking-label {
+        font-weight: 600;
+        color: #f57f17;
+      }
+      ul {
+        margin: 4px 0 0 16px;
+        padding: 0;
+      }
+    }
+    .action-description {
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 8px;
+    }
+
+    .action-forms-docs {
+      margin-bottom: 10px;
+      padding: 8px 12px;
+      background: #f5f5f5;
+      border-radius: 6px;
+      font-size: 0.85rem;
+
+      .action-meta-row {
+        display: flex;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 10px;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+        .meta-label {
+          flex-shrink: 0;
+        }
+        .action-chips {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+        .action-chip {
+          mat-icon {
+            font-size: 18px;
+            width: 18px;
+            height: 18px;
+            margin-right: 4px;
+            vertical-align: middle;
+          }
+          .chip-actions {
+            font-size: 0.85em;
+            opacity: 0.9;
+          }
+        }
+      }
+      .where-hint {
+        margin: 8px 0 0 0;
+        font-size: 0.8rem;
+        color: #555;
+        line-height: 1.4;
+      }
+      .meta-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        color: #555;
+        font-weight: 500;
+        min-width: 100px;
+
+        mat-icon {
+          font-size: 18px;
+          width: 18px;
+          height: 18px;
+          color: #1976d2;
+        }
+      }
+      .meta-value {
+        color: #333;
+      }
+      .doc-actions {
+        color: #2e7d32;
+        font-weight: 500;
+      }
+    }
+  }
+
+  .action-buttons,
+  .action-list .action-item-card {
     .action-btn {
       position: relative;
       

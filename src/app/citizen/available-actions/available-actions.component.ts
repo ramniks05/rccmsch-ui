@@ -12,6 +12,8 @@ import type { TransitionWithChecklist } from '../../core/models/workflow-conditi
 })
 export class AvailableActionsComponent implements OnInit, OnChanges {
   @Input() caseId!: number;
+  /** When false, hide the inner "Available actions" heading (e.g. when parent shows its own card title) */
+  @Input() showSectionTitle = true;
 
   transitions: TransitionWithChecklist[] = [];
   isLoading = false;
@@ -128,7 +130,7 @@ export class AvailableActionsComponent implements OnInit, OnChanges {
    * Execute a workflow transition
    */
   executeTransition(transition: TransitionWithChecklist): void {
-    if (!transition.canExecute || this.executingTransition) {
+    if (this.executingTransition) {
       return;
     }
 

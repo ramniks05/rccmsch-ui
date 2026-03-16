@@ -286,10 +286,21 @@ export class AdminService {
   // ==================== Roles Management ====================
 
   /**
-   * Get All Roles
+   * Get All Roles (citizen, lawyer, officer, etc.)
+   * GET /api/admin/roles — full role master
    */
   getAllRoles(): Observable<any> {
     return this.http.get(`${this.baseUrl}/admin/roles`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  /**
+   * Get All Officer Roles (for postings, officer-specific UIs)
+   * GET /api/admin/officer/roles
+   */
+  getAllOfficerRoles(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/admin/officer/roles`, {
       headers: this.getAuthHeaders(),
     });
   }

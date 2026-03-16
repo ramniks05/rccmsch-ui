@@ -3,7 +3,7 @@
   <!-- ── PAGE TITLE ─────────────────────────────────────── -->
   <h2 class="page-title">
     <mat-icon>{{ icon }}</mat-icon>
-    {{ caseNatureName || "File New Petition" }}
+    {{ isResubmitMode ? (caseTypeName || 'Edit & Resubmit') : (caseNatureName || "File New Petition") }}
   </h2>
 
   <form *ngIf="form" [formGroup]="form" (ngSubmit)="submit()">
@@ -22,8 +22,8 @@
         </div>
       </div>
 
-      <!-- Filing Type -->
-      <div class="row mb-3">
+      <!-- Filing Type (hidden in resubmit mode; case type is fixed) -->
+      <div class="row mb-3" *ngIf="!isResubmitMode">
         <div class="col-12">
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Filing Type *</mat-label>
@@ -41,6 +41,16 @@
             <mat-icon matPrefix>description</mat-icon>
             <mat-spinner *ngIf="loadingCaseTypes" matSuffix diameter="18"></mat-spinner>
             <mat-error *ngIf="!caseTypeId">Please select a filing type</mat-error>
+          </mat-form-field>
+        </div>
+      </div>
+      <!-- Resubmit: show case type as read-only -->
+      <div class="row mb-3" *ngIf="isResubmitMode && caseTypeName">
+        <div class="col-12">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Filing Type</mat-label>
+            <input matInput [value]="caseTypeName" readonly />
+            <mat-icon matPrefix>description</mat-icon>
           </mat-form-field>
         </div>
       </div>
@@ -392,8 +402,8 @@
         [disabled]="isSubmitting || !caseTypeId || !selectedUnitId || !courtId || form.invalid"
       >
         <mat-spinner diameter="18" *ngIf="isSubmitting" class="inline-spinner"></mat-spinner>
-        <span *ngIf="!isSubmitting">Submit Application</span>
-        <span *ngIf="isSubmitting">Submitting…</span>
+        <span *ngIf="!isSubmitting">{{ isResubmitMode ? 'Resubmit Application' : 'Submit Application' }}</span>
+        <span *ngIf="isSubmitting">{{ isResubmitMode ? 'Resubmitting…' : 'Submitting…' }}</span>
       </button>
     </div>
 
