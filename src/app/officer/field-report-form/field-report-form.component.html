@@ -1,7 +1,7 @@
 <div class="dialog-container">
   <h2 mat-dialog-title>
     <mat-icon>description</mat-icon>
-    Submit Field Report
+    Submit
   </h2>
   
   <mat-dialog-content>
@@ -158,7 +158,7 @@
       (click)="submitFieldReport()"
       [disabled]="submitting || !formSchema || dynamicFields.length === 0">
       <mat-spinner *ngIf="submitting" diameter="20" class="button-spinner"></mat-spinner>
-      <span *ngIf="!submitting">Submit Report</span>
+      <span *ngIf="!submitting">Submit</span>
       <span *ngIf="submitting">Submitting...</span>
     </button>
   </mat-dialog-actions>
