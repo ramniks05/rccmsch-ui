@@ -509,54 +509,47 @@ export class OfficerCaseDetailComponent implements OnInit {
     });
   }
 
-  /**
-   * Build document id → display name from transition conditions (DOCUMENT_CONDITION with moduleType).
-   * Pairs allowedDocumentIds with condition module types by order when counts match.
-   */
   private deriveDocumentNamesFromConditions(): void {
     this.transitions.forEach(t => {
       const c = t.checklist;
       if (!c) return;
-      const docIds = (c.allowedDocumentIds ?? []).slice().sort((a, b) => a - b);
-      const docModuleTypes = (c.conditions ?? [])
-        .filter(cond => cond.type === 'DOCUMENT_CONDITION' && cond.moduleType)
-        .map(cond => cond.moduleType!);
-      if (docIds.length === 0 || docModuleTypes.length === 0) return;
-      const len = Math.min(docIds.length, docModuleTypes.length);
-      for (let i = 0; i < len; i++) {
-        const id = docIds[i];
-        const existing = this.documentDetailsMap[id];
-        const name = this.humanizeModuleType(docModuleTypes[i]);
-        if (!existing || existing.name === `Document ${id}`) {
-          this.documentDetailsMap[id] = { id, name, moduleType: docModuleTypes[i] };
+      (c.conditions ?? []).forEach((cond: any) => {
+        if (cond?.type !== 'DOCUMENT_CONDITION') return;
+        const ids: number[] = Array.isArray(cond.documentTemplateIds) ? cond.documentTemplateIds : [];
+        if (!ids.length) return;
+        // Prefer name inside square brackets in label, e.g. [ORDERSHEET TEMPLATE]; fall back to moduleType.
+        let displayName = 'Document';
+        const labelMatch = typeof cond.label === 'string' ? cond.label.match(/\[([^\]]+)\]/) : null;
+        if (labelMatch && labelMatch[1]) {
+          displayName = this.humanizeModuleType(labelMatch[1]);
+        } else if (cond.moduleType) {
+          displayName = this.humanizeModuleType(cond.moduleType);
         }
-      }
+        ids.forEach((id: number) => {
+          const existing = this.documentDetailsMap[id];
+          if (!existing || existing.name === `Document ${id}`) {
+            this.documentDetailsMap[id] = { id, name: displayName, moduleType: cond.moduleType ?? displayName };
+          }
+        });
+      });
     });
   }
 
-  /**
-   * Build form id → display name from transition conditions (FORM_CONDITION with moduleType).
-   * Pairs allowedFormIds with condition module types by order when counts match; else keeps existing map.
-   */
   private deriveFormNamesFromConditions(): void {
     this.transitions.forEach(t => {
       const c = t.checklist;
       if (!c) return;
-      const formIds = (c.allowedFormIds ?? []).slice().sort((a, b) => a - b);
-      const formModuleTypes = (c.conditions ?? [])
-        .filter(cond => cond.type === 'FORM_CONDITION' && cond.moduleType)
-        .map(cond => cond.moduleType!);
-      if (formIds.length === 0 || formModuleTypes.length === 0) return;
-      // When counts match, assign first form id to first module type, etc.
-      const len = Math.min(formIds.length, formModuleTypes.length);
-      for (let i = 0; i < len; i++) {
-        const id = formIds[i];
+      (c.conditions ?? []).forEach((cond: any) => {
+        if (cond?.type !== 'FORM_CONDITION') return;
+        const id: number | null = typeof cond.formId === 'number' ? cond.formId : null;
+        if (id == null) return;
         const existing = this.formDetailsMap[id];
-        const name = this.humanizeModuleType(formModuleTypes[i]);
+        const moduleType: string | undefined = cond.moduleType;
+        const name = moduleType ? this.humanizeModuleType(moduleType) : (existing?.name ?? `Form ${id}`);
         if (!existing || existing.name === `Form ${id}`) {
-          this.formDetailsMap[id] = { id, name, moduleType: formModuleTypes[i] };
+          this.formDetailsMap[id] = { id, name, moduleType: moduleType ?? name };
         }
-      }
+      });
     });
   }
 
@@ -571,7 +564,8 @@ export class OfficerCaseDetailComponent implements OnInit {
     if (fromMap && fromMap !== `Document ${documentId}`) return fromMap;
     const fallback = OfficerCaseDetailComponent.DOCUMENT_DISPLAY_NAMES_FALLBACK[documentId];
     if (fallback) return fallback;
-    return d?.name ?? `Document ${documentId}`;
+    // As a last resort, show generic "Document" without internal ID – IDs are still used in API payloads.
+    return 'Document';
   }
 
   /** Human-readable module type for display (e.g. HEARING → Hearing, FIELD_REPORT → Field Report). */
