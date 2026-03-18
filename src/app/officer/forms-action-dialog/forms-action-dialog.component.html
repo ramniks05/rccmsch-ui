@@ -15,30 +15,22 @@
   </div>
   <!-- Open by form types (e.g. from "Open Forms" tab) -->
   <mat-tab-group *ngIf="!formItem && formTypes.length > 1" class="form-tabs">
-    <mat-tab *ngIf="formTypes.includes('HEARING')" label="Hearing">
+    <mat-tab *ngFor="let type of formTypes" [label]="getFormLabel(type)">
       <div class="tab-panel">
         <app-hearing-form
           [caseId]="caseId"
+          [moduleType]="type"
           (formSubmitted)="onFormSubmitted()">
         </app-hearing-form>
-      </div>
-    </mat-tab>
-    <mat-tab *ngIf="formTypes.includes('FIELD_REPORT')" label="Field Report">
-      <div class="tab-panel">
-        <app-field-report-view [caseId]="caseId"></app-field-report-view>
       </div>
     </mat-tab>
   </mat-tab-group>
   <div *ngIf="!formItem && formTypes.length === 1" class="single-form">
     <app-hearing-form
-      *ngIf="formTypes[0] === 'HEARING'"
       [caseId]="caseId"
+      [moduleType]="formTypes[0]"
       (formSubmitted)="onFormSubmitted()">
     </app-hearing-form>
-    <app-field-report-view
-      *ngIf="formTypes[0] === 'FIELD_REPORT'"
-      [caseId]="caseId">
-    </app-field-report-view>
   </div>
 </mat-dialog-content>
 

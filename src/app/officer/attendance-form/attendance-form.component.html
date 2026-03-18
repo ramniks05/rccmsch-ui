@@ -19,6 +19,12 @@
         <span>You have previously marked attendance. You can update it below.</span>
       </div>
 
+      <!-- Latest hearing date (reference) -->
+      <div *ngIf="latestHearingDate" class="info-banner">
+        <mat-icon>event</mat-icon>
+        <span>Latest Hearing Date: <strong>{{ latestHearingDate | date:'dd/MM/yyyy' }}</strong></span>
+      </div>
+
       <!-- Attendance Date -->
       <div class="form-section">
         <mat-form-field appearance="outline" class="full-width">

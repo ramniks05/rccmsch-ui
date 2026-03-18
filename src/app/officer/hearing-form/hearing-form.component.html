@@ -2,8 +2,11 @@
   <div class="card">
     <div class="card-header bg-info text-white">
       <h5 class="mb-0">
-        <i class="bi bi-calendar-event"></i> Hearing Form
+        <i class="bi bi-calendar-event"></i> {{ getModuleDisplayName() }} Form
       </h5>
+      <div *ngIf="currentModuleType === 'ATTENDANCE' && latestHearingDateLabel" class="small mt-1">
+        Latest Hearing Date: {{ latestHearingDateLabel }}
+      </div>
     </div>
     <div class="card-body">
       <!-- Loading State -->
@@ -11,12 +14,12 @@
         <div class="spinner-border text-primary" role="status">
           <span class="visually-hidden">Loading...</span>
         </div>
-        <p class="mt-2">Loading hearing form...</p>
+        <p class="mt-2">Loading {{ getModuleDisplayName() }} form...</p>
       </div>
 
       <!-- No Schema -->
       <div *ngIf="!loading && formSchema.length === 0" class="alert alert-warning">
-        <i class="bi bi-exclamation-triangle"></i> No hearing form configured for this case type.
+        <i class="bi bi-exclamation-triangle"></i> No {{ getModuleDisplayName() }} form configured for this case type.
       </div>
 
       <!-- Form -->
@@ -189,6 +192,7 @@
                 [formData]="formData"
                 [viewMode]="viewMode"
                 [errors]="validationErrors"
+                [caseId]="caseId"
                 (valueChange)="onRepeatableChange(field.fieldName, $event)">
               </app-repeatable-section>
 
