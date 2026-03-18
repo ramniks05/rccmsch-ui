@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ModuleFormsService, ModuleFormField, ModuleType, FieldType } from '../services/module-forms.service';
+import { ModuleFormsService, ModuleFormField, ModuleType, FieldType, ModuleTypeOption } from '../services/module-forms.service';
 import { AdminService } from '../admin.service';
 
 @Component({
@@ -16,10 +16,10 @@ export class ModuleFormsComponent implements OnInit {
   // Selection
   selectedCaseNatureId: number | null = null;
   selectedCaseTypeId: number | null = null; // Optional: for case type override
-  selectedModuleType: ModuleType = 'HEARING';
+  selectedModuleType: ModuleType = '';
   
   // Module types for dropdown
-  moduleTypes: ModuleType[] = ['HEARING', 'NOTICE', 'ORDERSHEET', 'JUDGEMENT', 'FIELD_REPORT'];
+  moduleTypeOptions: ModuleTypeOption[] = [];
   
   // Field types for dropdown
   fieldTypes: FieldType[] = [
@@ -59,6 +59,31 @@ export class ModuleFormsComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadCaseNatures();
+    this.loadModuleTypesFromBackend();
+  }
+
+  /**
+   * Load module types from backend (single source of truth).
+   */
+  loadModuleTypesFromBackend(): void {
+    this.moduleFormsService.getModuleTypes().subscribe({
+      next: (response) => {
+        if (response.success && response.data?.length) {
+          this.moduleTypeOptions = response.data;
+          this.selectedModuleType = this.moduleTypeOptions[0]?.code || '';
+          if (this.selectedCaseNatureId && this.selectedModuleType) {
+            this.loadFields();
+          }
+        } else {
+          this.moduleTypeOptions = [];
+          this.selectedModuleType = '';
+        }
+      },
+      error: () => {
+        this.moduleTypeOptions = [];
+        this.selectedModuleType = '';
+      }
+    });
   }
 
   /**
@@ -85,7 +110,7 @@ export class ModuleFormsComponent implements OnInit {
   onCaseNatureChange(): void {
     this.selectedCaseTypeId = null; // Reset case type when nature changes
     this.caseTypes = [];
-    if (this.selectedCaseNatureId) {
+    if (this.selectedCaseNatureId && this.selectedModuleType) {
       this.loadCaseTypes();
       this.loadFields();
     }
@@ -111,7 +136,7 @@ export class ModuleFormsComponent implements OnInit {
    * On case type selection change
    */
   onCaseTypeChange(): void {
-    if (this.selectedCaseNatureId) {
+    if (this.selectedCaseNatureId && this.selectedModuleType) {
       this.loadFields();
     }
   }
@@ -120,7 +145,7 @@ export class ModuleFormsComponent implements OnInit {
    * On module type change
    */
   onModuleTypeChange(): void {
-    if (this.selectedCaseNatureId) {
+    if (this.selectedCaseNatureId && this.selectedModuleType) {
       this.loadFields();
     }
   }
@@ -129,7 +154,7 @@ export class ModuleFormsComponent implements OnInit {
    * Load fields for selected case nature and module type (with optional case type override)
    */
   loadFields(): void {
-    if (!this.selectedCaseNatureId) return;
+    if (!this.selectedCaseNatureId || !this.selectedModuleType) return;
     
     this.loading = true;
     this.moduleFormsService.getFieldsByCaseNatureAndModule(
@@ -357,7 +382,9 @@ export class ModuleFormsComponent implements OnInit {
    * Check if field type needs options
    */
   needsOptions(fieldType: FieldType): boolean {
-    return ['SELECT', 'MULTISELECT', 'RADIO', 'CHECKBOX'].includes(fieldType);
+    // For SELECT/MULTISELECT/RADIO/CHECKBOX this controls static options + API dataSource.
+    // For REPEATABLE_SECTION this enables API-driven row population (e.g. PARTIES).
+    return ['SELECT', 'MULTISELECT', 'RADIO', 'CHECKBOX', 'REPEATABLE_SECTION'].includes(fieldType);
   }
 
   /**

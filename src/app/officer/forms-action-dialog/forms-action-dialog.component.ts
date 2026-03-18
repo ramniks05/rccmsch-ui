@@ -11,7 +11,7 @@ export interface FormItemByFormId {
 export interface FormsActionDialogData {
   caseId: number;
   caseData: CaseDTO;
-  /** Form types to show: 'HEARING', 'FIELD_REPORT' (used when opening from "Open Forms" tab) */
+  /** Form types to show (used when opening from "Open Forms" tab) */
   formTypes?: string[];
   /** When opening a specific form by ID (e.g. click "Form 5"), pass this so the correct form is loaded. */
   formItem?: FormItemByFormId;

@@ -28,12 +28,13 @@ export interface ConditionalLogic {
 
 /** Config for API-driven dropdown options (field.dataSource JSON). */
 export interface DataSourceConfig {
-  type?: string;        // ADMIN_UNITS | COURTS | ACTS | CASE_NATURES | CASE_TYPES
+  type?: string;        // ADMIN_UNITS | COURTS | ACTS | CASE_NATURES | CASE_TYPES | PARTIES
   level?: string;       // STATE | DISTRICT | SUB_DIVISION | CIRCLE
   apiEndpoint?: string; // Custom GET endpoint, e.g. /api/public/form-data-sources/custom
   parentField?: string; // Form field name; when it changes, refetch (e.g. parentId, caseNatureId)
   valueKey?: string;    // Response key for value (default "id")
   labelKey?: string;    // Response key for label (default "name")
+  includeTypes?: string[]; // For PARTIES type: filter by party types (e.g. ["PETITIONER", "RESPONDENT"])
 }
 
 export interface OptionItem {
@@ -50,6 +51,7 @@ export interface ItemSchemaField {
   fieldOptions?: string | null;
   dataSource?: string | null; // JSON DataSourceConfig for API-driven options
   placeholder?: string | null;
+  defaultValue?: string | number | boolean | null;
 }
 
 /** Generic form field definition (schema from API may have options or fieldOptions) */

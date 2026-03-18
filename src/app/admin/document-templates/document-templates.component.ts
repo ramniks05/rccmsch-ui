@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { DocumentTemplatesService, DocumentTemplate } from '../services/document-templates.service';
+import { DocumentTemplatesService, DocumentTemplate, DocumentModuleTypeOption } from '../services/document-templates.service';
 import { ModuleType } from '../services/module-forms.service';
 import { AdminService } from '../admin.service';
 
@@ -9,6 +9,13 @@ import { AdminService } from '../admin.service';
   styleUrls: ['./document-templates.component.scss']
 })
 export class DocumentTemplatesComponent implements OnInit {
+  /** Fallback document module types when API is unavailable or returns empty. */
+  private readonly fallbackModuleTypes: DocumentModuleTypeOption[] = [
+    { code: 'NOTICE',     name: 'NOTICE' },
+    { code: 'ORDERSHEET', name: 'ORDERSHEET' },
+    { code: 'JUDGEMENT',  name: 'JUDGEMENT' }
+  ];
+
   // Data
   caseNatures: any[] = [];
   caseTypes: any[] = [];
@@ -17,10 +24,10 @@ export class DocumentTemplatesComponent implements OnInit {
   // Selection
   selectedCaseNatureId: number | null = null;
   selectedCaseTypeId: number | null = null; // Optional: for case type override
-  selectedModuleType: ModuleType = 'NOTICE';
+  selectedModuleType: ModuleType = '';
   
-  // Module types for document templates (excluding HEARING)
-  moduleTypes: ModuleType[] = ['NOTICE', 'ORDERSHEET', 'JUDGEMENT'];
+  // Module types from backend
+  moduleTypeOptions: DocumentModuleTypeOption[] = [];
   
   // UI state
   loading = false;
@@ -93,7 +100,25 @@ export class DocumentTemplatesComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.loadModuleTypes();
     this.loadCaseNatures();
+  }
+
+  loadModuleTypes(): void {
+    this.documentTemplatesService.getDocumentModuleTypes().subscribe({
+      next: (response) => {
+        if (response.success && response.data?.length) {
+          this.moduleTypeOptions = response.data;
+        } else {
+          this.moduleTypeOptions = [...this.fallbackModuleTypes];
+        }
+        this.selectedModuleType = this.moduleTypeOptions[0]?.code || '';
+      },
+      error: () => {
+        this.moduleTypeOptions = [...this.fallbackModuleTypes];
+        this.selectedModuleType = this.moduleTypeOptions[0]?.code || '';
+      }
+    });
   }
 
   /**
@@ -120,7 +145,7 @@ export class DocumentTemplatesComponent implements OnInit {
   onCaseNatureChange(): void {
     this.selectedCaseTypeId = null; // Reset case type when nature changes
     this.caseTypes = [];
-    if (this.selectedCaseNatureId) {
+    if (this.selectedCaseNatureId && this.selectedModuleType) {
       this.loadCaseTypes();
       this.loadTemplates();
     }
@@ -146,7 +171,7 @@ export class DocumentTemplatesComponent implements OnInit {
    * On case type selection change
    */
   onCaseTypeChange(): void {
-    if (this.selectedCaseNatureId) {
+    if (this.selectedCaseNatureId && this.selectedModuleType) {
       this.loadTemplates();
     }
   }
@@ -155,7 +180,7 @@ export class DocumentTemplatesComponent implements OnInit {
    * On module type change
    */
   onModuleTypeChange(): void {
-    if (this.selectedCaseNatureId) {
+    if (this.selectedCaseNatureId && this.selectedModuleType) {
       this.loadTemplates();
     }
   }
@@ -164,7 +189,7 @@ export class DocumentTemplatesComponent implements OnInit {
    * Toggle active only filter
    */
   toggleActiveOnly(): void {
-    if (this.selectedCaseNatureId) {
+    if (this.selectedCaseNatureId && this.selectedModuleType) {
       this.loadTemplates();
     }
   }
@@ -173,7 +198,7 @@ export class DocumentTemplatesComponent implements OnInit {
    * Load templates for selected case nature and module type (with optional case type override)
    */
   loadTemplates(): void {
-    if (!this.selectedCaseNatureId) return;
+    if (!this.selectedCaseNatureId || !this.selectedModuleType) return;
     
     this.loading = true;
     this.documentTemplatesService.getTemplatesByCaseNatureAndModule(
@@ -417,20 +442,6 @@ export class DocumentTemplatesComponent implements OnInit {
     // Simply append the placeholder to the current content
     const currentContent = this.templateForm.templateHtml || '';
     this.templateForm.templateHtml = currentContent + ' ' + placeholder + ' ';
-  }
-
-  /**
-   * Get module type label
-   */
-  getModuleTypeLabel(moduleType: ModuleType): string {
-    const labels: Record<ModuleType, string> = {
-      'HEARING': 'Hearing',
-      'NOTICE': 'Notice',
-      'ORDERSHEET': 'Order Sheet',
-      'JUDGEMENT': 'Judgement',
-      'FIELD_REPORT': 'Field Report'
-    };
-    return labels[moduleType] || moduleType;
   }
 
   /**

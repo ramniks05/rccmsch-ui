@@ -4,7 +4,7 @@
       <div class="card">
         <div class="card-header bg-primary text-white">
           <h4 class="mb-0">Document Template Configuration</h4>
-          <p class="mb-0 small">Configure HTML templates for Notice, Ordersheet, and Judgement documents per case nature</p>
+          <p class="mb-0 small">Configure HTML templates for backend-configured document module types per case nature</p>
         </div>
         <div class="card-body">
           <!-- Selection Section -->
@@ -47,8 +47,8 @@
                 [(ngModel)]="selectedModuleType" 
                 (change)="onModuleTypeChange()"
                 [disabled]="loading || !selectedCaseNatureId">
-                <option *ngFor="let type of moduleTypes" [value]="type">
-                  {{ getModuleTypeLabel(type) }}
+                <option *ngFor="let type of moduleTypeOptions" [value]="type.code">
+                  {{ type.name }}
                 </option>
               </select>
             </div>

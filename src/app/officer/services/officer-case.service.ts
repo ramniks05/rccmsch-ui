@@ -427,6 +427,53 @@ export class OfficerCaseService {
    * For other modules, formData can be stringified if needed
    */
   submitModuleForm(caseId: number, moduleType: string, formData: any, remarks?: string): Observable<ApiResponse<any>> {
+    // Attendance is persisted in dedicated table via attendance endpoints.
+    if (moduleType === 'ATTENDANCE') {
+      let normalizedFormData: any = formData;
+      if (typeof normalizedFormData === 'string') {
+        try {
+          normalizedFormData = JSON.parse(normalizedFormData);
+        } catch {
+          // Keep raw string if it's not JSON.
+        }
+      }
+
+      let latestHearingSubmissionId: number | null = null;
+      let cleanedFormData: any = normalizedFormData;
+
+      if (normalizedFormData && typeof normalizedFormData === 'object' && !Array.isArray(normalizedFormData)) {
+        const candidate =
+          (normalizedFormData as any).latestHearingSubmissionId ??
+          (normalizedFormData as any).hearingSubmissionId;
+        if (candidate != null && !isNaN(Number(candidate))) {
+          latestHearingSubmissionId = Number(candidate);
+        }
+
+        // Keep formData clean; send hearing submission id at top-level for backend DTO.
+        const { latestHearingSubmissionId: _a, hearingSubmissionId: _b, ...rest } = normalizedFormData as any;
+        cleanedFormData = rest;
+      }
+
+      const attendancePayload: any = {
+        formData: typeof cleanedFormData === 'string' ? cleanedFormData : JSON.stringify(cleanedFormData),
+        remarks
+      };
+      if (latestHearingSubmissionId != null) {
+        attendancePayload.latestHearingSubmissionId = latestHearingSubmissionId;
+      }
+
+      return this.http.post<ApiResponse<any>>(
+        `${this.apiUrl}/${caseId}/attendance/submit`,
+        attendancePayload,
+        { headers: this.getAuthHeaders() }
+      ).pipe(
+        catchError(error => {
+          console.error(`Error submitting attendance for case ${caseId}:`, error);
+          return throwError(() => error);
+        })
+      );
+    }
+
     // For FIELD_REPORT, send formData as object; for others, stringify if it's not already a string
     const payload: any = {
       formData: moduleType === 'FIELD_REPORT' 
@@ -710,11 +757,11 @@ export class OfficerCaseService {
 
   /**
    * Get latest attendance submission
-   * GET /api/cases/{caseId}/module-forms/ATTENDANCE/latest
+   * GET /api/cases/{caseId}/attendance/latest
    */
   getLatestAttendance(caseId: number): Observable<ApiResponse<any>> {
     return this.http.get<ApiResponse<any>>(
-      `${this.apiUrl}/${caseId}/module-forms/ATTENDANCE/latest`,
+      `${this.apiUrl}/${caseId}/attendance/latest`,
       { headers: this.getAuthHeaders() }
     ).pipe(
       catchError(error => {

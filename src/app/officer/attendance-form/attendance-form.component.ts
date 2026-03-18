@@ -25,6 +25,11 @@ export interface PartyAttendance {
 
 export interface AttendanceData {
   attendanceDate: string;
+  /** Alias for backend extractors that expect "date" key. */
+  date?: string;
+  /** Link attendance to the latest hearing submission. */
+  hearingSubmissionId?: number | null;
+  hearingDate?: string | null;
   parties: PartyAttendance[];
   remarks: string | null;
 }
@@ -42,6 +47,8 @@ export class AttendanceFormComponent implements OnInit {
   existingAttendance: any = null;
   hasExistingData = false;
   today = new Date();
+  latestHearingSubmissionId: number | null = null;
+  latestHearingDate: string | null = null;
   
   attendanceForm: FormGroup;
   partiesFormArray: FormArray;
@@ -72,7 +79,7 @@ export class AttendanceFormComponent implements OnInit {
   loadData(): void {
     this.loading = true;
 
-    // Load parties and existing attendance in parallel
+    // Load parties (with latest hearing context) and existing attendance in parallel
     forkJoin({
       parties: this.caseService.getParties(this.caseId).pipe(
         catchError(error => {
@@ -97,6 +104,13 @@ export class AttendanceFormComponent implements OnInit {
         // Load parties
         if (results.parties.success && results.parties.data?.parties) {
           this.parties = results.parties.data.parties;
+          this.applyLatestHearingContext(results.parties.data);
+          if (this.latestHearingDate) {
+            // Prefill from latest hearing date by default.
+            this.attendanceForm.patchValue({
+              attendanceDate: new Date(this.latestHearingDate)
+            });
+          }
           this.buildPartiesFormArray();
         } else {
           this.snackBar.open(
@@ -114,8 +128,18 @@ export class AttendanceFormComponent implements OnInit {
           this.buildPartiesFormArray();
         }
 
-        // Load existing attendance if available
-        if (results.attendance.success && results.attendance.data) {
+        // Load existing attendance only when it actually has form content/date.
+        const attendancePayload = results.attendance?.data;
+        const hasAttendanceContent = !!(
+          attendancePayload &&
+          (
+            attendancePayload.formData ||
+            attendancePayload.attendanceDate ||
+            attendancePayload.date
+          )
+        );
+
+        if (results.attendance.success && hasAttendanceContent) {
           this.existingAttendance = results.attendance.data;
           this.hasExistingData = true;
           this.populateFormFromExistingData();
@@ -126,6 +150,83 @@ export class AttendanceFormComponent implements OnInit {
         this.snackBar.open('Failed to load data. Please try again.', 'Close', { duration: 5000 });
       }
     });
+  }
+
+  /**
+   * Parse latest hearing payload and keep linkage fields for attendance submit.
+   */
+  private applyLatestHearingContext(hearingData: any): void {
+    const idCandidate =
+      hearingData?.latestHearingSubmissionId ??
+      hearingData?.id ??
+      hearingData?.submissionId ??
+      hearingData?.formSubmissionId ??
+      hearingData?.moduleFormSubmissionId ??
+      hearingData?.data?.id;
+    if (idCandidate != null && !isNaN(Number(idCandidate))) {
+      this.latestHearingSubmissionId = Number(idCandidate);
+    }
+
+    const hearingDateCandidate = this.extractHearingDateCandidate(hearingData);
+    const normalized = this.normalizeToYyyyMmDd(hearingDateCandidate);
+    if (normalized) {
+      this.latestHearingDate = normalized;
+    }
+  }
+
+  private extractHearingDateCandidate(source: any): unknown {
+    if (!source) return null;
+    const direct =
+      source?.latestHearingDate ??
+      source?.hearingDate ??
+      source?.hearing_date ??
+      source?.nextHearingDate ??
+      source?.next_hearing_date ??
+      source?.date;
+    if (direct) return direct;
+
+    const buckets = [source?.formData, source?.data?.formData, source?.submission?.formData, source?.data];
+    for (const bucket of buckets) {
+      if (!bucket) continue;
+      let parsed = bucket;
+      if (typeof parsed === 'string') {
+        try {
+          parsed = JSON.parse(parsed);
+        } catch {
+          parsed = null;
+        }
+      }
+      if (!parsed || typeof parsed !== 'object') continue;
+      const nested =
+        (parsed as any)?.latestHearingDate ??
+        (parsed as any)?.hearingDate ??
+        (parsed as any)?.hearing_date ??
+        (parsed as any)?.nextHearingDate ??
+        (parsed as any)?.next_hearing_date ??
+        (parsed as any)?.date;
+      if (nested) return nested;
+    }
+    return null;
+  }
+
+  private normalizeToYyyyMmDd(value: unknown): string | null {
+    if (!value) return null;
+    const text = String(value).trim();
+    if (!text) return null;
+
+    // Already yyyy-mm-dd (or yyyy-mm-ddThh:mm:ss)
+    const iso = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+
+    // dd-mm-yyyy or dd/mm/yyyy
+    const dmy = text.match(/^(\d{2})[\/-](\d{2})[\/-](\d{4})$/);
+    if (dmy) return `${dmy[3]}-${dmy[2]}-${dmy[1]}`;
+
+    const asDate = new Date(text);
+    if (!isNaN(asDate.getTime())) {
+      return this.formatDate(asDate);
+    }
+    return null;
   }
 
   /**
@@ -297,6 +398,9 @@ export class AttendanceFormComponent implements OnInit {
     const formValue = this.attendanceForm.value;
     const attendanceData: AttendanceData = {
       attendanceDate: this.formatDate(formValue.attendanceDate),
+      date: this.formatDate(formValue.attendanceDate),
+      hearingSubmissionId: this.latestHearingSubmissionId,
+      hearingDate: this.latestHearingDate,
       parties: formValue.parties.map((p: any) => ({
         partyId: p.partyId,
         partyName: p.partyName,

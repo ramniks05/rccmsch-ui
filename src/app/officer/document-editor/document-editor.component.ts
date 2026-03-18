@@ -474,9 +474,13 @@ export class DocumentEditorComponent implements OnInit {
     const labels: Record<ModuleType, string> = {
       'HEARING': 'Hearing',
       'NOTICE': 'Notice',
+      'NOTICE_DRAFT': 'Notice Draft',
       'ORDERSHEET': 'Order Sheet',
       'JUDGEMENT': 'Judgement',
-      'FIELD_REPORT': 'Field Report'
+      'ATTENDANCE': 'Attendance',
+      'FIELD_REPORT': 'Field Report',
+      'FIELD_REPORT_REQUEST': 'Field Report Request',
+      'SUBMIT_FIELD_REPORT': 'Submit Field Report'
     };
     return labels[this.documentType] || this.documentType;
   }

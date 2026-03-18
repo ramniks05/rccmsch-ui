@@ -7,9 +7,6 @@ import { forkJoin, of } from 'rxjs';
 import { WorkflowActionDialogComponent } from '../workflow-action-dialog/workflow-action-dialog.component';
 import { DocumentsActionDialogComponent } from '../documents-action-dialog/documents-action-dialog.component';
 import { FormsActionDialogComponent } from '../forms-action-dialog/forms-action-dialog.component';
-import { FieldReportRequestDialogComponent } from '../field-report-request-dialog/field-report-request-dialog.component';
-import { FieldReportFormComponent } from '../field-report-form/field-report-form.component';
-import { AttendanceFormComponent } from '../attendance-form/attendance-form.component';
 
 @Component({
   selector: 'app-officer-case-detail',
@@ -45,16 +42,6 @@ export class OfficerCaseDetailComponent implements OnInit {
     fieldReport: false
   };
   
-  // Track if field report has been submitted
-  hasFieldReportSubmitted = false;
-
-  // Field report functionality
-  showRequestFieldReportButton = false;
-  showSubmitFieldReportButton = false;
-
-  // Attendance functionality
-  showMarkAttendanceButton = false;
-
   /** Pending-with value from case details API; set when case loads so it always shows when present */
   pendingWithDisplay = '';
 
@@ -124,8 +111,6 @@ export class OfficerCaseDetailComponent implements OnInit {
           this.caseData = response.data;
           this.pendingWithDisplay = this.getPendingWithDisplay();
           this.parseCaseData();
-          // Update attendance button visibility based on case state
-          this.updateAttendanceButtonVisibility();
         } else {
           this.pendingWithDisplay = '';
           this.error = response.message || 'Failed to load case details';
@@ -173,59 +158,6 @@ export class OfficerCaseDetailComponent implements OnInit {
           this.determineRequiredModules();
           this.loadActionFormAndDocumentDetails();
           
-          // Check if REQUEST_FIELD_REPORT transition is available (for Tehsildar)
-          this.showRequestFieldReportButton = this.transitions.some(
-            t => t.transitionCode === 'REQUEST_FIELD_REPORT' && 
-                 (t.checklist?.canExecute !== false)
-          );
-          
-          // Check if SUBMIT_FIELD_REPORT transition is available (for Field Officers)
-          const submitFieldReportTransition = this.transitions.find(
-            t => t.transitionCode === 'SUBMIT_FIELD_REPORT'
-          );
-          
-          console.log('=== SUBMIT_FIELD_REPORT Transition Debug ===');
-          console.log('- Case ID:', this.caseId);
-          console.log('- Case State:', this.caseData?.currentStateCode, this.caseData?.currentStateName);
-          console.log('- Total transitions available:', this.transitions.length);
-          console.log('- All transition codes:', this.transitions.map(t => ({
-            code: t.transitionCode,
-            name: t.transitionName,
-            fromState: t.fromStateCode,
-            toState: t.toStateCode,
-            canExecute: t.checklist?.canExecute,
-            checklist: t.checklist
-          })));
-          console.log('- SUBMIT_FIELD_REPORT transition found:', submitFieldReportTransition);
-          
-          if (submitFieldReportTransition) {
-            console.log('- Transition details:', {
-              code: submitFieldReportTransition.transitionCode,
-              name: submitFieldReportTransition.transitionName,
-              fromState: submitFieldReportTransition.fromStateCode,
-              toState: submitFieldReportTransition.toStateCode,
-              canExecute: submitFieldReportTransition.checklist?.canExecute,
-              conditions: submitFieldReportTransition.checklist?.conditions,
-              fullChecklist: submitFieldReportTransition.checklist
-            });
-          } else {
-            console.warn('- SUBMIT_FIELD_REPORT transition NOT FOUND in available transitions!');
-            console.warn('- This means either:');
-            console.warn('  1. Transition permissions are not set for current user role');
-            console.warn('  2. Case is not in the correct state (should be "Field Report Requested")');
-            console.warn('  3. Hierarchy rule mismatch (case not assigned to this officer)');
-            console.warn('  4. Transition conditions are not met');
-          }
-          
-          this.showSubmitFieldReportButton = submitFieldReportTransition !== undefined && 
-            (submitFieldReportTransition.checklist?.canExecute !== false);
-          
-          console.log('- showSubmitFieldReportButton:', this.showSubmitFieldReportButton);
-          console.log('=== End Debug ===');
-          
-          // Update attendance button visibility
-          this.updateAttendanceButtonVisibility();
-          
           // If no transitions available, show appropriate message
           if (this.transitions.length === 0) {
             // No error, just no actions available - this is handled in the template
@@ -234,10 +166,6 @@ export class OfficerCaseDetailComponent implements OnInit {
         } else {
           // Response indicates no actions available
           this.transitions = [];
-          this.showRequestFieldReportButton = false;
-          this.showSubmitFieldReportButton = false;
-          // Update attendance button visibility
-          this.updateAttendanceButtonVisibility();
           this.transitionError = null; // No error, just no actions
         }
       },
@@ -326,42 +254,7 @@ export class OfficerCaseDetailComponent implements OnInit {
       }
     });
 
-    // Check if field report has been submitted (case is in "Field Report Submitted" state or later)
-    this.checkFieldReportSubmission();
-
     console.log('Required modules:', this.requiredModules);
-  }
-
-  /**
-   * Check if field report has been submitted
-   */
-  checkFieldReportSubmission(): void {
-    if (!this.caseData) return;
-    
-    // Check if case is in "Field Report Submitted" state or later
-    const currentState = this.caseData.currentStateCode || this.caseData.currentStateName || '';
-    const stateLower = currentState.toLowerCase();
-    
-    // Show field report view if case is in "Field Report Submitted" state or later
-    if (stateLower.includes('field report submitted') || 
-        stateLower.includes('field_report_submitted') ||
-        this.transitions.some(t => t.transitionCode === 'REVIEW_FIELD_REPORT')) {
-      this.hasFieldReportSubmitted = true;
-      this.requiredModules.fieldReport = true;
-    }
-    
-    // Also check by loading field report data
-    this.caseService.getModuleFormWithData(this.caseId, 'FIELD_REPORT').subscribe({
-      next: (response: any) => {
-        if (response.success && response.data && response.data.hasExistingData) {
-          this.hasFieldReportSubmitted = true;
-          this.requiredModules.fieldReport = true;
-        }
-      },
-      error: () => {
-        // Field report not submitted yet or not configured
-      }
-    });
   }
 
   /**
@@ -716,7 +609,7 @@ export class OfficerCaseDetailComponent implements OnInit {
     if (!this.caseData) return;
     const formTypes: string[] = [];
     if (this.requiredModules.hearing) formTypes.push('HEARING');
-    if (this.requiredModules.fieldReport || this.hasFieldReportSubmitted || this.showSubmitFieldReportButton) formTypes.push('FIELD_REPORT');
+    if (this.requiredModules.fieldReport) formTypes.push('FIELD_REPORT');
     if (formTypes.length === 0) formTypes.push('HEARING');
     this.dialog.open(FormsActionDialogComponent, {
       width: '740px',
@@ -918,113 +811,4 @@ export class OfficerCaseDetailComponent implements OnInit {
     this.loadWorkflowHistory();
   }
 
-  /**
-   * Open field report request dialog (for Tehsildar)
-   */
-  openRequestFieldReportDialog(): void {
-    if (!this.caseData) {
-      this.snackBar.open('Case data not available', 'Close', { duration: 3000 });
-      return;
-    }
-
-    const unitId = this.caseData.assignedToUnitId || (this.caseData as any).unitId;
-    
-    if (!unitId) {
-      this.snackBar.open('Unit ID is required to request field report. Please ensure the case is assigned to a unit.', 'Close', { 
-        duration: 5000,
-        panelClass: ['error-snackbar']
-      });
-      console.error('Unit ID is missing. Case data:', this.caseData);
-      return;
-    }
-
-    try {
-      const dialogRef = this.dialog.open(FieldReportRequestDialogComponent, {
-        width: '700px',
-        maxWidth: '90vw',
-        data: {
-          caseId: this.caseId,
-          unitId: unitId,
-          courtId: (this.caseData as any).courtId
-        }
-      });
-
-      dialogRef.afterClosed().subscribe(result => {
-        if (result === 'success') {
-          // Refresh case details and transitions
-          this.loadCaseDetails();
-          this.loadAvailableTransitions();
-          this.loadWorkflowHistory();
-        }
-      });
-    } catch (error) {
-      console.error('Error opening field report request dialog:', error);
-      this.snackBar.open('Failed to open field report request dialog. Please try again.', 'Close', { 
-        duration: 5000,
-        panelClass: ['error-snackbar']
-      });
-    }
-  }
-
-  /**
-   * Open field report form dialog (for Field Officers)
-   */
-  openFieldReportForm(): void {
-    const dialogRef = this.dialog.open(FieldReportFormComponent, {
-      width: '700px',
-      maxHeight: '90vh',
-      data: {
-        caseId: this.caseId
-      }
-    });
-
-    dialogRef.afterClosed().subscribe(result => {
-      if (result === 'success') {
-        // Refresh case details and transitions
-        this.loadCaseDetails();
-        this.loadAvailableTransitions();
-        this.loadWorkflowHistory();
-      }
-    });
-  }
-
-  /**
-   * Update attendance button visibility based on case state and transitions
-   */
-  updateAttendanceButtonVisibility(): void {
-    // Show button if case is in PROCEEDINGS_IN_PROGRESS state
-    // Or if any transition requires ATTENDANCE_SUBMITTED condition
-    this.showMarkAttendanceButton = 
-      this.caseData?.currentStateCode === 'PROCEEDINGS_IN_PROGRESS' ||
-      this.transitions.some(t => {
-        const conditions = t.checklist?.conditions || [];
-        return conditions.some((c: any) => 
-          c.conditionCode === 'ATTENDANCE_SUBMITTED' || 
-          c.label?.toLowerCase().includes('attendance') ||
-          c.moduleType === 'ATTENDANCE'
-        );
-      });
-  }
-
-  /**
-   * Open attendance marking dialog
-   */
-  openAttendanceForm(): void {
-    const dialogRef = this.dialog.open(AttendanceFormComponent, {
-      width: '800px',
-      maxHeight: '90vh',
-      data: {
-        caseId: this.caseId
-      }
-    });
-
-    dialogRef.afterClosed().subscribe(result => {
-      if (result === 'success') {
-        // Refresh case details and transitions (attendance may enable new transitions)
-        this.loadCaseDetails();
-        this.loadAvailableTransitions();
-        this.loadWorkflowHistory();
-      }
-    });
-  }
 }

@@ -15,6 +15,8 @@ export class HearingFormComponent implements OnInit {
   @Input() caseId!: number;
   /** When set, load and submit form by this form ID (so Form 5 vs Form 7 fetch the correct form). */
   @Input() formId?: number;
+  /** Optional module type when opening without formId (e.g. ATTENDANCE, FIELD_REPORT). */
+  @Input() moduleType?: string;
   @Output() formSubmitted = new EventEmitter<void>(); // Emit when form is successfully submitted
   
   // Form data
@@ -28,11 +30,17 @@ export class HearingFormComponent implements OnInit {
   loading = false;
   submitting = false;
   viewMode = false;
+  /** Actual module type loaded from schema when opening by formId (e.g. HEARING, ATTENDANCE). */
+  currentModuleType: string = 'HEARING';
 
   /** API-driven options cache (fieldName -> OptionItem[]) */
   fieldOptionsMap: Record<string, OptionItem[]> = {};
   /** Loading state per field for dataSource */
   optionsLoadingMap: Record<string, boolean> = {};
+  /** For ATTENDANCE module display in dynamic form header. */
+  latestHearingDateLabel: string | null = null;
+  latestHearingDateRaw: string | null = null;
+  latestHearingSubmissionId: number | null = null;
 
   /** Visible fields based on conditional logic (for template) */
   get visibleFields(): ModuleFormField[] {
@@ -45,9 +53,18 @@ export class HearingFormComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    if (this.moduleType) {
+      this.currentModuleType = String(this.moduleType).toUpperCase();
+    }
     if (this.caseId) {
       this.loadFormWithData();
     }
+  }
+
+  getModuleDisplayName(): string {
+    return this.currentModuleType
+      ? this.currentModuleType.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+      : 'Form';
   }
 
   /**
@@ -55,9 +72,10 @@ export class HearingFormComponent implements OnInit {
    */
   loadFormWithData(): void {
     this.loading = true;
+    const requestedModuleType = (this.moduleType || this.currentModuleType || 'HEARING').toUpperCase();
     const load$ = this.formId != null
       ? this.officerCaseService.getModuleFormWithDataByFormId(this.caseId, this.formId)
-      : this.officerCaseService.getModuleFormWithData(this.caseId, 'HEARING');
+      : this.officerCaseService.getModuleFormWithData(this.caseId, requestedModuleType);
     load$.subscribe({
       next: (response) => {
         this.loading = false;
@@ -66,6 +84,9 @@ export class HearingFormComponent implements OnInit {
           // Set schema fields
           if (response.data.schema?.fields) {
             this.formSchema = response.data.schema.fields;
+            if (response.data.schema?.moduleType) {
+              this.currentModuleType = String(response.data.schema.moduleType);
+            }
           }
 
           // Set existing form data if available
@@ -77,12 +98,44 @@ export class HearingFormComponent implements OnInit {
             this.initializeFormData(); // Initialize with defaults
           }
           this.loadDataSourceOptions();
+          this.loadAttendanceHeaderContextIfNeeded();
         }
       },
       error: (error: any) => {
         this.loading = false;
-        console.error('Error loading hearing form:', error);
-        alert(error.error?.message || 'Failed to load hearing form');
+        console.error(`Error loading ${this.currentModuleType} form:`, error);
+        alert(error.error?.message || `Failed to load ${this.getModuleDisplayName()} form`);
+      }
+    });
+  }
+
+  private loadAttendanceHeaderContextIfNeeded(): void {
+    if (this.currentModuleType !== 'ATTENDANCE') {
+      this.latestHearingDateLabel = null;
+      this.latestHearingDateRaw = null;
+      this.latestHearingSubmissionId = null;
+      return;
+    }
+    this.officerCaseService.getParties(this.caseId).subscribe({
+      next: (res: any) => {
+        const raw = res?.data?.latestHearingDate;
+        const submissionId = res?.data?.latestHearingSubmissionId;
+        if (submissionId != null && !isNaN(Number(submissionId))) {
+          this.latestHearingSubmissionId = Number(submissionId);
+        }
+        if (!raw) {
+          this.latestHearingDateLabel = null;
+          this.latestHearingDateRaw = null;
+          return;
+        }
+        this.latestHearingDateRaw = String(raw);
+        const d = new Date(raw);
+        this.latestHearingDateLabel = isNaN(d.getTime()) ? String(raw) : d.toLocaleDateString();
+      },
+      error: () => {
+        this.latestHearingDateLabel = null;
+        this.latestHearingDateRaw = null;
+        this.latestHearingSubmissionId = null;
       }
     });
   }
@@ -117,17 +170,28 @@ export class HearingFormComponent implements OnInit {
       return;
     }
 
-    if (!confirm('Are you sure you want to submit this hearing form?')) {
+    if (!confirm(`Are you sure you want to submit this ${this.getModuleDisplayName()} form?`)) {
       return;
     }
 
     this.submitting = true;
+    const isAttendance = this.currentModuleType === 'ATTENDANCE';
+    const sanitizedFormData = this.stripInternalKeys(this.formData);
+    const submitFormData = isAttendance
+      ? {
+          ...sanitizedFormData,
+          hearingSubmissionId: this.latestHearingSubmissionId ?? (sanitizedFormData as any).hearingSubmissionId ?? null,
+          hearingDate: this.latestHearingDateRaw ?? (sanitizedFormData as any).hearingDate ?? null,
+        }
+      : sanitizedFormData;
     const submit$ = this.formId != null
-      ? this.officerCaseService.submitModuleFormByFormId(this.caseId, this.formId, this.formData, this.remarks)
-      : this.officerCaseService.submitModuleForm(this.caseId, 'HEARING', this.formData, this.remarks);
+      ? (isAttendance
+          ? this.officerCaseService.submitModuleForm(this.caseId, 'ATTENDANCE', submitFormData, this.remarks)
+          : this.officerCaseService.submitModuleFormByFormId(this.caseId, this.formId, submitFormData, this.remarks))
+      : this.officerCaseService.submitModuleForm(this.caseId, this.currentModuleType || 'HEARING', submitFormData, this.remarks);
     submit$.subscribe({
       next: (response) => {
-        alert('Hearing form submitted successfully');
+        alert(`${this.getModuleDisplayName()} form submitted successfully`);
         this.submittedData = response.data;
         this.viewMode = true;
         this.submitting = false;
@@ -137,7 +201,7 @@ export class HearingFormComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error submitting form:', error);
-        alert('Failed to submit hearing form');
+        alert(`Failed to submit ${this.getModuleDisplayName()} form`);
         this.submitting = false;
       }
     });
@@ -305,5 +369,20 @@ export class HearingFormComponent implements OnInit {
    */
   isSelectType(fieldType: FieldType): boolean {
     return ['SELECT', 'MULTISELECT', 'RADIO'].includes(fieldType);
+  }
+
+  private stripInternalKeys(value: unknown): any {
+    if (Array.isArray(value)) {
+      return value.map((item) => this.stripInternalKeys(item));
+    }
+    if (value && typeof value === 'object') {
+      const out: Record<string, unknown> = {};
+      Object.entries(value as Record<string, unknown>).forEach(([k, v]) => {
+        if (k.startsWith('__')) return;
+        out[k] = this.stripInternalKeys(v);
+      });
+      return out;
+    }
+    return value;
   }
 }

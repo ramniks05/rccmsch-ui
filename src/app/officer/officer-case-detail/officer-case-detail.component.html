@@ -270,79 +270,9 @@
         </div>
       </mat-tab>
 
-      <!-- Field Report Tab (Show when submitted or when field report is required) -->
-      <mat-tab label="Field Report" *ngIf="requiredModules.fieldReport || hasFieldReportSubmitted || showSubmitFieldReportButton">
-        <div class="tab-content">
-          <app-field-report-view [caseId]="caseData.id"></app-field-report-view>
-        </div>
-      </mat-tab>
-
       <!-- Workflow Actions Tab -->
       <mat-tab label="Actions">
         <div class="tab-content">
-          <!-- Field Report Request Card (for Tehsildar) -->
-          <mat-card *ngIf="showRequestFieldReportButton" class="info-card action-card">
-            <mat-card-header>
-              <mat-card-title>
-                <mat-icon>assignment</mat-icon>
-                Field Report Request
-              </mat-card-title>
-            </mat-card-header>
-            <mat-card-content>
-              <p>Request a field report from a field officer for this case.</p>
-              <button 
-                mat-raised-button 
-                color="primary"
-                (click)="openRequestFieldReportDialog()"
-                [disabled]="loading || executing || !caseData">
-                <mat-icon>send</mat-icon>
-                Request Field Report
-              </button>
-            </mat-card-content>
-          </mat-card>
-
-          <!-- Field Report Submission Card (for Field Officers) -->
-          <mat-card *ngIf="showSubmitFieldReportButton" class="info-card action-card">
-            <mat-card-header>
-              <mat-card-title>
-                <mat-icon>description</mat-icon>
-                Field Report Submission
-              </mat-card-title>
-            </mat-card-header>
-            <mat-card-content>
-              <p>Submit field report for this case.</p>
-              <button 
-                mat-raised-button 
-                color="primary"
-                (click)="openFieldReportForm()"
-                [disabled]="loading || executing">
-                <mat-icon>send</mat-icon>
-                Submit
-              </button>
-            </mat-card-content>
-          </mat-card>
-
-          <!-- Attendance Marking Card -->
-          <mat-card *ngIf="showMarkAttendanceButton" class="info-card action-card">
-            <mat-card-header>
-              <mat-card-title>
-                <mat-icon>event_available</mat-icon>
-                Attendance Marking
-              </mat-card-title>
-            </mat-card-header>
-            <mat-card-content>
-              <p>Mark attendance of parties for this case proceeding.</p>
-              <button 
-                mat-raised-button 
-                color="primary"
-                (click)="openAttendanceForm()"
-                [disabled]="loading || executing">
-                <mat-icon>check_circle</mat-icon>
-                Mark Attendance
-              </button>
-            </mat-card-content>
-          </mat-card>
-
           <!-- Workflow Actions Card -->
     <mat-card class="info-card actions-card">
       <mat-card-header>
