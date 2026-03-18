@@ -36,6 +36,11 @@ interface ApiResponse<T> {
   timestamp?: string;
 }
 
+export interface DocumentModuleTypeOption {
+  code: ModuleType;
+  name: string;
+}
+
 /**
  * Document Templates Service
  * Handles admin APIs for configuring document templates per case nature
@@ -57,6 +62,17 @@ export class DocumentTemplatesService {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
     });
+  }
+
+  /**
+   * List allowed document module types
+   * GET /api/admin/document-templates/module-types
+   */
+  getDocumentModuleTypes(): Observable<ApiResponse<DocumentModuleTypeOption[]>> {
+    return this.http.get<ApiResponse<DocumentModuleTypeOption[]>>(
+      `${this.apiUrl}/module-types`,
+      { headers: this.getAuthHeaders() }
+    );
   }
 
   /**

@@ -4,9 +4,14 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 /**
- * Module Types
+ * Module type code (backend-driven; do not hardcode values in UI)
  */
-export type ModuleType = 'HEARING' | 'NOTICE' | 'ORDERSHEET' | 'JUDGEMENT' | 'FIELD_REPORT';
+export type ModuleType = string;
+
+export interface ModuleTypeOption {
+  code: ModuleType;
+  name: string;
+}
 
 /**
  * Field Types (includes REPEATABLE_SECTION and DYNAMIC_FILES for attendance/party lists and multi-file uploads)
@@ -81,6 +86,17 @@ export class ModuleFormsService {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
     });
+  }
+
+  /**
+   * List available module types from backend
+   * GET /api/admin/module-forms/module-types
+   */
+  getModuleTypes(): Observable<ApiResponse<ModuleTypeOption[]>> {
+    return this.http.get<ApiResponse<ModuleTypeOption[]>>(
+      `${this.apiUrl}/module-types`,
+      { headers: this.getAuthHeaders() }
+    );
   }
 
   /**
