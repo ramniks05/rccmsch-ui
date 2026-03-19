@@ -1,34 +1,41 @@
-<div class="container py-4">
-  <h2 class="mb-4 d-flex align-items-center">
-    <mat-icon class="me-2">account_tree</mat-icon>
-    Online Services
-  </h2>
+<div class="services-container">
 
-  <div class="row g-4">
+  <!-- Header — same pattern as Case Details -->
+  <div class="header-section">
+    <div class="header-left"></div>
+    <div class="header-center">
+      <!-- <span class="breadcrumb">Citizen &nbsp;/&nbsp; Land Services</span> -->
+      <h2>Online Services</h2>
+    </div>
+    <div class="header-right"></div>
+  </div>
+
+  <!-- Subtitle -->
+  <p class="page-subtitle">Select a service below to begin your application</p>
+
+  <!-- Service Cards Grid -->
+  <div class="services-grid">
     <div
-      class="col-12 col-md-4"
+      class="service-card"
       *ngFor="let p of processes"
-    >
-      <div
-        class="card h-100 shadow-sm text-center process-card"
-        (click)="openForm(p)"
-        style="cursor: pointer;"
-      >
-        <div class="card-body d-flex flex-column align-items-center">
-          <mat-icon class="mb-3" style="font-size: 26px;">{{ p.icon }}</mat-icon>
-          <h5 class="card-title">{{ p.title }}</h5>
-          <button
-            mat-flat-button
-            color="primary"
-            class="mt-auto"
-            (click)="openForm(p); $event.stopPropagation()"
-          >
-            Proceed
-          </button>
+      (click)="openForm(p)">
+
+      <div class="card-accent-bar"></div>
+      <div class="service-card-inner">
+        <div class="service-icon-wrap">
+          <mat-icon>{{ p.icon }}</mat-icon>
         </div>
+        <div class="service-title">{{ p.title }}</div>
+        <button
+          mat-flat-button
+          class="service-btn"
+          (click)="openForm(p); $event.stopPropagation()">
+          <span>Proceed</span>
+          <mat-icon>arrow_forward</mat-icon>
+        </button>
       </div>
+
     </div>
   </div>
+
 </div>
-
-

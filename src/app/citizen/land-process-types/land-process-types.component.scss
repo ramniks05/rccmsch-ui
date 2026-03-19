@@ -1,33 +1,191 @@
-.process-card {
-  transition: transform 0.2s, box-shadow 0.2s;
+// ── Host ─────────────────────────────────────────────────────────────────────
+:host {
+  display: block;
+  width: 100%;
+  background: #f0f2f5;
+}
+
+// ── Container ────────────────────────────────────────────────────────────────
+.services-container {
+  padding: 16px 16px 32px;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+// ── Header — mirrors Case Details exactly ─────────────────────────────────────
+.header-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  padding: 14px 20px;
+  background: #ffffff;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #1a3558, #2563eb, #1a3558);
+    border-radius: 10px 10px 0 0;
+  }
+
+  .header-left,
+  .header-right {
+    flex: 0 0 40px;
+  }
+
+  .header-center {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 3px;
+
+    .breadcrumb {
+      display: block;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: #9ca3af;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+      color: #1a3558;
+      letter-spacing: 0.2px;
+    }
+  }
+}
+
+// ── Subtitle ─────────────────────────────────────────────────────────────────
+.page-subtitle {
+  text-align: center;
+  font-size: 12.5px;
+  color: #9ca3af;
+  margin: 0 0 24px;
+  font-weight: 400;
+}
+
+// ── Grid ─────────────────────────────────────────────────────────────────────
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+  max-width: 880px;
+  margin: 0 auto;
+}
+
+// ── Card ─────────────────────────────────────────────────────────────────────
+.service-card {
+  cursor: pointer;
   border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 4px rgba(26, 53, 88, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  position: relative;
+  overflow: hidden;
+
+  .card-accent-bar {
+    height: 3px;
+    background: linear-gradient(90deg, #1a3558, #2563eb);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 16px 40px rgba(26, 53, 88, 0.13);
+    border-color: #c5d5e8;
+
+    .card-accent-bar { opacity: 1; }
+
+    .service-icon-wrap {
+      background: #1a3558;
+      mat-icon { color: #ffffff; }
+    }
+
+    .service-btn { background: #1a3558 !important; }
+  }
 }
 
-.process-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+// ── Card Inner ───────────────────────────────────────────────────────────────
+.service-card-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 28px 24px 24px;
 }
 
-.card-title {
+// ── Icon ─────────────────────────────────────────────────────────────────────
+.service-icon-wrap {
+  width: 56px;
+  height: 56px;
+  background: #eef2fb;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  transition: background 0.2s ease;
+  box-shadow: 0 2px 8px rgba(26, 53, 88, 0.08);
+
+  mat-icon {
+    font-size: 26px !important;
+    width: 26px !important;
+    height: 26px !important;
+    color: #1a3558;
+    transition: color 0.2s ease;
+  }
+}
+
+// ── Title ────────────────────────────────────────────────────────────────────
+.service-title {
+  font-size: 14.5px;
   font-weight: 600;
-  font-size: 1.1rem;
+  color: #111827;
+  text-align: center;
+  line-height: 1.4;
+  margin-bottom: 20px;
+  letter-spacing: 0.1px;
 }
 
-mat-icon {
-  color: #0d6efd; /* Bootstrap primary color */
+// ── Button ───────────────────────────────────────────────────────────────────
+.service-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  height: 36px !important;
+  padding: 0 18px !important;
+  background: #2563eb !important;
+  color: #ffffff !important;
+  font-family: inherit !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  border-radius: 7px !important;
+  letter-spacing: 0.2px !important;
+  transition: background 0.2s ease !important;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25) !important;
+
+  mat-icon {
+    font-size: 15px !important;
+    width: 15px !important;
+    height: 15px !important;
+    color: #ffffff !important;
+  }
+
+  &:hover { background: #1d4ed8 !important; }
 }
 
-.process-card {
-  transition: transform 0.2s, box-shadow 0.2s;
-  border-radius: 12px;
-}
-
-.process-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
-}
-
-.card-title {
-  font-weight: 600;
-  font-size: 1.05rem;
+// ── Responsive ───────────────────────────────────────────────────────────────
+@media (max-width: 600px) {
+  .services-container { padding: 12px 12px 28px; }
+  .services-grid { grid-template-columns: 1fr; max-width: 100%; }
 }
