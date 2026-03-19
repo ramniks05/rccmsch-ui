@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 /**
  * Module Types
  */
-export type ModuleType = 'HEARING' | 'NOTICE' | 'ORDERSHEET' | 'JUDGEMENT' | 'FIELD_REPORT';
+export type ModuleType = 'HEARING' | 'NOTICE' | 'ORDERSHEET' | 'JUDGEMENT' | 'FIELD_REPORT' | 'ASK_FIELD_REPORT';
 
 /**
  * Field Types (includes REPEATABLE_SECTION and DYNAMIC_FILES for attendance/party lists and multi-file uploads)
@@ -88,6 +88,93 @@ export class ModuleFormsService {
    * GET /api/admin/module-forms/case-natures/{caseNatureId}/modules/{moduleType}/fields?caseTypeId=
    */
   getFieldsByCaseNatureAndModule(caseNatureId: number, moduleType: ModuleType, caseTypeId?: number): Observable<ApiResponse<ModuleFormField[]>> {
+    // Return dummy data for ASK_FIELD_REPORT
+    if (moduleType === 'ASK_FIELD_REPORT') {
+      const dummyData: ApiResponse<ModuleFormField[]> = {
+        success: true,
+        message: 'Module form fields retrieved',
+        data: [
+          {
+            id: 5,
+            caseNatureId: caseNatureId,
+            caseNatureCode: 'MUTATION_CASE',
+            caseNatureName: 'Mutation Case',
+            caseTypeId: caseTypeId || undefined,
+            caseTypeCode: null,
+            caseTypeName: null,
+            moduleType: 'ASK_FIELD_REPORT',
+            fieldName: 'hearingDate',
+            fieldLabel: 'Hearing Date',
+            fieldType: 'DATE',
+            isRequired: true,
+            validationRules: '',
+            displayOrder: 1,
+            isActive: true,
+            defaultValue: '',
+            placeholder: 'Select Hearing Date',
+            helpText: '',
+            dataSource: '',
+            dependsOnField: '',
+            conditionalLogic: '',
+            createdAt: '2026-03-15T12:31:26.363343',
+            updatedAt: '2026-03-15T12:31:26.363343'
+          } as ModuleFormField,
+          {
+            id: 6,
+            caseNatureId: caseNatureId,
+            caseNatureCode: 'MUTATION_CASE',
+            caseNatureName: 'Mutation Case',
+            caseTypeId: caseTypeId || undefined,
+            caseTypeCode: null,
+            caseTypeName: null,
+            moduleType: 'ASK_FIELD_REPORT',
+            fieldName: 'remarks',
+            fieldLabel: 'Remarks',
+            fieldType: 'TEXT',
+            isRequired: false,
+            validationRules: '',
+            displayOrder: 2,
+            isActive: true,
+            defaultValue: '',
+            placeholder: 'Enter Remark',
+            helpText: '',
+            dataSource: '',
+            dependsOnField: '',
+            conditionalLogic: '',
+            createdAt: '2026-03-15T12:32:08.336209',
+            updatedAt: '2026-03-15T12:32:08.336209'
+          } as ModuleFormField,
+          {
+            id: 7,
+            caseNatureId: caseNatureId,
+            caseNatureCode: 'MUTATION_CASE',
+            caseNatureName: 'Mutation Case',
+            caseTypeId: caseTypeId || undefined,
+            caseTypeCode: null,
+            caseTypeName: null,
+            moduleType: 'ASK_FIELD_REPORT',
+            fieldName: 'fieldOfficer',
+            fieldLabel: 'Field Officer',
+            fieldType: 'SELECT',
+            isRequired: true,
+            validationRules: '',
+            displayOrder: 3,
+            isActive: true,
+            defaultValue: '',
+            placeholder: 'Select Field Officer',
+            helpText: 'Select the field officer to assign',
+            dataSource: '',
+            dependsOnField: '',
+            conditionalLogic: '',
+            createdAt: '2026-03-15T12:33:00.000000',
+            updatedAt: '2026-03-15T12:33:00.000000'
+          } as ModuleFormField
+        ],
+        timestamp: new Date().toISOString()
+      };
+      return of(dummyData);
+    }
+
     let url = `${this.apiUrl}/case-natures/${caseNatureId}/modules/${moduleType}/fields`;
     if (caseTypeId) {
       url += `?caseTypeId=${caseTypeId}`;

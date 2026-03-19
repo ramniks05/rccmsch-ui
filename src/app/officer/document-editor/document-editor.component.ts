@@ -27,14 +27,14 @@ export class DocumentEditorComponent implements OnInit {
   @Input() templateId!: number;
   /** Optional: module type for display only when template doesn't provide it (e.g. NOTICE, ORDERSHEET, JUDGEMENT). */
   @Input() documentType: ModuleType = 'NOTICE';
-  
+
   // Template & Document data
   template: any = null;
   document: DocumentData | null = null;
   contentHtml: string = '';
   contentData: any = {};
   documentStatus: 'DRAFT' | 'FINAL' | 'SIGNED' = 'DRAFT';
-  
+
   // UI state
   loading = false;
   saving = false;
@@ -43,10 +43,10 @@ export class DocumentEditorComponent implements OnInit {
   // Workflow-based action permissions for this document template
   allowDraftFromWorkflow = false;
   allowSaveAndSignFromWorkflow = false;
-  
+
   // Placeholders for replacement
   placeholderValues: Record<string, string> = {};
-  
+
   // User role for access control
   userRoleCode: string = '';
   userRoleName: string = '';
@@ -57,7 +57,7 @@ export class DocumentEditorComponent implements OnInit {
   ) {
     this.loadUserRole();
   }
-  
+
   /**
    * Load user role from localStorage
    */
@@ -74,7 +74,7 @@ export class DocumentEditorComponent implements OnInit {
       console.error('Error loading user role:', e);
     }
   }
-  
+
   ngOnInit(): void {
     if (this.caseId && this.templateId != null) {
       this.loadUserRole(); // Ensure role is loaded
@@ -105,7 +105,7 @@ export class DocumentEditorComponent implements OnInit {
     const posting = officerData?.posting || {};
     const designation = posting.roleName || posting.designation || this.caseData.assignedToRole || '';
     const officerName = posting.officerName || this.caseData.assignedToOfficerName || '';
-    
+
     // Extract court name - priority: caseData > posting > default
     let courtName = 'Court Name'; // Default fallback
     if ((this.caseData as any).courtName) {
@@ -117,23 +117,23 @@ export class DocumentEditorComponent implements OnInit {
     }
 
     // Digital Signature ID - can be userId, officerId, or custom field
-    const digitalSignatureId = officerData?.userId?.toString() || 
-                               posting.officerId?.toString() || 
-                               this.caseData.assignedToOfficerId?.toString() || 
+    const digitalSignatureId = officerData?.userId?.toString() ||
+                               posting.officerId?.toString() ||
+                               this.caseData.assignedToOfficerId?.toString() ||
                                '';
 
     // Parse caseData JSON to extract form fields (including respondent name)
     let parsedCaseData: Record<string, any> = {};
     let respondentName = '';
-    
+
     if (this.caseData.caseData) {
       try {
         parsedCaseData = JSON.parse(this.caseData.caseData);
-        
+
         // Try multiple possible field names for respondent
         // Common variations: respondentName, respondent, respondent_name, etc.
-        respondentName = parsedCaseData['respondentName'] || 
-                        parsedCaseData['respondent'] || 
+        respondentName = parsedCaseData['respondentName'] ||
+                        parsedCaseData['respondent'] ||
                         parsedCaseData['respondent_name'] ||
                         parsedCaseData['Respondent Name'] ||
                         parsedCaseData['Respondent'] ||
@@ -353,10 +353,10 @@ export class DocumentEditorComponent implements OnInit {
     }
 
     this.saving = true;
-    
+
     // Ensure status is exactly as expected (uppercase, no whitespace)
     const normalizedStatus = status.trim().toUpperCase() as 'DRAFT' | 'FINAL' | 'SIGNED';
-    
+
     const templateId = this.templateId ?? this.template?.id;
     if (templateId == null) {
       alert('Template ID is required to save document.');
@@ -385,7 +385,7 @@ export class DocumentEditorComponent implements OnInit {
           const returnedStatus = response.data?.status || status;
           console.log('Requested status:', status);
           console.log('Returned status from backend:', returnedStatus);
-          
+
           if (returnedStatus !== status) {
             console.warn('⚠️ WARNING: Status mismatch!');
             console.warn('Requested:', status, 'but backend returned:', returnedStatus);
@@ -393,7 +393,7 @@ export class DocumentEditorComponent implements OnInit {
           } else {
             console.log('✅ Status matches correctly');
           }
-          
+
           alert(`Document updated successfully. Status: ${returnedStatus}`);
           this.document = response.data;
           this.documentStatus = returnedStatus as 'DRAFT' | 'FINAL' | 'SIGNED';
@@ -476,7 +476,8 @@ export class DocumentEditorComponent implements OnInit {
       'NOTICE': 'Notice',
       'ORDERSHEET': 'Order Sheet',
       'JUDGEMENT': 'Judgement',
-      'FIELD_REPORT': 'Field Report'
+      'FIELD_REPORT': 'Field Report',
+      'ASK_FIELD_REPORT': 'Ask Field Report'
     };
     return labels[this.documentType] || this.documentType;
   }

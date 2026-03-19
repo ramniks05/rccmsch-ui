@@ -12,27 +12,30 @@ export class ModuleFormsComponent implements OnInit {
   caseNatures: any[] = [];
   caseTypes: any[] = [];
   fields: ModuleFormField[] = [];
-  
+
   // Selection
   selectedCaseNatureId: number | null = null;
   selectedCaseTypeId: number | null = null; // Optional: for case type override
   selectedModuleType: ModuleType = 'HEARING';
-  
+
+  // LocalStorage key for ASK_FIELD_REPORT fields
+  private readonly STORAGE_KEY = 'ASK_FIELD_REPORT_FIELDS';
+
   // Module types for dropdown
-  moduleTypes: ModuleType[] = ['HEARING', 'NOTICE', 'ORDERSHEET', 'JUDGEMENT', 'FIELD_REPORT'];
-  
+  moduleTypes: ModuleType[] = ['HEARING', 'NOTICE', 'ORDERSHEET', 'JUDGEMENT', 'FIELD_REPORT', 'ASK_FIELD_REPORT'];
+
   // Field types for dropdown
   fieldTypes: FieldType[] = [
     'TEXT', 'TEXTAREA', 'RICH_TEXT', 'NUMBER', 'DATE', 'DATETIME',
     'SELECT', 'MULTISELECT', 'CHECKBOX', 'RADIO', 'FILE',
     'REPEATABLE_SECTION', 'DYNAMIC_FILES'
   ];
-  
+
   // UI state
   loading = false;
   showFieldForm = false;
   editingField: ModuleFormField | null = null;
-  
+
   // Field form
   fieldForm: Partial<ModuleFormField> = {
     fieldName: '',
@@ -96,7 +99,7 @@ export class ModuleFormsComponent implements OnInit {
    */
   loadCaseTypes(): void {
     if (!this.selectedCaseNatureId) return;
-    
+
     this.adminService.getCaseTypesByCaseNature(this.selectedCaseNatureId).subscribe({
       next: (response: any) => {
         this.caseTypes = response.data || response;
@@ -121,7 +124,37 @@ export class ModuleFormsComponent implements OnInit {
    */
   onModuleTypeChange(): void {
     if (this.selectedCaseNatureId) {
+      // If ASK_FIELD_REPORT is selected, store dummy data to localStorage
+      if (this.selectedModuleType === 'ASK_FIELD_REPORT') {
+        this.initializeASKFieldReportStorageIfNeeded();
+      }
       this.loadFields();
+    }
+  }
+
+  /**
+   * Initialize localStorage for ASK_FIELD_REPORT fields if not already done
+   */
+  private initializeASKFieldReportStorageIfNeeded(): void {
+    const existingData = localStorage.getItem(this.STORAGE_KEY);
+    if (!existingData) {
+      // First time, fetch dummy data from service and store it
+      this.moduleFormsService.getFieldsByCaseNatureAndModule(
+        this.selectedCaseNatureId!,
+        'ASK_FIELD_REPORT',
+        this.selectedCaseTypeId || undefined
+      ).subscribe({
+        next: (response) => {
+          const fields = response.data || [];
+          localStorage.setItem(this.STORAGE_KEY, JSON.stringify({
+            timestamp: new Date().toISOString(),
+            fields: fields
+          }));
+        },
+        error: (error) => {
+          console.error('Error initializing ASK_FIELD_REPORT storage:', error);
+        }
+      });
     }
   }
 
@@ -130,15 +163,38 @@ export class ModuleFormsComponent implements OnInit {
    */
   loadFields(): void {
     if (!this.selectedCaseNatureId) return;
-    
+
     this.loading = true;
+
+    // For ASK_FIELD_REPORT, try to load from localStorage first
+    if (this.selectedModuleType === 'ASK_FIELD_REPORT') {
+      const storedData = localStorage.getItem(this.STORAGE_KEY);
+      if (storedData) {
+        try {
+          const parsed = JSON.parse(storedData);
+          this.fields = parsed.fields || [];
+          this.loading = false;
+          return;
+        } catch (error) {
+          console.error('Error parsing localStorage data:', error);
+        }
+      }
+    }
+
     this.moduleFormsService.getFieldsByCaseNatureAndModule(
-      this.selectedCaseNatureId, 
+      this.selectedCaseNatureId,
       this.selectedModuleType,
       this.selectedCaseTypeId || undefined
     ).subscribe({
       next: (response) => {
         this.fields = response.data || [];
+        // Store to localStorage if it's ASK_FIELD_REPORT
+        if (this.selectedModuleType === 'ASK_FIELD_REPORT') {
+          localStorage.setItem(this.STORAGE_KEY, JSON.stringify({
+            timestamp: new Date().toISOString(),
+            fields: this.fields
+          }));
+        }
         this.loading = false;
       },
       error: (error) => {
@@ -206,6 +262,12 @@ export class ModuleFormsComponent implements OnInit {
 
     this.loading = true;
 
+    // For ASK_FIELD_REPORT, handle localStorage
+    if (this.selectedModuleType === 'ASK_FIELD_REPORT') {
+      this.saveFieldToLocalStorage(fieldData);
+      return;
+    }
+
     if (this.editingField && this.editingField.id) {
       // Update existing field
       this.moduleFormsService.updateField(this.editingField.id, fieldData).subscribe({
@@ -238,16 +300,66 @@ export class ModuleFormsComponent implements OnInit {
   }
 
   /**
+   * Save field to localStorage for ASK_FIELD_REPORT
+   */
+  private saveFieldToLocalStorage(fieldData: ModuleFormField): void {
+    try {
+      const storedData = localStorage.getItem(this.STORAGE_KEY);
+      let storageObj: any = { timestamp: new Date().toISOString(), fields: [] };
+
+      if (storedData) {
+        storageObj = JSON.parse(storedData);
+      }
+
+      if (this.editingField && this.editingField.id) {
+        // Update existing field in localStorage
+        const fieldIndex = storageObj.fields.findIndex((f: ModuleFormField) => f.id === this.editingField!.id);
+        if (fieldIndex !== -1) {
+          storageObj.fields[fieldIndex] = fieldData;
+        }
+      } else {
+        // Generate a temporary ID for new field
+        const maxId = storageObj.fields.length > 0
+          ? Math.max(...storageObj.fields.map((f: ModuleFormField) => f.id || 0))
+          : 0;
+        fieldData.id = maxId + 1;
+        fieldData.createdAt = new Date().toISOString();
+        fieldData.updatedAt = new Date().toISOString();
+        storageObj.fields.push(fieldData);
+      }
+
+      storageObj.timestamp = new Date().toISOString();
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(storageObj));
+
+      alert('Field saved successfully');
+      this.showFieldForm = false;
+      this.loading = false;
+      this.loadFields();
+    } catch (error) {
+      console.error('Error saving field to localStorage:', error);
+      alert('Failed to save field');
+      this.loading = false;
+    }
+  }
+
+  /**
    * Delete field
    */
   deleteField(field: ModuleFormField): void {
     if (!field.id) return;
-    
+
     if (!confirm(`Are you sure you want to delete field "${field.fieldLabel}"?`)) {
       return;
     }
 
     this.loading = true;
+
+    // For ASK_FIELD_REPORT, handle localStorage deletion
+    if (this.selectedModuleType === 'ASK_FIELD_REPORT') {
+      this.deleteFieldFromLocalStorage(field.id);
+      return;
+    }
+
     this.moduleFormsService.deleteField(field.id).subscribe({
       next: () => {
         alert('Field deleted successfully');
@@ -259,6 +371,28 @@ export class ModuleFormsComponent implements OnInit {
         this.loading = false;
       }
     });
+  }
+
+  /**
+   * Delete field from localStorage for ASK_FIELD_REPORT
+   */
+  private deleteFieldFromLocalStorage(fieldId: number): void {
+    try {
+      const storedData = localStorage.getItem(this.STORAGE_KEY);
+      if (storedData) {
+        const storageObj = JSON.parse(storedData);
+        storageObj.fields = storageObj.fields.filter((f: ModuleFormField) => f.id !== fieldId);
+        storageObj.timestamp = new Date().toISOString();
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(storageObj));
+      }
+      alert('Field deleted successfully');
+      this.loading = false;
+      this.loadFields();
+    } catch (error) {
+      console.error('Error deleting field from localStorage:', error);
+      alert('Failed to delete field');
+      this.loading = false;
+    }
   }
 
   /**
@@ -274,15 +408,15 @@ export class ModuleFormsComponent implements OnInit {
    */
   moveFieldUp(index: number): void {
     if (index === 0) return;
-    
+
     const field = this.fields[index];
     const prevField = this.fields[index - 1];
-    
+
     // Swap display orders
     const tempOrder = field.displayOrder;
     field.displayOrder = prevField.displayOrder;
     prevField.displayOrder = tempOrder;
-    
+
     // Update both fields
     this.updateFieldOrder(field, prevField);
   }
@@ -292,15 +426,15 @@ export class ModuleFormsComponent implements OnInit {
    */
   moveFieldDown(index: number): void {
     if (index === this.fields.length - 1) return;
-    
+
     const field = this.fields[index];
     const nextField = this.fields[index + 1];
-    
+
     // Swap display orders
     const tempOrder = field.displayOrder;
     field.displayOrder = nextField.displayOrder;
     nextField.displayOrder = tempOrder;
-    
+
     // Update both fields
     this.updateFieldOrder(field, nextField);
   }
@@ -310,7 +444,13 @@ export class ModuleFormsComponent implements OnInit {
    */
   private updateFieldOrder(field1: ModuleFormField, field2: ModuleFormField): void {
     if (!this.selectedCaseNatureId || !field1.id || !field2.id) return;
-    
+
+    // For ASK_FIELD_REPORT, handle localStorage
+    if (this.selectedModuleType === 'ASK_FIELD_REPORT') {
+      this.updateFieldOrderInLocalStorage(field1, field2);
+      return;
+    }
+
     const fieldOrders = [
       { fieldId: field1.id, displayOrder: field1.displayOrder },
       { fieldId: field2.id, displayOrder: field2.displayOrder }
@@ -329,6 +469,24 @@ export class ModuleFormsComponent implements OnInit {
         alert('Failed to reorder fields');
       }
     });
+  }
+
+  /**
+   * Update field order in localStorage for ASK_FIELD_REPORT
+   */
+  private updateFieldOrderInLocalStorage(field1: ModuleFormField, field2: ModuleFormField): void {
+    try {
+      const storedData = localStorage.getItem(this.STORAGE_KEY);
+      if (storedData) {
+        const storageObj = JSON.parse(storedData);
+        storageObj.timestamp = new Date().toISOString();
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(storageObj));
+        this.loadFields();
+      }
+    } catch (error) {
+      console.error('Error updating field order in localStorage:', error);
+      alert('Failed to reorder fields');
+    }
   }
 
   /**

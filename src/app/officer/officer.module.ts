@@ -14,6 +14,7 @@ import { FieldReportViewComponent } from './field-report-view/field-report-view.
 import { AttendanceFormComponent } from './attendance-form/attendance-form.component';
 import { DocumentsActionDialogComponent } from './documents-action-dialog/documents-action-dialog.component';
 import { FormsActionDialogComponent } from './forms-action-dialog/forms-action-dialog.component';
+import { AskFieldReportFormComponent } from './ask-field-report-form/ask-field-report-form.component';
 import { SharedModule } from '../shared/shared.module';
 
 const routes: Routes = [
@@ -61,7 +62,8 @@ const routes: Routes = [
     FieldReportViewComponent,
     AttendanceFormComponent,
     DocumentsActionDialogComponent,
-    FormsActionDialogComponent
+    FormsActionDialogComponent,
+    AskFieldReportFormComponent
   ],
   imports: [
     SharedModule,

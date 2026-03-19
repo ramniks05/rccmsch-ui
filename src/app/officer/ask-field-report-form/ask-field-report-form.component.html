@@ -1,0 +1,94 @@
+<div class="ask-field-report-form">
+  <!-- Loading indicator -->
+  <div *ngIf="loading" class="text-center py-4">
+    <mat-spinner diameter="30"></mat-spinner>
+    <p>Loading form fields...</p>
+  </div>
+
+  <!-- Form content -->
+  <div *ngIf="!loading && form">
+    <form [formGroup]="form" (ngSubmit)="submitForm()" class="form-container">
+      <!-- Form fields -->
+      <div *ngFor="let field of fields" class="form-group mb-3">
+        <label [for]="field.fieldName" class="form-label">
+          {{ field.fieldLabel }}
+          <span *ngIf="field.isRequired" class="text-danger">*</span>
+        </label>
+
+        <!-- Text Input -->
+        <input
+          *ngIf="field.fieldType === 'TEXT'"
+          type="text"
+          [id]="field.fieldName"
+          class="form-control"
+          [formControlName]="field.fieldName"
+          [placeholder]="field.placeholder || ''"
+          [attr.aria-label]="field.fieldLabel">
+
+        <!-- Date Input -->
+        <input
+          *ngIf="field.fieldType === 'DATE'"
+          type="date"
+          [id]="field.fieldName"
+          class="form-control"
+          [formControlName]="field.fieldName"
+          [attr.aria-label]="field.fieldLabel">
+
+        <!-- Select Dropdown -->
+        <select
+          *ngIf="field.fieldType === 'SELECT'"
+          class="form-control"
+          [id]="field.fieldName"
+          [formControlName]="field.fieldName"
+          [attr.aria-label]="field.fieldLabel">
+          <option value="">-- Select {{ field.fieldLabel }} --</option>
+          <option *ngFor="let officer of fieldOfficers" [value]="officer.id">
+            {{ officer.name }}
+          </option>
+        </select>
+
+        <!-- Textarea -->
+        <textarea
+          *ngIf="field.fieldType === 'TEXTAREA'"
+          [id]="field.fieldName"
+          class="form-control"
+          [formControlName]="field.fieldName"
+          [placeholder]="field.placeholder || ''"
+          [attr.aria-label]="field.fieldLabel"
+          rows="3">
+        </textarea>
+
+        <!-- Help text -->
+        <small *ngIf="field.helpText" class="form-text text-muted d-block mt-1">
+          {{ field.helpText }}
+        </small>
+
+        <!-- Validation error messages -->
+        <div *ngIf="form.get(field.fieldName)?.invalid && form.get(field.fieldName)?.touched" class="alert alert-danger mt-1 mb-0">
+          <small *ngIf="form.get(field.fieldName)?.errors?.['required']">
+            {{ field.fieldLabel }} is required
+          </small>
+        </div>
+      </div>
+
+      <!-- Submit button -->
+      <div class="form-actions mt-4">
+        <button
+          type="submit"
+          class="btn btn-primary"
+          [disabled]="submitting || !form.valid">
+          <span *ngIf="!submitting">Submit Request</span>
+          <span *ngIf="submitting">
+            <mat-spinner diameter="20" class="me-2"></mat-spinner>
+            Submitting...
+          </span>
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Error state -->
+  <div *ngIf="!loading && fields.length === 0" class="alert alert-warning">
+    <p>No form fields available</p>
+  </div>
+</div>

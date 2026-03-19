@@ -13,21 +13,21 @@ export class DocumentTemplatesComponent implements OnInit {
   caseNatures: any[] = [];
   caseTypes: any[] = [];
   templates: DocumentTemplate[] = [];
-  
+
   // Selection
   selectedCaseNatureId: number | null = null;
   selectedCaseTypeId: number | null = null; // Optional: for case type override
   selectedModuleType: ModuleType = 'NOTICE';
-  
+
   // Module types for document templates (excluding HEARING)
   moduleTypes: ModuleType[] = ['NOTICE', 'ORDERSHEET', 'JUDGEMENT'];
-  
+
   // UI state
   loading = false;
   showTemplateForm = false;
   editingTemplate: DocumentTemplate | null = null;
   activeOnly = false;
-  
+
   // Template form
   templateForm: Partial<DocumentTemplate> = {
     templateName: '',
@@ -79,7 +79,7 @@ export class DocumentTemplatesComponent implements OnInit {
    */
   private hasMeaningfulContent(content: string): boolean {
     if (!content) return false;
-    
+
     // If content contains HTML tags, extract text content
     if (content.includes('<')) {
       const tmp = document.createElement('DIV');
@@ -87,7 +87,7 @@ export class DocumentTemplatesComponent implements OnInit {
       const textContent = tmp.textContent || tmp.innerText || '';
       return textContent.trim().length > 0;
     }
-    
+
     // For plain text, just check if trimmed content has length
     return content.trim().length > 0;
   }
@@ -131,7 +131,7 @@ export class DocumentTemplatesComponent implements OnInit {
    */
   loadCaseTypes(): void {
     if (!this.selectedCaseNatureId) return;
-    
+
     this.adminService.getCaseTypesByCaseNature(this.selectedCaseNatureId).subscribe({
       next: (response: any) => {
         this.caseTypes = response.data || response;
@@ -174,10 +174,10 @@ export class DocumentTemplatesComponent implements OnInit {
    */
   loadTemplates(): void {
     if (!this.selectedCaseNatureId) return;
-    
+
     this.loading = true;
     this.documentTemplatesService.getTemplatesByCaseNatureAndModule(
-      this.selectedCaseNatureId, 
+      this.selectedCaseNatureId,
       this.selectedModuleType,
       this.activeOnly,
       this.selectedCaseTypeId || undefined
@@ -231,16 +231,16 @@ export class DocumentTemplatesComponent implements OnInit {
         <h2>${this.selectedModuleType}</h2>
         <p>Case Number: {{caseNumber}}</p>
     </div>
-    
+
     <div class="content">
         <p>Date: {{currentDate}}</p>
         <p>Applicant Name: {{applicantName}}</p>
         <p>Case Nature: {{caseNature}}</p>
         <p>Subject: {{subject}}</p>
-        
+
         <p>{{description}}</p>
     </div>
-    
+
     <div class="footer">
         <p>{{officerName}}</p>
         <p>{{courtName}}</p>
@@ -336,7 +336,7 @@ export class DocumentTemplatesComponent implements OnInit {
    */
   deleteTemplate(template: DocumentTemplate): void {
     if (!template.id) return;
-    
+
     if (!confirm(`Are you sure you want to delete template "${template.templateName}"?`)) {
       return;
     }
@@ -396,12 +396,12 @@ export class DocumentTemplatesComponent implements OnInit {
       const startPos = textarea.selectionStart;
       const endPos = textarea.selectionEnd;
       const currentValue = this.templateForm.templateHtml || '';
-      
-      this.templateForm.templateHtml = 
-        currentValue.substring(0, startPos) + 
-        placeholder + 
+
+      this.templateForm.templateHtml =
+        currentValue.substring(0, startPos) +
+        placeholder +
         currentValue.substring(endPos);
-      
+
       // Set cursor position after inserted placeholder
       setTimeout(() => {
         textarea.focus();
@@ -428,7 +428,8 @@ export class DocumentTemplatesComponent implements OnInit {
       'NOTICE': 'Notice',
       'ORDERSHEET': 'Order Sheet',
       'JUDGEMENT': 'Judgement',
-      'FIELD_REPORT': 'Field Report'
+      'FIELD_REPORT': 'Field Report',
+      'ASK_FIELD_REPORT': 'Ask Field Report'
     };
     return labels[moduleType] || moduleType;
   }
@@ -510,8 +511,8 @@ export class DocumentTemplatesComponent implements OnInit {
   private htmlToWordBlob(html: string): Blob {
     // Wrap HTML in proper Word XML structure
     const wordXml = `
-      <html xmlns:o='urn:schemas-microsoft-com:office:office' 
-            xmlns:w='urn:schemas-microsoft-com:office:word' 
+      <html xmlns:o='urn:schemas-microsoft-com:office:office'
+            xmlns:w='urn:schemas-microsoft-com:office:word'
             xmlns='http://www.w3.org/TR/REC-html40'>
       <head>
         <meta charset='utf-8'>

@@ -28,6 +28,14 @@
         <app-field-report-view [caseId]="caseId"></app-field-report-view>
       </div>
     </mat-tab>
+    <mat-tab *ngIf="formTypes.includes('ASK_FIELD_REPORT')" label="Ask Field Report">
+      <div class="tab-panel">
+        <app-ask-field-report-form
+          [caseId]="caseId"
+          (formSubmitted)="onFormSubmitted()">
+        </app-ask-field-report-form>
+      </div>
+    </mat-tab>
   </mat-tab-group>
   <div *ngIf="!formItem && formTypes.length === 1" class="single-form">
     <app-hearing-form
@@ -39,6 +47,11 @@
       *ngIf="formTypes[0] === 'FIELD_REPORT'"
       [caseId]="caseId">
     </app-field-report-view>
+    <app-ask-field-report-form
+      *ngIf="formTypes[0] === 'ASK_FIELD_REPORT'"
+      [caseId]="caseId"
+      (formSubmitted)="onFormSubmitted()">
+    </app-ask-field-report-form>
   </div>
 </mat-dialog-content>
 

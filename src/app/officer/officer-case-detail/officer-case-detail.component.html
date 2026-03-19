@@ -103,7 +103,7 @@
 
     <!-- Tabs for different sections -->
     <mat-tab-group class="case-tabs" [(selectedIndex)]="selectedTabIndex" animationDuration="300ms">
-      
+
       <!-- Case Info Tab -->
       <mat-tab label="Case Info">
         <div class="tab-content">
@@ -230,7 +230,7 @@
       <!-- Hearing Form Tab (Conditional) -->
       <mat-tab label="Hearing" *ngIf="requiredModules.hearing">
         <div class="tab-content">
-          <app-hearing-form 
+          <app-hearing-form
             [caseId]="caseData.id"
             (formSubmitted)="onHearingFormSubmitted()">
           </app-hearing-form>
@@ -240,8 +240,8 @@
       <!-- Notice Document Tab (by template ID when available) -->
       <mat-tab label="Notice" *ngIf="requiredModules.notice && getTemplateIdForModuleType('NOTICE')">
         <div class="tab-content">
-          <app-document-editor 
-            [caseId]="caseData.id" 
+          <app-document-editor
+            [caseId]="caseData.id"
             [caseData]="caseData"
             [templateId]="getTemplateIdForModuleType('NOTICE')!">
           </app-document-editor>
@@ -251,8 +251,8 @@
       <!-- Order Sheet Document Tab (by template ID when available) -->
       <mat-tab label="Order Sheet" *ngIf="requiredModules.ordersheet && getTemplateIdForModuleType('ORDERSHEET')">
         <div class="tab-content">
-          <app-document-editor 
-            [caseId]="caseData.id" 
+          <app-document-editor
+            [caseId]="caseData.id"
             [caseData]="caseData"
             [templateId]="getTemplateIdForModuleType('ORDERSHEET')!">
           </app-document-editor>
@@ -262,8 +262,8 @@
       <!-- Judgement Document Tab (by template ID when available) -->
       <mat-tab label="Judgement" *ngIf="requiredModules.judgement && getTemplateIdForModuleType('JUDGEMENT')">
         <div class="tab-content">
-          <app-document-editor 
-            [caseId]="caseData.id" 
+          <app-document-editor
+            [caseId]="caseData.id"
             [caseData]="caseData"
             [templateId]="getTemplateIdForModuleType('JUDGEMENT')!">
           </app-document-editor>
@@ -290,8 +290,8 @@
             </mat-card-header>
             <mat-card-content>
               <p>Request a field report from a field officer for this case.</p>
-              <button 
-                mat-raised-button 
+              <button
+                mat-raised-button
                 color="primary"
                 (click)="openRequestFieldReportDialog()"
                 [disabled]="loading || executing || !caseData">
@@ -311,8 +311,8 @@
             </mat-card-header>
             <mat-card-content>
               <p>Submit field report for this case.</p>
-              <button 
-                mat-raised-button 
+              <button
+                mat-raised-button
                 color="primary"
                 (click)="openFieldReportForm()"
                 [disabled]="loading || executing">
@@ -332,8 +332,8 @@
             </mat-card-header>
             <mat-card-content>
               <p>Mark attendance of parties for this case proceeding.</p>
-              <button 
-                mat-raised-button 
+              <button
+                mat-raised-button
                 color="primary"
                 (click)="openAttendanceForm()"
                 [disabled]="loading || executing">
@@ -373,8 +373,8 @@
           <div *ngFor="let transition of transitions" class="action-item-card">
             <div class="action-item-header">
               <mat-icon [class]="'action-icon ' + getActionClass(transition.transitionCode)">
-                {{ transition.transitionCode.includes('APPROVE') ? 'check_circle' : 
-                   transition.transitionCode.includes('REJECT') ? 'cancel' : 
+                {{ transition.transitionCode.includes('APPROVE') ? 'check_circle' :
+                   transition.transitionCode.includes('REJECT') ? 'cancel' :
                    transition.transitionCode.includes('RETURN') ? 'undo' : 'play_arrow' }}
               </mat-icon>
               <span class="action-name">{{ transition.transitionName }}</span>
@@ -389,6 +389,15 @@
               </ul>
             </div>
             <div *ngIf="transition.description" class="action-description">{{ transition.description }}</div>
+            <!-- Ask Field Report button for Hearing Reschedule transitions -->
+            <div *ngIf="isAskFieldReportTransition(transition)" class="action-forms-docs">
+              <div class="action-meta-row">
+                <button type="button" mat-stroked-button color="accent" class="action-chip" (click)="openAskFieldReportForm(transition)">
+                  <mat-icon>assignment</mat-icon> Ask For Report
+                </button>
+                <p class="where-hint">Click to request a field report from the assigned field officer.</p>
+              </div>
+            </div>
             <!-- Forms & documents for this action: clear names, each clickable to open that form/document -->
             <div *ngIf="hasFormsOrDocuments(transition)" class="action-forms-docs">
               <div *ngIf="getTransitionFormIds(transition).length" class="action-meta-row">
