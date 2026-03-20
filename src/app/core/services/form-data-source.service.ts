@@ -82,6 +82,9 @@ export class FormDataSourceService {
       : '';
 
     let url: string;
+    let resolvedValueKey = valueKey;
+    let resolvedLabelKey = labelKey;
+
     if (ds.type === 'ADMIN_UNITS') {
       const level = ds.level ?? 'CIRCLE';
       url = `${this.baseUrl}/public/form-data-sources/admin-units?level=${encodeURIComponent(level)}${parentValue != null && parentValue !== '' ? `&parentId=${encodeURIComponent(String(parentValue))}` : ''}`;
@@ -95,6 +98,13 @@ export class FormDataSourceService {
     } else if (ds.type === 'CASE_TYPES') {
       if (parentValue == null || parentValue === '') return of([]);
       url = `${this.baseUrl}/public/form-data-sources/case-types?caseNatureId=${encodeURIComponent(String(parentValue))}`;
+    } else if (ds.type === 'FIELD_OFFICER') {
+      // Fetch field officers for a specific unit
+      const unitFieldName = ds.unitField ?? '__caseUnitId';
+      const unitId = formData[unitFieldName];
+      if (unitId == null || unitId === '') return of([]);
+      url = `${this.baseUrl}/admin/postings/field-officers/unit/${encodeURIComponent(String(unitId))}`;
+      resolvedLabelKey = 'officerName';
     } else if (ds.apiEndpoint) {
       const path = ds.apiEndpoint.startsWith('/') ? ds.apiEndpoint.slice(1) : ds.apiEndpoint;
       const sep = path.includes('?') ? '&' : '?';
@@ -106,7 +116,16 @@ export class FormDataSourceService {
     return this.http.get<{ data?: unknown[] } | unknown[]>(url, { headers: this.getHeaders() }).pipe(
       map((res) => {
         const list = Array.isArray(res) ? res : (res && typeof res === 'object' && 'data' in res ? (res as { data?: unknown[] }).data : []);
-        return toOptions(Array.isArray(list) ? list : [], valueKey, labelKey);
+        if (ds.type === 'FIELD_OFFICER') {
+          return (Array.isArray(list) ? list : []).map((item: unknown) => {
+            const r = item as Record<string, unknown>;
+            return {
+              value: (r['id'] ?? r[valueKey]) as string | number,
+              label: `${String(r['officerName'] ?? '')} (${String(r['roleName'] ?? 'Field Officer')})`,
+            };
+          });
+        }
+        return toOptions(Array.isArray(list) ? list : [], resolvedValueKey, resolvedLabelKey);
       }),
       catchError((err) => {
         console.error('FormDataSourceService.getOptionsForField failed', field.fieldName, err);

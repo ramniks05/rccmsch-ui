@@ -18,13 +18,14 @@ export class HearingFormComponent implements OnInit {
   /** Optional module type when opening without formId (e.g. ATTENDANCE, FIELD_REPORT). */
   @Input() moduleType?: string;
   @Output() formSubmitted = new EventEmitter<void>(); // Emit when form is successfully submitted
-  
+
   // Form data
   formSchema: ModuleFormField[] = [];
   formData: Record<string, unknown> = {};
   remarks: string = '';
   submittedData: any = null;
   validationErrors: ValidationErrors = {};
+  caseUnitId: number | null = null;
 
   // UI state
   loading = false;
@@ -79,7 +80,7 @@ export class HearingFormComponent implements OnInit {
     load$.subscribe({
       next: (response) => {
         this.loading = false;
-        
+
         if (response.success && response.data) {
           // Set schema fields
           if (response.data.schema?.fields) {
@@ -97,8 +98,25 @@ export class HearingFormComponent implements OnInit {
           } else {
             this.initializeFormData(); // Initialize with defaults
           }
-          this.loadDataSourceOptions();
-          this.loadAttendanceHeaderContextIfNeeded();
+
+          // Fetch case details to get unitId for FIELD_OFFICER dataSource
+          this.officerCaseService.getCaseById(this.caseId).subscribe({
+            next: (caseResponse) => {
+              if (caseResponse.success && caseResponse.data) {
+                this.caseUnitId = (caseResponse.data as any).unitId ?? null;
+                // Make unitId available to FormDataSourceService via formData
+                this.formData['__caseUnitId'] = this.caseUnitId;
+              }
+              this.loadDataSourceOptions();
+              this.loadAttendanceHeaderContextIfNeeded();
+            },
+            error: (error) => {
+              console.error('Error fetching case details:', error);
+              // Proceed without case details - field officers may not load
+              this.loadDataSourceOptions();
+              this.loadAttendanceHeaderContextIfNeeded();
+            }
+          });
         }
       },
       error: (error: any) => {
@@ -248,6 +266,16 @@ export class HearingFormComponent implements OnInit {
         return value ? 'Yes' : 'No';
       case 'SELECT':
       case 'RADIO': {
+        // Handle multi-select array for officerName field
+        if (this.shouldBeMultiSelect(field) && Array.isArray(value)) {
+          const options = this.getOptions(field);
+          const labels = (value as (string | number)[]).map(v => {
+            const option = options.find((o) => o.value === v || String(o.value) === String(v));
+            return option ? option.label : v;
+          });
+          return labels.join(', ');
+        }
+        // Handle single-select
         const options = this.getOptions(field);
         const option = options.find((o) => o.value === value || String(o.value) === String(value));
         return option ? option.label : value;
@@ -371,6 +399,17 @@ export class HearingFormComponent implements OnInit {
     return ['SELECT', 'MULTISELECT', 'RADIO'].includes(fieldType);
   }
 
+  /**
+   * Check if a SELECT field should be rendered as multi-select.
+   * Currently only officerName with FIELD_OFFICER dataSource is multi-select.
+   */
+  shouldBeMultiSelect(field: ModuleFormField): boolean {
+    if (field.fieldType !== 'SELECT') return false;
+    if (field.fieldName !== 'officerName') return false;
+    const ds = parseDataSource(field.dataSource);
+    return ds?.type === 'FIELD_OFFICER';
+  }
+
   private stripInternalKeys(value: unknown): any {
     if (Array.isArray(value)) {
       return value.map((item) => this.stripInternalKeys(item));
@@ -384,5 +423,15 @@ export class HearingFormComponent implements OnInit {
       return out;
     }
     return value;
+  }
+
+  /**
+   * Open the native browser date/datetime picker
+   */
+  openDatePicker(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    if (target && typeof (target as any).showPicker === 'function') {
+      (target as any).showPicker();
+    }
   }
 }

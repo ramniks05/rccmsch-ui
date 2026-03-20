@@ -1,53 +1,359 @@
 .hearing-form-container {
-  .card {
+  padding: 16px;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  .form-card {
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    overflow: hidden;
   }
 
-  .form-control-plaintext {
-    padding: 0.375rem 0;
-    font-size: 1rem;
+  .dialog-header {
+    display: flex;
+    align-items: center;
+    padding: 16px !important;
+
+    .toolbar-title {
+      margin-left: 8px;
+      font-weight: 500;
+      font-size: 1.1rem;
+    }
   }
 
-  .badge {
-    font-size: 0.85em;
+  // Attendance info badge
+  .attendance-info {
+    padding: 12px 16px;
+    background-color: #f5f5f5;
+    border-bottom: 1px solid #eee;
+
+    .attendance-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background-color: #e3f2fd;
+      color: #1976d2;
+      border-radius: 4px;
+      font-weight: 500;
+
+      mat-icon {
+        font-size: 1.2rem;
+        width: 1.2rem;
+        height: 1.2rem;
+      }
+    }
+  }
+
+  // Loading state
+  .loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 16px;
+    color: #666;
+    font-size: 0.95rem;
+  }
+
+  // Success card
+  .success-card {
+    background-color: #f1f8e9;
+    border-left: 4px solid #4caf50;
+
+    mat-card-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px;
+    }
+
+    .success-icon {
+      color: #4caf50;
+      font-size: 1.5rem;
+      width: 1.5rem;
+      height: 1.5rem;
+    }
+  }
+
+  // Form fields container with grid layout
+  .form-fields-container {
+    padding: 24px;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+
+    @media (max-width: 900px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .field-container {
+    display: flex;
+    flex-direction: column;
+
+    mat-form-field {
+      &.w-100 {
+        width: 100%;
+      }
+    }
+
+    &.checkbox-container {
+      padding-top: 8px;
+      padding-bottom: 8px;
+
+      mat-checkbox {
+        margin-top: 8px;
+      }
+    }
+  }
+
+  .field-full-width {
+    grid-column: 1 / -1;
+
+    h4 {
+      margin: 0 0 12px 0;
+      color: #333;
+      font-weight: 500;
+      font-size: 1rem;
+    }
+  }
+
+  // Rich text label
+  .rich-text-label {
+    display: block;
+    margin-bottom: 8px;
+    color: #666;
+    font-weight: 500;
+    font-size: 0.875rem;
+
+    .required-asterisk {
+      color: #d32f2f;
+      margin-left: 2px;
+    }
   }
 
   // Rich text view mode styling
   .rich-text-view {
-    padding: 10px;
+    padding: 12px;
     border: 1px solid #ddd;
     border-radius: 4px;
     background-color: #f9f9f9;
     min-height: 100px;
-    
-    // Quill content styles
+    line-height: 1.6;
+
     h1, h2, h3, h4, h5, h6 {
       margin-top: 0.5em;
       margin-bottom: 0.5em;
     }
-    
+
     ul, ol {
       padding-left: 1.5em;
     }
-    
+
     blockquote {
       border-left: 4px solid #ccc;
       margin-left: 0;
       padding-left: 1em;
       color: #666;
+      font-style: italic;
     }
-    
+
     pre {
       background-color: #f4f4f4;
       padding: 10px;
       border-radius: 4px;
       overflow-x: auto;
+      font-size: 0.9rem;
     }
-    
+
     a {
       color: #0066cc;
       text-decoration: underline;
+
+      &:hover {
+        color: #0052a3;
+      }
     }
   }
+
+  // Remarks section
+  .remarks-section {
+    grid-column: 1 / -1;
+
+    mat-divider {
+      margin: 0 0 16px 0;
+    }
+
+    h3 {
+      margin: 0;
+      color: #333;
+      font-weight: 500;
+      font-size: 1rem;
+    }
+
+    mat-form-field {
+      margin-top: 12px;
+    }
+
+    .view-mode-remarks {
+      padding: 12px;
+      background-color: #f5f5f5;
+      border-radius: 4px;
+
+      strong {
+        display: block;
+        margin-bottom: 8px;
+        color: #333;
+      }
+
+      p {
+        margin: 0;
+        color: #666;
+        line-height: 1.5;
+      }
+    }
+  }
+
+  // Material form field styling
+  mat-form-field {
+    width: 100%;
+
+    &.w-100 {
+      width: 100%;
+    }
+  }
+
+  // Radio group styling
+  mat-radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .radio-group-label {
+    display: block;
+    margin-bottom: 8px;
+    color: #666;
+    font-weight: 500;
+    font-size: 0.875rem;
+
+    .required-asterisk {
+      color: #d32f2f;
+      margin-left: 2px;
+    }
+  }
+
+  // Required asterisk
+  .required-asterisk {
+    color: #d32f2f;
+    margin-left: 2px;
+  }
+
+  // Action buttons
+  .button-actions {
+    padding: 16px 24px;
+    background-color: #f5f5f5;
+    border-top: 1px solid #eee;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+
+    .action-buttons-group {
+      display: flex;
+      gap: 8px;
+
+      button {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 16px;
+
+        mat-icon {
+          font-size: 1.1rem;
+          width: 1.1rem;
+          height: 1.1rem;
+        }
+
+        mat-spinner {
+          display: inline-block;
+        }
+
+        &:disabled {
+          opacity: 0.6;
+        }
+      }
+    }
+  }
+
+  // Utility classes
+  .mt-3 {
+    margin-top: 12px;
+  }
+
+  .mt-4 {
+    margin-top: 16px;
+  }
+
+  .mb-2 {
+    margin-bottom: 8px;
+  }
+
+  .mb-3 {
+    margin-bottom: 12px;
+  }
+
+  .me-2 {
+    margin-right: 8px;
+  }
+
+  .float-end {
+    float: right;
+  }
+
+  // Material select styling
+  mat-select {
+    .mat-select-trigger {
+      display: flex;
+      align-items: center;
+    }
+  }
+
+  // Native date/datetime input styling to match Material
+  .mat-input-element {
+    font-family: Roboto, 'Helvetica Neue', sans-serif;
+    font-size: 1rem;
+    padding: 0.5rem 0;
+    background-color: transparent;
+    border: none;
+    outline: none;
+    color: rgba(0, 0, 0, 0.87);
+    width: 100%;
+
+    &::-webkit-calendar-picker-indicator {
+      cursor: pointer;
+    }
+
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+      display: none;
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+  }
+
+  // Scrollable content for large forms
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
 }
+

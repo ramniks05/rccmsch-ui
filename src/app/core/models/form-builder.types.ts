@@ -32,6 +32,7 @@ export interface DataSourceConfig {
   level?: string;       // STATE | DISTRICT | SUB_DIVISION | CIRCLE
   apiEndpoint?: string; // Custom GET endpoint, e.g. /api/public/form-data-sources/custom
   parentField?: string; // Form field name; when it changes, refetch (e.g. parentId, caseNatureId)
+  unitField?: string;   // Form field name that contains unitId (for FIELD_OFFICER type)
   valueKey?: string;    // Response key for value (default "id")
   labelKey?: string;    // Response key for label (default "name")
   includeTypes?: string[]; // For PARTIES type: filter by party types (e.g. ["PETITIONER", "RESPONDENT"])

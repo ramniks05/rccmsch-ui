@@ -1,192 +1,56 @@
 <div class="hearing-form-container">
-  <div class="card">
-    <div class="card-header bg-info text-white">
-      <h5 class="mb-0">
-        <i class="bi bi-calendar-event"></i> {{ getModuleDisplayName() }} Form
-      </h5>
-      <div *ngIf="currentModuleType === 'ATTENDANCE' && latestHearingDateLabel" class="small mt-1">
-        Latest Hearing Date: {{ latestHearingDateLabel }}
-      </div>
-    </div>
-    <div class="card-body">
-      <!-- Loading State -->
-      <div *ngIf="loading" class="text-center py-4">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">Loading...</span>
-        </div>
-        <p class="mt-2">Loading {{ getModuleDisplayName() }} form...</p>
-      </div>
+  <mat-card class="form-card">
+    <!-- Header -->
+    <mat-toolbar color="primary" class="dialog-header">
+      <button mat-icon-button disabled>
+        <mat-icon>calendar_today</mat-icon>
+      </button>
+      <span class="toolbar-title">{{ getModuleDisplayName() }} Form</span>
+    </mat-toolbar>
 
-      <!-- No Schema -->
-      <div *ngIf="!loading && formSchema.length === 0" class="alert alert-warning">
-        <i class="bi bi-exclamation-triangle"></i> No {{ getModuleDisplayName() }} form configured for this case type.
+    <!-- Latest Hearing Date Badge -->
+    <mat-card-content *ngIf="currentModuleType === 'ATTENDANCE' && latestHearingDateLabel" class="attendance-info">
+      <div class="attendance-badge">
+        <mat-icon>schedule</mat-icon>
+        <span>Latest Hearing Date: {{ latestHearingDateLabel }}</span>
       </div>
+    </mat-card-content>
 
-      <!-- Form -->
-      <div *ngIf="!loading && formSchema.length > 0">
-        <!-- View Mode Header -->
-        <div *ngIf="viewMode && submittedData" class="alert alert-success d-flex justify-content-between align-items-center">
-          <div>
-            <i class="bi bi-check-circle"></i> 
-            <strong>Hearing form submitted</strong>
+    <!-- Loading State -->
+    <mat-card-content *ngIf="loading" class="loading-container">
+      <mat-spinner diameter="50"></mat-spinner>
+      <p class="mt-3">Loading {{ getModuleDisplayName() }} form...</p>
+    </mat-card-content>
+
+    <!-- No Schema Alert -->
+    <mat-card-content *ngIf="!loading && formSchema.length === 0">
+      No {{ getModuleDisplayName() }} form configured for this case type.
+    </mat-card-content>
+
+    <!-- Form Content -->
+    <ng-container *ngIf="!loading && formSchema.length > 0">
+      <!-- View Mode Success Message -->
+      <mat-card-content *ngIf="viewMode && submittedData" class="mb-3">
+        <mat-card class="success-card">
+          <mat-card-content>
+            <mat-icon class="success-icon">check_circle</mat-icon>
+            <strong>{{ getModuleDisplayName() }} form submitted</strong>
             <span *ngIf="submittedData.submittedAt"> on {{ submittedData.submittedAt | date:'medium' }}</span>
-          </div>
-          <button class="btn btn-sm btn-primary" (click)="enableEdit()">
-            <i class="bi bi-pencil"></i> Edit
-          </button>
-        </div>
+            <button mat-icon-button (click)="enableEdit()" matTooltip="Edit form" class="float-end">
+              <mat-icon>edit</mat-icon>
+            </button>
+          </mat-card-content>
+        </mat-card>
+      </mat-card-content>
 
-        <!-- Form Fields (only visible fields; conditional logic applied) -->
-        <div class="row g-3">
-          <div *ngFor="let field of visibleFields" [class.col-md-6]="field.fieldType !== 'REPEATABLE_SECTION' && field.fieldType !== 'DYNAMIC_FILES'" [class.col-12]="field.fieldType === 'REPEATABLE_SECTION' || field.fieldType === 'DYNAMIC_FILES'">
-            <div class="mb-3">
-              <label *ngIf="field.fieldType !== 'REPEATABLE_SECTION' && field.fieldType !== 'DYNAMIC_FILES'" [for]="field.fieldName" class="form-label">
-                {{ field.fieldLabel }}
-                <span *ngIf="isFieldRequired(field)" class="text-danger">*</span>
-              </label>
-
-              <!-- Read-only view (non-repeatable, non-dynamic) -->
-              <div *ngIf="viewMode && field.fieldType !== 'REPEATABLE_SECTION' && field.fieldType !== 'DYNAMIC_FILES'" class="form-control-plaintext">
-                <strong>{{ getFieldValue(field) || '-' }}</strong>
-              </div>
-
-              <!-- Text Input -->
-              <input 
-                *ngIf="!viewMode && field.fieldType === 'TEXT'"
-                [id]="field.fieldName"
-                type="text"
-                class="form-control"
-                [(ngModel)]="formData[field.fieldName]"
-                [placeholder]="field.placeholder || ''"
-                [required]="field.isRequired">
-
-              <!-- Text Area -->
-              <textarea 
-                *ngIf="!viewMode && field.fieldType === 'TEXTAREA'"
-                [id]="field.fieldName"
-                class="form-control"
-                rows="3"
-                [(ngModel)]="formData[field.fieldName]"
-                [placeholder]="field.placeholder || ''"
-                [required]="field.isRequired"></textarea>
-
-              <!-- Rich Text Editor -->
-              <app-rich-text-editor
-                *ngIf="!viewMode && field.fieldType === 'RICH_TEXT'"
-                [content]="getRichTextContent(field.fieldName)"
-                (contentChange)="formData[field.fieldName] = $event"
-                [placeholder]="field.placeholder || 'Enter content...'"
-                [height]="'400px'"
-              ></app-rich-text-editor>
-              
-              <!-- Rich Text View Mode -->
-              <div *ngIf="viewMode && field.fieldType === 'RICH_TEXT'" class="rich-text-view" [innerHTML]="formData[field.fieldName]"></div>
-
-              <!-- Number Input -->
-              <input 
-                *ngIf="!viewMode && field.fieldType === 'NUMBER'"
-                [id]="field.fieldName"
-                type="number"
-                class="form-control"
-                [(ngModel)]="formData[field.fieldName]"
-                [placeholder]="field.placeholder || ''"
-                [required]="field.isRequired">
-
-              <!-- Date Input -->
-              <input 
-                *ngIf="!viewMode && field.fieldType === 'DATE'"
-                [id]="field.fieldName"
-                type="date"
-                class="form-control"
-                [(ngModel)]="formData[field.fieldName]"
-                [required]="field.isRequired">
-
-              <!-- DateTime Input -->
-              <input 
-                *ngIf="!viewMode && field.fieldType === 'DATETIME'"
-                [id]="field.fieldName"
-                type="datetime-local"
-                class="form-control"
-                [(ngModel)]="formData[field.fieldName]"
-                [required]="field.isRequired">
-
-              <!-- Select Dropdown (supports dataSource API) -->
-              <div *ngIf="!viewMode && field.fieldType === 'SELECT'" class="position-relative">
-                <select 
-                  [id]="field.fieldName"
-                  class="form-select"
-                  [ngModel]="formData[field.fieldName]"
-                  (ngModelChange)="onFieldChange(field.fieldName, $event)"
-                  [required]="field.isRequired"
-                  [disabled]="isOptionsLoading(field)">
-                  <option value="">-- Select --</option>
-                  <option *ngFor="let option of getOptions(field)" [value]="option.value">
-                    {{ option.label }}
-                  </option>
-                </select>
-                <span *ngIf="isOptionsLoading(field)" class="position-absolute end-0 top-50 translate-middle-y me-2 spinner-border spinner-border-sm text-primary" role="status"></span>
-              </div>
-
-              <!-- Multi-Select (supports dataSource API) -->
-              <div *ngIf="!viewMode && field.fieldType === 'MULTISELECT'" class="position-relative">
-                <select 
-                  [id]="field.fieldName"
-                  class="form-select"
-                  multiple
-                  [ngModel]="formData[field.fieldName]"
-                  (ngModelChange)="onFieldChange(field.fieldName, $event)"
-                  [required]="field.isRequired"
-                  [disabled]="isOptionsLoading(field)">
-                  <option *ngFor="let option of getOptions(field)" [value]="option.value">
-                    {{ option.label }}
-                  </option>
-                </select>
-                <span *ngIf="isOptionsLoading(field)" class="position-absolute end-0 top-50 translate-middle-y me-2 spinner-border spinner-border-sm text-primary" role="status"></span>
-              </div>
-
-              <!-- Checkbox -->
-              <div *ngIf="!viewMode && field.fieldType === 'CHECKBOX'" class="form-check">
-                <input 
-                  [id]="field.fieldName"
-                  type="checkbox"
-                  class="form-check-input"
-                  [(ngModel)]="formData[field.fieldName]">
-                <label [for]="field.fieldName" class="form-check-label">
-                  {{ field.helpText || 'Yes' }}
-                </label>
-              </div>
-
-              <!-- Radio Buttons (supports dataSource API) -->
-              <div *ngIf="!viewMode && field.fieldType === 'RADIO'">
-                <span *ngIf="isOptionsLoading(field)" class="spinner-border spinner-border-sm text-primary me-2" role="status"></span>
-                <div *ngFor="let option of getOptions(field)" class="form-check">
-                  <input 
-                    [id]="field.fieldName + '_' + option.value"
-                    type="radio"
-                    class="form-check-input"
-                    [name]="field.fieldName"
-                    [value]="option.value"
-                    [ngModel]="formData[field.fieldName]"
-                    (ngModelChange)="onFieldChange(field.fieldName, $event)"
-                    [required]="field.isRequired"
-                    [disabled]="isOptionsLoading(field)">
-                  <label [for]="field.fieldName + '_' + option.value" class="form-check-label">
-                    {{ option.label }}
-                  </label>
-                </div>
-              </div>
-
-              <!-- File Upload -->
-              <input 
-                *ngIf="!viewMode && field.fieldType === 'FILE'"
-                [id]="field.fieldName"
-                type="file"
-                class="form-control"
-                [required]="field.isRequired">
-
-              <!-- Repeatable Section (e.g. attendance, party list) -->
+      <!-- Form Fields -->
+      <mat-card-content class="form-fields-container">
+        <div class="form-grid">
+          <ng-container *ngFor="let field of visibleFields">
+            <!-- Repeatable Section (Full Width) -->
+            <div *ngIf="field.fieldType === 'REPEATABLE_SECTION'" class="field-full-width">
+              <h4>{{ field.fieldLabel }}</h4>
               <app-repeatable-section
-                *ngIf="field.fieldType === 'REPEATABLE_SECTION'"
                 [field]="field"
                 [value]="getRepeatableValue(field.fieldName)"
                 [formData]="formData"
@@ -195,10 +59,12 @@
                 [caseId]="caseId"
                 (valueChange)="onRepeatableChange(field.fieldName, $event)">
               </app-repeatable-section>
+            </div>
 
-              <!-- Dynamic Files (multiple file uploads) -->
+            <!-- Dynamic Files (Full Width) -->
+            <div *ngIf="field.fieldType === 'DYNAMIC_FILES'" class="field-full-width">
+              <h4>{{ field.fieldLabel }}</h4>
               <app-dynamic-files-field
-                *ngIf="field.fieldType === 'DYNAMIC_FILES'"
                 [field]="field"
                 [value]="getDynamicFilesValue(field.fieldName)"
                 [caseId]="caseId"
@@ -206,53 +72,316 @@
                 [errors]="validationErrors"
                 (valueChange)="onDynamicFilesChange(field.fieldName, $event)">
               </app-dynamic-files-field>
-
-              <!-- Help Text -->
-              <small *ngIf="!viewMode && field.helpText" class="form-text text-muted">
-                {{ field.helpText }}
-              </small>
             </div>
-          </div>
+
+            <!-- View Mode Display -->
+            <div *ngIf="viewMode && field.fieldType !== 'REPEATABLE_SECTION' && field.fieldType !== 'DYNAMIC_FILES'" class="field-container">
+              <mat-form-field class="w-100" [appearance]="'fill'">
+                <mat-label>{{ field.fieldLabel }}</mat-label>
+                <input matInput disabled [value]="getFieldValue(field) || '-'">
+              </mat-form-field>
+            </div>
+
+            <!-- Edit Mode Fields -->
+            <ng-container *ngIf="!viewMode && field.fieldType !== 'REPEATABLE_SECTION' && field.fieldType !== 'DYNAMIC_FILES'">
+              <!-- Text Input -->
+              <div *ngIf="field.fieldType === 'TEXT'" class="field-container">
+                <mat-form-field class="w-100">
+                  <mat-label>
+                    {{ field.fieldLabel }}
+                    <span *ngIf="isFieldRequired(field)" class="required-asterisk">*</span>
+                  </mat-label>
+                  <input
+                    matInput
+                    [id]="field.fieldName"
+                    [(ngModel)]="formData[field.fieldName]"
+                    [placeholder]="field.placeholder || ''"
+                    [required]="field.isRequired">
+                  <mat-hint *ngIf="field.helpText">{{ field.helpText }}</mat-hint>
+                  <mat-error *ngIf="validationErrors[field.fieldName]">
+                    {{ validationErrors[field.fieldName] }}
+                  </mat-error>
+                </mat-form-field>
+              </div>
+
+              <!-- Textarea -->
+              <div *ngIf="field.fieldType === 'TEXTAREA'" class="field-container">
+                <mat-form-field class="w-100">
+                  <mat-label>
+                    {{ field.fieldLabel }}
+                    <span *ngIf="isFieldRequired(field)" class="required-asterisk">*</span>
+                  </mat-label>
+                  <textarea
+                    matInput
+                    [id]="field.fieldName"
+                    [(ngModel)]="formData[field.fieldName]"
+                    [placeholder]="field.placeholder || ''"
+                    [required]="field.isRequired"
+                    rows="3"></textarea>
+                  <mat-hint *ngIf="field.helpText">{{ field.helpText }}</mat-hint>
+                  <mat-error *ngIf="validationErrors[field.fieldName]">
+                    {{ validationErrors[field.fieldName] }}
+                  </mat-error>
+                </mat-form-field>
+              </div>
+
+              <!-- Rich Text Editor -->
+              <div *ngIf="field.fieldType === 'RICH_TEXT'" class="field-container">
+                <label class="rich-text-label">
+                  {{ field.fieldLabel }}
+                  <span *ngIf="isFieldRequired(field)" class="required-asterisk">*</span>
+                </label>
+                <app-rich-text-editor
+                  [content]="getRichTextContent(field.fieldName)"
+                  (contentChange)="formData[field.fieldName] = $event"
+                  [placeholder]="field.placeholder || 'Enter content...'"
+                  [height]="'400px'">
+                </app-rich-text-editor>
+                <mat-hint *ngIf="field.helpText">{{ field.helpText }}</mat-hint>
+              </div>
+
+              <!-- Number Input -->
+              <div *ngIf="field.fieldType === 'NUMBER'" class="field-container">
+                <mat-form-field class="w-100">
+                  <mat-label>
+                    {{ field.fieldLabel }}
+                    <span *ngIf="isFieldRequired(field)" class="required-asterisk">*</span>
+                  </mat-label>
+                  <input
+                    matInput
+                    [id]="field.fieldName"
+                    type="number"
+                    [(ngModel)]="formData[field.fieldName]"
+                    [placeholder]="field.placeholder || ''"
+                    [required]="field.isRequired">
+                  <mat-hint *ngIf="field.helpText">{{ field.helpText }}</mat-hint>
+                  <mat-error *ngIf="validationErrors[field.fieldName]">
+                    {{ validationErrors[field.fieldName] }}
+                  </mat-error>
+                </mat-form-field>
+              </div>
+
+              <!-- Date Input -->
+              <div *ngIf="field.fieldType === 'DATE'" class="field-container">
+                <mat-form-field class="w-100">
+                  <mat-label>
+                    {{ field.fieldLabel }}
+                    <span *ngIf="isFieldRequired(field)" class="required-asterisk">*</span>
+                  </mat-label>
+                  <input
+                    matInput
+                    [id]="field.fieldName"
+                    type="date"
+                    [(ngModel)]="formData[field.fieldName]"
+                    [required]="field.isRequired"
+                    (click)="openDatePicker($event)">
+                  <mat-hint *ngIf="field.helpText">{{ field.helpText }}</mat-hint>
+                  <mat-error *ngIf="validationErrors[field.fieldName]">
+                    {{ validationErrors[field.fieldName] }}
+                  </mat-error>
+                </mat-form-field>
+              </div>
+
+              <!-- DateTime Input -->
+              <div *ngIf="field.fieldType === 'DATETIME'" class="field-container">
+                <mat-form-field class="w-100">
+                  <mat-label>
+                    {{ field.fieldLabel }}
+                    <span *ngIf="isFieldRequired(field)" class="required-asterisk">*</span>
+                  </mat-label>
+                  <input
+                    matInput
+                    [id]="field.fieldName"
+                    type="datetime-local"
+                    [(ngModel)]="formData[field.fieldName]"
+                    [required]="field.isRequired"
+                    (click)="openDatePicker($event)">
+                  <mat-hint *ngIf="field.helpText">{{ field.helpText }}</mat-hint>
+                  <mat-error *ngIf="validationErrors[field.fieldName]">
+                    {{ validationErrors[field.fieldName] }}
+                  </mat-error>
+                </mat-form-field>
+              </div>
+
+              <!-- Select (Single) -->
+              <div *ngIf="field.fieldType === 'SELECT' && !shouldBeMultiSelect(field)" class="field-container">
+                <mat-form-field class="w-100">
+                  <mat-label>
+                    {{ field.fieldLabel }}
+                    <span *ngIf="isFieldRequired(field)" class="required-asterisk">*</span>
+                  </mat-label>
+                  <mat-select
+                    [id]="field.fieldName"
+                    [ngModel]="formData[field.fieldName]"
+                    (ngModelChange)="onFieldChange(field.fieldName, $event)"
+                    [required]="field.isRequired"
+                    [disabled]="isOptionsLoading(field)">
+                    <mat-option></mat-option>
+                    <mat-option *ngFor="let option of getOptions(field)" [value]="option.value">
+                      {{ option.label }}
+                    </mat-option>
+                  </mat-select>
+                  <mat-hint *ngIf="isOptionsLoading(field)">Loading options...</mat-hint>
+                  <mat-hint *ngIf="field.helpText && !isOptionsLoading(field)">{{ field.helpText }}</mat-hint>
+                  <mat-error *ngIf="validationErrors[field.fieldName]">
+                    {{ validationErrors[field.fieldName] }}
+                  </mat-error>
+                </mat-form-field>
+              </div>
+
+              <!-- Select (Multi) with Material -->
+              <div *ngIf="field.fieldType === 'SELECT' && shouldBeMultiSelect(field)" class="field-container">
+                <mat-form-field class="w-100">
+                  <mat-label>
+                    {{ field.fieldLabel }}
+                    <span *ngIf="isFieldRequired(field)" class="required-asterisk">*</span>
+                  </mat-label>
+                  <mat-select
+                    [id]="field.fieldName"
+                    [ngModel]="formData[field.fieldName]"
+                    (ngModelChange)="onFieldChange(field.fieldName, $event)"
+                    [required]="field.isRequired"
+                    [disabled]="isOptionsLoading(field)"
+                    multiple>
+                    <mat-option *ngFor="let option of getOptions(field)" [value]="option.value">
+                      {{ option.label }}
+                    </mat-option>
+                  </mat-select>
+                  <mat-hint *ngIf="isOptionsLoading(field)">Loading officers...</mat-hint>
+                  <mat-hint *ngIf="field.helpText && !isOptionsLoading(field)">{{ field.helpText }}</mat-hint>
+                  <mat-error *ngIf="validationErrors[field.fieldName]">
+                    {{ validationErrors[field.fieldName] }}
+                  </mat-error>
+                </mat-form-field>
+              </div>
+
+              <!-- Multiselect -->
+              <div *ngIf="field.fieldType === 'MULTISELECT'" class="field-container">
+                <mat-form-field class="w-100">
+                  <mat-label>
+                    {{ field.fieldLabel }}
+                    <span *ngIf="isFieldRequired(field)" class="required-asterisk">*</span>
+                  </mat-label>
+                  <mat-select
+                    [id]="field.fieldName"
+                    [ngModel]="formData[field.fieldName]"
+                    (ngModelChange)="onFieldChange(field.fieldName, $event)"
+                    [required]="field.isRequired"
+                    [disabled]="isOptionsLoading(field)"
+                    multiple>
+                    <mat-option *ngFor="let option of getOptions(field)" [value]="option.value">
+                      {{ option.label }}
+                    </mat-option>
+                  </mat-select>
+                  <mat-hint *ngIf="isOptionsLoading(field)">Loading options...</mat-hint>
+                  <mat-hint *ngIf="field.helpText && !isOptionsLoading(field)">{{ field.helpText }}</mat-hint>
+                  <mat-error *ngIf="validationErrors[field.fieldName]">
+                    {{ validationErrors[field.fieldName] }}
+                  </mat-error>
+                </mat-form-field>
+              </div>
+
+              <!-- Checkbox -->
+              <div *ngIf="field.fieldType === 'CHECKBOX'" class="field-container checkbox-container">
+                <mat-checkbox
+                  [id]="field.fieldName"
+                  [(ngModel)]="formData[field.fieldName]"
+                  [required]="field.isRequired">
+                  {{ field.helpText || field.fieldLabel }}
+                </mat-checkbox>
+                <mat-error *ngIf="validationErrors[field.fieldName]">
+                  {{ validationErrors[field.fieldName] }}
+                </mat-error>
+              </div>
+
+              <!-- Radio Buttons -->
+              <div *ngIf="field.fieldType === 'RADIO'" class="field-container">
+                <label class="radio-group-label">
+                  {{ field.fieldLabel }}
+                  <span *ngIf="isFieldRequired(field)" class="required-asterisk">*</span>
+                </label>
+                <mat-radio-group
+                  [ngModel]="formData[field.fieldName]"
+                  (ngModelChange)="onFieldChange(field.fieldName, $event)"
+                  [required]="field.isRequired"
+                  [disabled]="isOptionsLoading(field)">
+                  <mat-radio-button *ngFor="let option of getOptions(field)" [value]="option.value">
+                    {{ option.label }}
+                  </mat-radio-button>
+                </mat-radio-group>
+                <mat-hint *ngIf="isOptionsLoading(field)">Loading options...</mat-hint>
+                <mat-hint *ngIf="field.helpText && !isOptionsLoading(field)">{{ field.helpText }}</mat-hint>
+                <mat-error *ngIf="validationErrors[field.fieldName]">
+                  {{ validationErrors[field.fieldName] }}
+                </mat-error>
+              </div>
+
+              <!-- File Upload -->
+              <div *ngIf="field.fieldType === 'FILE'" class="field-container">
+                <mat-form-field class="w-100">
+                  <mat-label>
+                    {{ field.fieldLabel }}
+                    <span *ngIf="isFieldRequired(field)" class="required-asterisk">*</span>
+                  </mat-label>
+                  <input
+                    matInput
+                    [id]="field.fieldName"
+                    type="file"
+                    [required]="field.isRequired">
+                  <mat-hint *ngIf="field.helpText">{{ field.helpText }}</mat-hint>
+                  <mat-error *ngIf="validationErrors[field.fieldName]">
+                    {{ validationErrors[field.fieldName] }}
+                  </mat-error>
+                </mat-form-field>
+              </div>
+            </ng-container>
+          </ng-container>
         </div>
 
-        <!-- Remarks -->
-        <div class="mb-3 mt-3">
-          <label for="remarks" class="form-label">Remarks</label>
-          <textarea 
-            *ngIf="!viewMode"
-            id="remarks"
-            class="form-control"
-            rows="3"
-            [(ngModel)]="remarks"
-            placeholder="Enter any additional remarks"></textarea>
-          <div *ngIf="viewMode" class="form-control-plaintext">
-            {{ remarks || '-' }}
+        <!-- Remarks Section -->
+        <div class="remarks-section mt-4">
+          <mat-divider></mat-divider>
+          <h3 class="mt-3 mb-2">Additional Information</h3>
+          <mat-form-field class="w-100" *ngIf="!viewMode">
+            <mat-label>Remarks</mat-label>
+            <textarea
+              matInput
+              id="remarks"
+              [(ngModel)]="remarks"
+              placeholder="Enter any additional remarks"
+              rows="3"></textarea>
+            <mat-hint>Optional: Add any comments or notes</mat-hint>
+          </mat-form-field>
+          <div *ngIf="viewMode" class="view-mode-remarks">
+            <strong>Remarks:</strong>
+            <p>{{ remarks || 'No remarks provided' }}</p>
           </div>
         </div>
+      </mat-card-content>
 
-        <!-- Action Buttons -->
-        <div class="d-flex gap-2">
-          <button 
-            *ngIf="!viewMode"
-            class="btn btn-primary" 
-            (click)="submitForm()" 
-            [disabled]="submitting">
-            <span *ngIf="!submitting">
-              <i class="bi bi-save"></i> Submit
-            </span>
-            <span *ngIf="submitting">
-              <span class="spinner-border spinner-border-sm me-2"></span> Submitting...
-            </span>
-          </button>
-          <button 
+      <!-- Action Buttons -->
+      <mat-card-actions class="button-actions">
+        <div class="action-buttons-group">
+          <button
             *ngIf="!viewMode && submittedData"
-            class="btn btn-secondary" 
+            mat-button
             (click)="cancelEdit()"
             [disabled]="submitting">
-            <i class="bi bi-x-circle"></i> Cancel
+            <mat-icon>clear</mat-icon>
+            Cancel
+          </button>
+          <button
+            *ngIf="!viewMode"
+            mat-raised-button
+            color="primary"
+            (click)="submitForm()"
+            [disabled]="submitting">
+            <mat-icon *ngIf="!submitting">save</mat-icon>
+            <mat-spinner *ngIf="submitting" diameter="18" class="me-2"></mat-spinner>
+            {{ submitting ? 'Submitting...' : 'Submit' }}
           </button>
         </div>
-      </div>
-    </div>
-  </div>
+      </mat-card-actions>
+    </ng-container>
+  </mat-card>
 </div>
