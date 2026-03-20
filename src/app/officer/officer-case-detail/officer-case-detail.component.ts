@@ -43,7 +43,8 @@ export class OfficerCaseDetailComponent implements OnInit {
     notice: false,
     ordersheet: false,
     judgement: false,
-    fieldReport: false
+    requestFieldReport: false,
+    submitFieldReport: false
   };
 
   // Track if field report has been submitted
@@ -273,7 +274,8 @@ export class OfficerCaseDetailComponent implements OnInit {
       notice: false,
       ordersheet: false,
       judgement: false,
-      fieldReport: false
+      requestFieldReport: false,
+      submitFieldReport: false
     };
 
     // Check each transition
@@ -290,8 +292,10 @@ export class OfficerCaseDetailComponent implements OnInit {
           this.requiredModules.ordersheet = true;
         } else if (moduleType === 'JUDGEMENT') {
           this.requiredModules.judgement = true;
-        } else if (moduleType === 'FIELD_REPORT') {
-          this.requiredModules.fieldReport = true;
+        } else if (moduleType === 'REQUEST_FIELD_REPORT') {
+          this.requiredModules.requestFieldReport = true;
+        } else if (moduleType === 'SUBMIT_FIELD_REPORT') {
+          this.requiredModules.submitFieldReport = true;
         }
       }
 
@@ -309,8 +313,10 @@ export class OfficerCaseDetailComponent implements OnInit {
               this.requiredModules.ordersheet = true;
             } else if (moduleType === 'JUDGEMENT') {
               this.requiredModules.judgement = true;
-            } else if (moduleType === 'FIELD_REPORT') {
-              this.requiredModules.fieldReport = true;
+            } else if (moduleType === 'REQUEST_FIELD_REPORT') {
+              this.requiredModules.requestFieldReport = true;
+            } else if (moduleType === 'SUBMIT_FIELD_REPORT') {
+              this.requiredModules.submitFieldReport = true;
             }
           }
         });
@@ -349,15 +355,15 @@ export class OfficerCaseDetailComponent implements OnInit {
         stateLower.includes('field_report_submitted') ||
         this.transitions.some(t => t.transitionCode === 'REVIEW_FIELD_REPORT')) {
       this.hasFieldReportSubmitted = true;
-      this.requiredModules.fieldReport = true;
+      this.requiredModules.submitFieldReport = true;
     }
 
     // Also check by loading field report data
-    this.caseService.getModuleFormWithData(this.caseId, 'FIELD_REPORT').subscribe({
+    this.caseService.getModuleFormWithData(this.caseId, 'SUBMIT_FIELD_REPORT').subscribe({
       next: (response: any) => {
         if (response.success && response.data && response.data.hasExistingData) {
           this.hasFieldReportSubmitted = true;
-          this.requiredModules.fieldReport = true;
+          this.requiredModules.submitFieldReport = true;
         }
       },
       error: () => {
@@ -570,7 +576,7 @@ export class OfficerCaseDetailComponent implements OnInit {
     return 'Document';
   }
 
-  /** Human-readable module type for display (e.g. HEARING → Hearing, FIELD_REPORT → Field Report). */
+  /** Human-readable module type for display (e.g. HEARING → Hearing, SUBMIT_FIELD_REPORT → Field Report). */
   humanizeModuleType(code: string): string {
     if (!code || typeof code !== 'string') return code;
     return code.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
@@ -591,7 +597,7 @@ export class OfficerCaseDetailComponent implements OnInit {
       const id = parseInt(idStr, 10);
       return `Document(s) ${this.getDocumentName(id)}`;
     });
-    // Form [HEARING] / Form [FIELD_REPORT] → Form {humanized}
+    // Form [HEARING] / Form [SUBMIT_FIELD_REPORT] → Form {humanized}
     out = out.replace(/Form\s*\[([A-Z_]+)\]/g, (_, code) => `Form ${this.humanizeModuleType(code)}`);
     // Form [5] (form id) → Form {name}
     formIds.forEach(id => {
@@ -719,26 +725,26 @@ export class OfficerCaseDetailComponent implements OnInit {
     const name = transition.transitionName?.toUpperCase() || '';
     // Check for HEARING_RESCHEDULE or transitions that contain HEARING
     return code.includes('HEARING_RESCHEDULE') ||
-           code.includes('ASK_FIELD_REPORT') ||
+           code.includes('REQUEST_FIELD_REPORT') ||
            name.includes('HEARING RESCHEDULE') ||
-           name.includes('ASK FOR REPORT');
+           name.includes('REQUEST FOR REPORT');
   }
 
-  /** Open Ask Field Report form with dummy data in a modal */
+  /** Open Request Field Report form with dummy data in a modal */
   openAskFieldReportForm(transition: WorkflowTransitionDTO): void {
     if (!this.caseData) return;
 
-    // Fetch ASK_FIELD_REPORT form data with FIELD_OFFICER field
+    // Fetch REQUEST_FIELD_REPORT form data with FIELD_OFFICER field
     this.moduleFormsService.getFieldsByCaseNatureAndModule(
       this.caseData.caseNatureId || 0,
-      'ASK_FIELD_REPORT'
+      'REQUEST_FIELD_REPORT'
     ).subscribe({
       next: (response) => {
         // Get the Field Officer field from the dummy data
         const fieldOfficerField = response.data?.find(f => f.fieldName === 'fieldOfficer');
 
         if (fieldOfficerField) {
-          // Open the forms dialog with ASK_FIELD_REPORT form type
+          // Open the forms dialog with REQUEST_FIELD_REPORT form type
           this.dialog.open(FormsActionDialogComponent, {
             width: '740px',
             maxWidth: '95vw',
@@ -746,7 +752,7 @@ export class OfficerCaseDetailComponent implements OnInit {
             data: {
               caseId: this.caseId,
               caseData: this.caseData,
-              formTypes: ['ASK_FIELD_REPORT'],
+              formTypes: ['REQUEST_FIELD_REPORT'],
               fieldOfficerToken: 'FIELD_OFFICER'
             },
             disableClose: false

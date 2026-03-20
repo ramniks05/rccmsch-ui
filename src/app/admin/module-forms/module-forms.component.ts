@@ -22,7 +22,7 @@ export class ModuleFormsComponent implements OnInit {
   private readonly STORAGE_KEY = 'ASK_FIELD_REPORT_FIELDS';
 
   // Module types for dropdown
-  moduleTypes: ModuleType[] = ['HEARING', 'NOTICE', 'ORDERSHEET', 'JUDGEMENT', 'FIELD_REPORT', 'ASK_FIELD_REPORT'];
+  moduleTypes: ModuleType[] = ['HEARING', 'NOTICE', 'ORDERSHEET', 'JUDGEMENT', 'REQUEST_FIELD_REPORT', 'SUBMIT_FIELD_REPORT'];
 
   // Field types for dropdown
   fieldTypes: FieldType[] = [
@@ -125,9 +125,9 @@ export class ModuleFormsComponent implements OnInit {
   onModuleTypeChange(): void {
     if (this.selectedCaseNatureId) {
       // If ASK_FIELD_REPORT is selected, store dummy data to localStorage
-      if (this.selectedModuleType === 'ASK_FIELD_REPORT') {
-        this.initializeASKFieldReportStorageIfNeeded();
-      }
+      // if (this.selectedModuleType === 'ASK_FIELD_REPORT') {
+      //   this.initializeASKFieldReportStorageIfNeeded();
+      // }
       this.loadFields();
     }
   }
@@ -141,7 +141,7 @@ export class ModuleFormsComponent implements OnInit {
       // First time, fetch dummy data from service and store it
       this.moduleFormsService.getFieldsByCaseNatureAndModule(
         this.selectedCaseNatureId!,
-        'ASK_FIELD_REPORT',
+        'REQUEST_FIELD_REPORT',
         this.selectedCaseTypeId || undefined
       ).subscribe({
         next: (response) => {
@@ -167,19 +167,19 @@ export class ModuleFormsComponent implements OnInit {
     this.loading = true;
 
     // For ASK_FIELD_REPORT, try to load from localStorage first
-    if (this.selectedModuleType === 'ASK_FIELD_REPORT') {
-      const storedData = localStorage.getItem(this.STORAGE_KEY);
-      if (storedData) {
-        try {
-          const parsed = JSON.parse(storedData);
-          this.fields = parsed.fields || [];
-          this.loading = false;
-          return;
-        } catch (error) {
-          console.error('Error parsing localStorage data:', error);
-        }
-      }
-    }
+    // if (this.selectedModuleType === 'ASK_FIELD_REPORT') {
+    //   const storedData = localStorage.getItem(this.STORAGE_KEY);
+    //   if (storedData) {
+    //     try {
+    //       const parsed = JSON.parse(storedData);
+    //       this.fields = parsed.fields || [];
+    //       this.loading = false;
+    //       return;
+    //     } catch (error) {
+    //       console.error('Error parsing localStorage data:', error);
+    //     }
+    //   }
+    // }
 
     this.moduleFormsService.getFieldsByCaseNatureAndModule(
       this.selectedCaseNatureId,
@@ -189,12 +189,12 @@ export class ModuleFormsComponent implements OnInit {
       next: (response) => {
         this.fields = response.data || [];
         // Store to localStorage if it's ASK_FIELD_REPORT
-        if (this.selectedModuleType === 'ASK_FIELD_REPORT') {
-          localStorage.setItem(this.STORAGE_KEY, JSON.stringify({
-            timestamp: new Date().toISOString(),
-            fields: this.fields
-          }));
-        }
+        // if (this.selectedModuleType === 'ASK_FIELD_REPORT') {
+        //   localStorage.setItem(this.STORAGE_KEY, JSON.stringify({
+        //     timestamp: new Date().toISOString(),
+        //     fields: this.fields
+        //   }));
+        // }
         this.loading = false;
       },
       error: (error) => {
@@ -263,10 +263,10 @@ export class ModuleFormsComponent implements OnInit {
     this.loading = true;
 
     // For ASK_FIELD_REPORT, handle localStorage
-    if (this.selectedModuleType === 'ASK_FIELD_REPORT') {
-      this.saveFieldToLocalStorage(fieldData);
-      return;
-    }
+    // if (this.selectedModuleType === 'ASK_FIELD_REPORT') {
+    //   this.saveFieldToLocalStorage(fieldData);
+    //   return;
+    // }
 
     if (this.editingField && this.editingField.id) {
       // Update existing field
@@ -355,10 +355,10 @@ export class ModuleFormsComponent implements OnInit {
     this.loading = true;
 
     // For ASK_FIELD_REPORT, handle localStorage deletion
-    if (this.selectedModuleType === 'ASK_FIELD_REPORT') {
-      this.deleteFieldFromLocalStorage(field.id);
-      return;
-    }
+    // if (this.selectedModuleType === 'ASK_FIELD_REPORT') {
+    //   this.deleteFieldFromLocalStorage(field.id);
+    //   return;
+    // }
 
     this.moduleFormsService.deleteField(field.id).subscribe({
       next: () => {
@@ -446,10 +446,10 @@ export class ModuleFormsComponent implements OnInit {
     if (!this.selectedCaseNatureId || !field1.id || !field2.id) return;
 
     // For ASK_FIELD_REPORT, handle localStorage
-    if (this.selectedModuleType === 'ASK_FIELD_REPORT') {
-      this.updateFieldOrderInLocalStorage(field1, field2);
-      return;
-    }
+    // if (this.selectedModuleType === 'ASK_FIELD_REPORT') {
+    //   this.updateFieldOrderInLocalStorage(field1, field2);
+    //   return;
+    // }
 
     const fieldOrders = [
       { fieldId: field1.id, displayOrder: field1.displayOrder },

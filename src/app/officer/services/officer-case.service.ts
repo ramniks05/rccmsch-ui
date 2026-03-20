@@ -423,13 +423,13 @@ export class OfficerCaseService {
   /**
    * Submit module form data
    * POST /api/cases/{caseId}/module-forms/{moduleType}/submit
-   * For FIELD_REPORT module, formData should be an object (not stringified)
+   * For SUBMIT_FIELD_REPORT module, formData should be an object (not stringified)
    * For other modules, formData can be stringified if needed
    */
   submitModuleForm(caseId: number, moduleType: string, formData: any, remarks?: string): Observable<ApiResponse<any>> {
-    // For FIELD_REPORT, send formData as object; for others, stringify if it's not already a string
+    // For SUBMIT_FIELD_REPORT, send formData as object; for others, stringify if it's not already a string
     const payload: any = {
-      formData: moduleType === 'FIELD_REPORT' 
+      formData: moduleType === 'SUBMIT_FIELD_REPORT'
         ? (typeof formData === 'string' ? JSON.parse(formData) : formData)
         : (typeof formData === 'string' ? formData : JSON.stringify(formData)),
       remarks
@@ -471,7 +471,7 @@ export class OfficerCaseService {
   /**
    * Submit module form data with files (multipart/form-data)
    * POST /api/cases/{caseId}/module-forms/{moduleType}/submit
-   * 
+   *
    * FormData structure:
    * - Regular fields: fieldName = value
    * - fileMetadata: JSON string with file metadata
@@ -483,11 +483,11 @@ export class OfficerCaseService {
     // Create headers without Content-Type (browser will set it automatically with boundary)
     const token = localStorage.getItem('adminToken');
     const headers: { [key: string]: string } = {};
-    
+
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
-    
+
     // Note: Do NOT set Content-Type header - browser will set it automatically with boundary
 
     return this.http.post<ApiResponse<any>>(
@@ -521,7 +521,7 @@ export class OfficerCaseService {
   /**
    * Upload file for a case (multipart/form-data)
    * POST /api/cases/{caseId}/documents/upload
-   * 
+   *
    * This endpoint uploads a file and returns file metadata including:
    * - fileId: Unique identifier for the uploaded file
    * - fileName: Original filename
@@ -538,18 +538,18 @@ export class OfficerCaseService {
   }>> {
     const formData = new FormData();
     formData.append('file', file);
-    
+
     // Create headers without Content-Type (browser will set it automatically with boundary for multipart/form-data)
     const token = localStorage.getItem('adminToken');
     const headers: { [key: string]: string } = {};
-    
+
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
-    
+
     // Note: Do NOT set Content-Type header - browser will set it automatically with boundary
     // Setting it manually will break multipart/form-data
-    
+
     return this.http.post<ApiResponse<{
       fileId: string;
       fileName: string;

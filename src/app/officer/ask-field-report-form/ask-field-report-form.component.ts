@@ -60,7 +60,7 @@ export class AskFieldReportFormComponent implements OnInit {
 
     this.moduleFormsService.getFieldsByCaseNatureAndModule(
       caseNatureId,
-      'ASK_FIELD_REPORT'
+      'REQUEST_FIELD_REPORT'
     ).subscribe({
       next: (response) => {
         this.fields = response.data || [];

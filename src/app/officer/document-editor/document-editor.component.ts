@@ -476,8 +476,8 @@ export class DocumentEditorComponent implements OnInit {
       'NOTICE': 'Notice',
       'ORDERSHEET': 'Order Sheet',
       'JUDGEMENT': 'Judgement',
-      'FIELD_REPORT': 'Field Report',
-      'ASK_FIELD_REPORT': 'Ask Field Report'
+      'REQUEST_FIELD_REPORT': 'Request Field Report',
+      'SUBMIT_FIELD_REPORT': 'Submit Field Report'
     };
     return labels[this.documentType] || this.documentType;
   }

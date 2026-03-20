@@ -271,7 +271,7 @@
       </mat-tab>
 
       <!-- Field Report Tab (Show when submitted or when field report is required) -->
-      <mat-tab label="Field Report" *ngIf="requiredModules.fieldReport || hasFieldReportSubmitted || showSubmitFieldReportButton">
+      <mat-tab label="Field Report" *ngIf="requiredModules.requestFieldReport || hasFieldReportSubmitted || showSubmitFieldReportButton">
         <div class="tab-content">
           <app-field-report-view [caseId]="caseData.id"></app-field-report-view>
         </div>

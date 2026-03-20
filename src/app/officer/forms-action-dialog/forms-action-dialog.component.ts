@@ -11,7 +11,7 @@ export interface FormItemByFormId {
 export interface FormsActionDialogData {
   caseId: number;
   caseData: CaseDTO;
-  /** Form types to show: 'HEARING', 'FIELD_REPORT', 'ASK_FIELD_REPORT' (used when opening from "Open Forms" tab) */
+  /** Form types to show: 'HEARING', 'SUBMIT_FIELD_REPORT', 'ASK_FIELD_REPORT' (used when opening from "Open Forms" tab) */
   formTypes?: string[];
   /** When opening a specific form by ID (e.g. click "Form 5"), pass this so the correct form is loaded. */
   formItem?: FormItemByFormId;
@@ -46,7 +46,7 @@ export class FormsActionDialogComponent {
   getFormLabel(type: string): string {
     const labels: Record<string, string> = {
       HEARING: 'Hearing',
-      FIELD_REPORT: 'Field Report',
+      SUBMIT_FIELD_REPORT: 'Field Report',
       ASK_FIELD_REPORT: 'Ask Field Report'
     };
     return labels[type] || type;

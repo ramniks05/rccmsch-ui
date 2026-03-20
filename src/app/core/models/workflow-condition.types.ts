@@ -9,7 +9,7 @@ export type WorkflowConditionType =
   | 'CASE_DATA_FIELD'
   | 'CASE_FILTER';
 
-export type ModuleType = 'HEARING' | 'NOTICE' | 'ORDERSHEET' | 'JUDGEMENT' | 'ATTENDANCE' | 'FIELD_REPORT';
+export type ModuleType = 'HEARING' | 'NOTICE' | 'ORDERSHEET' | 'JUDGEMENT' | 'ATTENDANCE' | 'SUBMIT_FIELD_REPORT';
 
 /** One item from GET /api/admin/workflow/data-keys data.keysWithBinding */
 export interface WorkflowDataKeyBinding {
@@ -137,7 +137,7 @@ export const MODULE_TYPES: { value: ModuleType; label: string }[] = [
   { value: 'ORDERSHEET', label: 'Ordersheet' },
   { value: 'JUDGEMENT', label: 'Judgement' },
   { value: 'ATTENDANCE', label: 'Attendance' },
-  { value: 'FIELD_REPORT', label: 'Field Report' }
+  { value: 'SUBMIT_FIELD_REPORT', label: 'Field Report' }
 ];
 
 /** Common form fields per module (fallback when schema API not available). */
@@ -169,7 +169,7 @@ export const MODULE_FIELDS: Record<ModuleType, { value: string; label: string }[
     { value: 'present', label: 'Present' },
     { value: 'remarks', label: 'Remarks' }
   ],
-  FIELD_REPORT: [
+  SUBMIT_FIELD_REPORT: [
     { value: 'reportDate', label: 'Report date' },
     { value: 'remarks', label: 'Remarks' }
   ]

@@ -9,7 +9,7 @@ import { environment } from '../../../environments/environment';
 })
 export class FieldReportViewComponent implements OnInit {
   @Input() caseId!: number;
-  
+
   formSchema: any = null;
   formData: any = {};
   loading = false;
@@ -32,29 +32,29 @@ export class FieldReportViewComponent implements OnInit {
   loadFieldReport(): void {
     this.loading = true;
     this.hasData = false;
-    
-    this.caseService.getModuleFormWithData(this.caseId, 'FIELD_REPORT').subscribe({
+
+    this.caseService.getModuleFormWithData(this.caseId, 'SUBMIT_FIELD_REPORT').subscribe({
       next: (response: any) => {
         this.loading = false;
-        
+
         if (response.success && response.data) {
           this.formSchema = response.data.schema;
-          
+
           if (response.data.hasExistingData && response.data.formData) {
             try {
               this.formData = typeof response.data.formData === 'string'
                 ? JSON.parse(response.data.formData)
                 : response.data.formData;
-              
+
               // Check if formData has any actual values
               const hasValues = Object.keys(this.formData).some(key => {
                 const value = this.formData[key];
                 if (Array.isArray(value)) return value.length > 0;
                 return value !== null && value !== undefined && value !== '';
               });
-              
+
               this.hasData = hasValues && this.formSchema && this.formSchema.fields && this.formSchema.fields.length > 0;
-              
+
               // Get submission date if available
               if (response.data.submittedAt) {
                 this.submittedAt = response.data.submittedAt;
@@ -86,11 +86,11 @@ export class FieldReportViewComponent implements OnInit {
    */
   getFieldValue(field: any): string {
     const value = this.formData[field.fieldName];
-    
+
     if (value === null || value === undefined || value === '') {
       return '-';
     }
-    
+
     // Handle date fields
     if (field.fieldType === 'DATE' && value) {
       try {
@@ -100,7 +100,7 @@ export class FieldReportViewComponent implements OnInit {
         return value;
       }
     }
-    
+
     // Handle arrays (for DYNAMIC_FILES)
     if (Array.isArray(value)) {
       if (value.length === 0) {
@@ -111,7 +111,7 @@ export class FieldReportViewComponent implements OnInit {
       }
       return value.join(', ');
     }
-    
+
     return String(value);
   }
 
@@ -142,26 +142,26 @@ export class FieldReportViewComponent implements OnInit {
       if (file.fileUrl.startsWith('http://') || file.fileUrl.startsWith('https://')) {
         return file.fileUrl;
       }
-      
+
       // If URL starts with /, it's a relative path - prepend API base URL
       if (file.fileUrl.startsWith('/')) {
         // Remove /api from apiUrl if present, then add the file path
         const baseUrl = environment.apiUrl.replace('/api', '');
         return `${baseUrl}${file.fileUrl}`;
       }
-      
+
       // Otherwise, assume it's relative to API base
       const baseUrl = environment.apiUrl.replace('/api', '');
       return `${baseUrl}/${file.fileUrl}`;
     }
-    
+
     // Fallback: construct URL from fileId or fileName if fileUrl is not available
     if (file.fileId || file.fileName) {
       const baseUrl = environment.apiUrl.replace('/api', '');
       const fileName = file.fileName || file.fileId;
       return `${baseUrl}/uploads/documents/${fileName}`;
     }
-    
+
     return '';
   }
 
@@ -173,7 +173,7 @@ export class FieldReportViewComponent implements OnInit {
       event.preventDefault();
       event.stopPropagation();
     }
-    
+
     const fileUrl = this.getFileUrl(file);
     if (fileUrl) {
       // Open in new tab

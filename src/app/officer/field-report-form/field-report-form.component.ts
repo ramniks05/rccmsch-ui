@@ -24,7 +24,7 @@ export class FieldReportFormComponent implements OnInit {
   submitting = false;
   form: FormGroup = this.fb.group({});
   dynamicFields: any[] = [];
-  
+
   // Store File objects temporarily (keyed by fieldName and fileId)
   private fileObjects: Map<string, Map<string, File>> = new Map();
 
@@ -47,12 +47,12 @@ export class FieldReportFormComponent implements OnInit {
    */
   loadFieldReportForm(): void {
     this.loading = true;
-    
-    this.caseService.getModuleFormWithData(this.caseId, 'FIELD_REPORT').pipe(
+
+    this.caseService.getModuleFormWithData(this.caseId, 'SUBMIT_FIELD_REPORT').pipe(
       catchError(error => {
         this.loading = false;
         console.error('Error loading field report form:', error);
-        
+
         if (error.status === 404) {
           this.snackBar.open(
             'Field report form not configured. Please contact administrator.',
@@ -66,17 +66,17 @@ export class FieldReportFormComponent implements OnInit {
             { duration: 5000 }
           );
         }
-        
+
         return of({ success: false, data: null });
       })
     ).subscribe({
       next: (response: any) => {
         this.loading = false;
-        
+
         if (response.success && response.data) {
           this.formSchema = response.data.schema;
           this.hasExistingData = response.data.hasExistingData;
-          
+
           // Parse existing form data if available
           if (response.data.formData) {
             try {
@@ -88,7 +88,7 @@ export class FieldReportFormComponent implements OnInit {
               this.formData = {};
             }
           }
-          
+
           // Build dynamic form based on schema
           this.buildDynamicForm();
         } else {
@@ -120,7 +120,7 @@ export class FieldReportFormComponent implements OnInit {
 
     this.dynamicFields.forEach((field: any) => {
       let value: any;
-      
+
       // Handle DYNAMIC_FILES fields - they should be arrays
       if (field.fieldType === 'DYNAMIC_FILES') {
         value = this.formData[field.fieldName] || [];
@@ -141,13 +141,13 @@ export class FieldReportFormComponent implements OnInit {
       } else {
         value = this.formData[field.fieldName] || field.defaultValue || '';
       }
-      
+
       const validators = [];
-      
+
       if (field.isRequired) {
         validators.push(Validators.required);
       }
-      
+
       // Add custom validation rules if provided
       if (field.validationRules) {
         try {
@@ -165,7 +165,7 @@ export class FieldReportFormComponent implements OnInit {
           console.warn('Invalid validation rules:', e);
         }
       }
-      
+
       formControls[field.fieldName] = [value, validators];
     });
 
@@ -179,7 +179,7 @@ export class FieldReportFormComponent implements OnInit {
     if (!field.options) {
       return [];
     }
-    
+
     try {
       return JSON.parse(field.options);
     } catch (e) {
@@ -208,10 +208,10 @@ export class FieldReportFormComponent implements OnInit {
    */
   private transformFormData(formValue: any): any {
     const transformed: any = {};
-    
+
     Object.keys(formValue).forEach(key => {
       const value = formValue[key];
-      
+
       // Handle DYNAMIC_FILES fields - transform file structure
       if (Array.isArray(value) && value.length > 0 && value[0]?.fileId) {
         transformed[key] = value.map((file: any) => ({
@@ -230,7 +230,7 @@ export class FieldReportFormComponent implements OnInit {
         }
       }
     });
-    
+
     return transformed;
   }
 
@@ -256,7 +256,7 @@ export class FieldReportFormComponent implements OnInit {
 
   /**
    * Submit field report
-   * 
+   *
    * VALIDATION LOGIC:
    * 1. Check all form fields for standard validation (required, min/max length, etc.)
    * 2. For DYNAMIC_FILES fields: File type (displayName) is ALWAYS mandatory if files are uploaded
@@ -276,23 +276,23 @@ export class FieldReportFormComponent implements OnInit {
     // This validation is HARDCODED and cannot be configured - it's always required
     let hasFileValidationError = false;
     const filesWithoutTypes: string[] = []; // Track which fields have missing file types
-    
+
     this.dynamicFields.forEach((field: any) => {
       if (field.fieldType === 'DYNAMIC_FILES') {
         const files = this.form.get(field.fieldName)?.value || [];
-        
+
         // If files are uploaded, file type is MANDATORY (regardless of field.isRequired)
         if (files.length > 0) {
           const missingTypes = files.filter((f: any) => !f.displayName || !f.displayName.trim());
-          
+
           if (missingTypes.length > 0) {
             hasFileValidationError = true;
             filesWithoutTypes.push(field.fieldLabel || field.fieldName);
-            
+
             // Mark field as invalid
-            this.form.get(field.fieldName)?.setErrors({ 
+            this.form.get(field.fieldName)?.setErrors({
               fileTypeRequired: true,
-              required: true 
+              required: true
             });
             this.form.get(field.fieldName)?.markAsTouched();
           }
@@ -313,14 +313,14 @@ export class FieldReportFormComponent implements OnInit {
 
     this.submitting = true;
     const rawFormData = this.form.value;
-    
+
     // Check if there are files to upload
     // Files should have File objects attached (not just metadata with fileUrl)
     const hasFiles = this.dynamicFields.some((field: any) => {
       if (field.fieldType === 'DYNAMIC_FILES') {
         const files = rawFormData[field.fieldName] || [];
         if (files.length === 0) return false;
-        
+
         // Check if any file has a File object attached (not already uploaded)
         return files.some((f: any) => {
           // If fileUrl exists, it means file was already uploaded - skip it
@@ -340,7 +340,7 @@ export class FieldReportFormComponent implements OnInit {
       }
       return false;
     });
-    
+
     console.log('hasFiles check:', hasFiles);
     console.log('rawFormData keys:', Object.keys(rawFormData));
     this.dynamicFields.forEach((field: any) => {
@@ -370,7 +370,7 @@ export class FieldReportFormComponent implements OnInit {
    */
   private submitWithFiles(rawFormData: any, remarks: string): void {
     const formData = new FormData();
-    
+
     // Add regular form fields (non-file fields)
     const fileFields: string[] = [];
     Object.keys(rawFormData).forEach(key => {
@@ -399,10 +399,10 @@ export class FieldReportFormComponent implements OnInit {
         fileType: fileItem.fileType || this.getFileTypeFromFileName(fileItem.fileName)
       }));
     });
-    
+
     // Add file metadata as JSON string
     formData.append('fileMetadata', JSON.stringify(fileMetadata));
-    
+
     // Add remarks
     if (remarks) {
       formData.append('remarks', remarks);
@@ -418,10 +418,10 @@ export class FieldReportFormComponent implements OnInit {
           console.log(`Skipping already uploaded file: ${fileItem.fileUrl}`);
           return;
         }
-        
+
         // Get File object - check multiple sources
         let file: File | null = null;
-        
+
         // First, check if file is directly attached
         if (fileItem.file && fileItem.file instanceof File) {
           file = fileItem.file;
@@ -430,7 +430,7 @@ export class FieldReportFormComponent implements OnInit {
         else if (fileItem.fileId) {
           file = this.getFileObject(fieldName, fileItem.fileId);
         }
-        
+
         // Only add files that are actual File objects
         if (file instanceof File) {
           console.log(`Adding file ${fileIndex}:`, file.name, 'for field:', fieldName);
@@ -448,9 +448,9 @@ export class FieldReportFormComponent implements OnInit {
         }
       });
     });
-    
+
     console.log(`Total files to upload: ${fileIndex}`);
-    
+
     if (fileIndex === 0) {
       console.error('No files found to upload! Falling back to JSON submission.');
       // Fall back to JSON submission if no files found
@@ -462,7 +462,7 @@ export class FieldReportFormComponent implements OnInit {
     // Submit with multipart/form-data
     this.caseService.submitModuleFormWithFiles(
       this.caseId,
-      'FIELD_REPORT',
+      'SUBMIT_FIELD_REPORT',
       formData
     ).pipe(
       catchError(error => {
@@ -500,7 +500,7 @@ export class FieldReportFormComponent implements OnInit {
   private submitWithoutFiles(transformedFormData: any, remarks: string): void {
     this.caseService.submitModuleForm(
       this.caseId,
-      'FIELD_REPORT',
+      'SUBMIT_FIELD_REPORT',
       transformedFormData,
       remarks
     ).pipe(
@@ -581,7 +581,7 @@ export class FieldReportFormComponent implements OnInit {
     Object.keys(formGroup.controls).forEach(key => {
       const control = formGroup.get(key);
       control?.markAsTouched();
-      
+
       if (control instanceof FormGroup) {
         this.markFormGroupTouched(control);
       }
@@ -604,7 +604,7 @@ export class FieldReportFormComponent implements OnInit {
     if (!field || !field.errors) {
       return '';
     }
-    
+
     if (field.errors['required']) {
       return 'This field is required';
     }
@@ -617,7 +617,7 @@ export class FieldReportFormComponent implements OnInit {
     if (field.errors['pattern']) {
       return 'Invalid format';
     }
-    
+
     return 'Invalid value';
   }
 
@@ -652,7 +652,7 @@ export class FieldReportFormComponent implements OnInit {
       }
       return fileItem;
     });
-    
+
     this.form.get(fieldName)?.setValue(valueWithFiles);
     this.form.get(fieldName)?.markAsTouched();
   }
@@ -671,14 +671,14 @@ export class FieldReportFormComponent implements OnInit {
   /**
    * Store file temporarily (not uploaded yet)
    * Files will be sent with form submission as multipart/form-data
-   * 
+   *
    * @param caseId - Case ID
    * @param file - File object to store
    * @returns Promise with file metadata (fileId, fileName, fileSize)
    */
-  async uploadFile(caseId: number, file: File): Promise<{ 
-    fileId: string; 
-    fileName: string; 
+  async uploadFile(caseId: number, file: File): Promise<{
+    fileId: string;
+    fileName: string;
     fileSize: number;
     fileUrl?: string;
     fileType?: string;
@@ -686,7 +686,7 @@ export class FieldReportFormComponent implements OnInit {
   } | null> {
     // Generate temporary fileId
     const fileId = `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    
+
     return {
       fileId: fileId,
       fileName: file.name,
