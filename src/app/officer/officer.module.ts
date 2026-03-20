@@ -12,6 +12,7 @@ import { FieldReportRequestDialogComponent } from './field-report-request-dialog
 import { FieldReportViewComponent } from './field-report-view/field-report-view.component';
 import { DocumentsActionDialogComponent } from './documents-action-dialog/documents-action-dialog.component';
 import { FormsActionDialogComponent } from './forms-action-dialog/forms-action-dialog.component';
+import { HearingShiftComponent } from './hearing-shift/hearing-shift.component';
 import { SharedModule } from '../shared/shared.module';
 
 const routes: Routes = [
@@ -39,6 +40,12 @@ const routes: Routes = [
     data: { breadcrumb: 'Case Details' }
   },
   {
+    path: 'hearing-shift',
+    component: HearingShiftComponent,
+    canActivate: [OfficerGuard],
+    data: { breadcrumb: 'Hearing Shift' }
+  },
+  {
     path: 'reset-password',
     component: OfficerResetPasswordComponent,
     data: { breadcrumb: 'Reset Password' }
@@ -57,7 +64,8 @@ const routes: Routes = [
     FieldReportRequestDialogComponent,
     FieldReportViewComponent,
     DocumentsActionDialogComponent,
-    FormsActionDialogComponent
+    FormsActionDialogComponent,
+    HearingShiftComponent
   ],
   imports: [
     SharedModule,

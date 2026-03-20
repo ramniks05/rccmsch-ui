@@ -1,0 +1,67 @@
+.hearing-shift-page {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.page-header h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.page-header p {
+  margin: 6px 0 0;
+  color: #616161;
+}
+
+.filters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.load-action {
+  display: flex;
+  align-items: center;
+}
+
+.state-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #616161;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.cases-table {
+  width: 100%;
+}
+
+.selection-info {
+  margin-left: 10px;
+  color: #455a64;
+}
+
+.preview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.audit-note {
+  margin-top: 12px;
+  padding: 10px;
+  border-left: 4px solid #90caf9;
+  background: #f5f9ff;
+}
