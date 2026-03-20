@@ -29,6 +29,7 @@ export class OfficerHomeComponent implements OnInit {
   postingType: 'COURT_BASED' | 'UNIT_BASED' | null = null;
   courtName: string = '';
   courtCode: string = '';
+  courtId: number | null = null;
 
   /** Actions required for dashboard */
   actionsRequiredCount = 0;
@@ -113,6 +114,9 @@ export class OfficerHomeComponent implements OnInit {
 
       // Court information (for court-based postings)
       if (this.postingType === 'COURT_BASED') {
+        if (posting.courtId) {
+          this.courtId = posting.courtId;
+        }
         if (posting.courtName) {
           this.courtName = posting.courtName;
         }
@@ -202,6 +206,16 @@ export class OfficerHomeComponent implements OnInit {
     this.authService.sendData(null);
     this.adminService.logout();
     this.router.navigate(['/home']);
+  }
+
+  get showHearingShiftAction(): boolean {
+    const role = (this.roleCode || this.roleName || '').toUpperCase();
+    return role.includes('PRESIDING') || role.includes('PRECIDING') || role.includes('READER');
+  }
+
+  openHearingShiftWindow(): void {
+    const url = this.router.serializeUrl(this.router.createUrlTree(['/officer/hearing-shift']));
+    window.open(url, '_blank', 'noopener');
   }
 }
 

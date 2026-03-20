@@ -114,6 +114,16 @@
             My Cases
             <span *ngIf="actionsRequiredCount > 0" class="action-badge">{{ actionsRequiredCount }}</span>
           </button>
+          <button
+            *ngIf="showHearingShiftAction"
+            mat-raised-button
+            color="primary"
+            class="action-btn"
+            (click)="openHearingShiftWindow()"
+          >
+            <mat-icon>swap_horiz</mat-icon>
+            Hearing Shift
+          </button>
           <button mat-raised-button color="accent" class="action-btn">
             <mat-icon>add_circle</mat-icon>
             New Case
