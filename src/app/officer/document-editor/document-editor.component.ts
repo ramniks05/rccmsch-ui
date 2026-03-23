@@ -24,6 +24,8 @@ interface DocumentData {
 export class DocumentEditorComponent implements OnInit, OnChanges {
   @Input() caseId!: number;
   @Input() caseData!: CaseDTO;
+  /** Preferred transition code selected on the case detail action strip. */
+  @Input() preferredTransitionCode: string | null = null;
   /** Template ID (from permission-documents / allowedDocumentIds). Required for officer document APIs. */
   @Input() templateId!: number;
   /** Optional: module type for display only when template doesn't provide it (e.g. NOTICE, ORDERSHEET, JUDGEMENT). */
@@ -507,7 +509,13 @@ export class DocumentEditorComponent implements OnInit, OnChanges {
     returnedStatus: string,
   ): void {
     this.workflowAuto
-      .tryAfterDocumentSave(this.caseId, templateId, returnedStatus)
+      .tryAfterDocumentSave(
+        this.caseId,
+        templateId,
+        returnedStatus,
+        undefined,
+        this.preferredTransitionCode,
+      )
       .subscribe((result) => {
         if (result.executed) {
           if (result.ambiguous && result.message) {

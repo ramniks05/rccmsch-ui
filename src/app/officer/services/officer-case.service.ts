@@ -108,6 +108,14 @@ export interface WorkflowTransitionDTO {
     allowedFormIds?: number[] | null;
     /** IDs of document templates this action is tied to (used in API payloads) */
     allowedDocumentIds?: number[] | null;
+    /** Optional richer form requirements (new API shape). */
+    forms?: Array<{ formId: number; mandatory: boolean }> | null;
+    /** Optional richer document requirements (new API shape). */
+    documents?: Array<{
+      documentId: number;
+      stages?: string[] | null;
+      mandatory: boolean;
+    }> | null;
     /** Optional: form id → display name (from backend for readable condition labels) */
     allowedForms?: Array<{ id: number; name: string }> | null;
     /** Optional: document id → display name (from backend for readable condition labels) */

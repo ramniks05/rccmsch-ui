@@ -332,6 +332,7 @@
           <app-document-editor
             [caseId]="caseData.id"
             [caseData]="caseData"
+            [preferredTransitionCode]="selectedActionTransition?.transitionCode ?? null"
             [templateId]="tid"
             [openInEditMode]="isOrderSheetTemplateId(tid)">
           </app-document-editor>

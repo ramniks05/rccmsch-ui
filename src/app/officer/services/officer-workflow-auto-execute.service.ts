@@ -47,13 +47,19 @@ export class OfficerWorkflowAutoExecuteService {
     caseId: number,
     ctx: ModuleFormMatchContext,
     comments: string,
+    preferredTransitionCode?: string | null,
   ): Observable<AutoExecuteResult> {
     return this.caseService.getAvailableTransitions(caseId).pipe(
       switchMap((res) => {
         const transitions =
           res.success && Array.isArray(res.data) ? res.data : [];
         const matches = this.pickExecutableModuleFormMatches(transitions, ctx);
-        return this.executeFirstMatch(caseId, matches, comments);
+        return this.executeFirstMatch(
+          caseId,
+          matches,
+          comments,
+          preferredTransitionCode,
+        );
       }),
       catchError(() =>
         of({
@@ -112,19 +118,31 @@ export class OfficerWorkflowAutoExecuteService {
     templateId: number,
     status: string,
     comments?: string,
+    preferredTransitionCode?: string | null,
   ): Observable<AutoExecuteResult> {
     const st = String(status || '').toUpperCase().trim();
-    if (st !== 'FINAL' && st !== 'SIGNED') {
-      return of({ executed: false, message: 'Skipped auto-execute for draft.' });
+    const stage = this.getDocumentStageFromStatus(st);
+    if (!stage) {
+      return of({
+        executed: false,
+        message: 'Skipped auto-execute for unsupported document status.',
+      });
     }
     return this.caseService.getAvailableTransitions(caseId).pipe(
       switchMap((res) => {
         const transitions =
           res.success && Array.isArray(res.data) ? res.data : [];
         const matches = transitions.filter(
-          (t) => this.isExecutable(t) && this.matchesDocumentTemplate(t, templateId),
+          (t) =>
+            this.isExecutable(t) &&
+            this.matchesDocumentTemplate(t, templateId, stage),
         );
-        return this.executeFirstMatch(caseId, matches, comments || '');
+        return this.executeFirstMatch(
+          caseId,
+          matches,
+          comments || '',
+          preferredTransitionCode,
+        );
       }),
       catchError(() =>
         of({
@@ -136,7 +154,22 @@ export class OfficerWorkflowAutoExecuteService {
   }
 
   private isExecutable(t: WorkflowTransitionDTO): boolean {
-    return t.checklist?.canExecute !== false;
+    const checklist = t.checklist;
+    if (!checklist) return true;
+    if (checklist.canExecute !== false) return true;
+
+    const conditions = checklist.conditions ?? [];
+    if (!Array.isArray(conditions) || conditions.length === 0) {
+      return false;
+    }
+
+    // Optional conditions (required === false) should not block action execution.
+    const hasBlockingRequiredCondition = conditions.some((c) => {
+      const passed = (c as { passed?: boolean }).passed === true;
+      const required = (c as { required?: boolean }).required !== false;
+      return required && !passed;
+    });
+    return !hasBlockingRequiredCondition;
   }
 
   private normModule(s?: string | null): string {
@@ -156,6 +189,10 @@ export class OfficerWorkflowAutoExecuteService {
         : null;
 
     if (formId != null) {
+      const mandatoryFromRules = this.getFormMandatoryFromChecklist(t, formId);
+      if (mandatoryFromRules != null) {
+        return mandatoryFromRules;
+      }
       const ids = t.checklist?.allowedFormIds;
       if (Array.isArray(ids) && ids.includes(formId)) {
         return true;
@@ -191,21 +228,113 @@ export class OfficerWorkflowAutoExecuteService {
   private matchesDocumentTemplate(
     t: WorkflowTransitionDTO,
     templateId: number,
+    stage: 'DRAFT' | 'SAVE_AND_SIGN',
   ): boolean {
+    const documentRule = this.getDocumentRuleFromChecklist(t, templateId);
+    if (documentRule) {
+      if (!documentRule.mandatory) {
+        return false;
+      }
+      const stages = (documentRule.stages ?? []).map((s) =>
+        String(s || '').toUpperCase().trim(),
+      );
+      if (stages.length > 0 && !stages.includes(stage)) {
+        return false;
+      }
+      return true;
+    }
+
     const ids = t.checklist?.allowedDocumentIds;
-    return Array.isArray(ids) && ids.includes(templateId);
+    if (!Array.isArray(ids) || !ids.includes(templateId)) {
+      return false;
+    }
+
+    if (stage === 'DRAFT') {
+      // Legacy behavior: do not auto-execute on draft without explicit document rules.
+      return false;
+    }
+
+    const allowSign = t.checklist?.allowDocumentSaveAndSign;
+    if (allowSign === false) {
+      return false;
+    }
+    return true;
+  }
+
+  private getDocumentStageFromStatus(
+    status: string,
+  ): 'DRAFT' | 'SAVE_AND_SIGN' | null {
+    if (status === 'DRAFT') return 'DRAFT';
+    if (status === 'FINAL' || status === 'SIGNED') return 'SAVE_AND_SIGN';
+    return null;
+  }
+
+  private getFormMandatoryFromChecklist(
+    t: WorkflowTransitionDTO,
+    formId: number,
+  ): boolean | null {
+    const forms =
+      t.checklist?.forms ??
+      ((t.checklist as { requiredForms?: Array<{ formId: number; mandatory: boolean }> | null } | undefined)
+        ?.requiredForms ?? null);
+    if (!Array.isArray(forms)) {
+      return null;
+    }
+    const entry = forms.find(
+      (f) => Number((f as { formId?: number })?.formId) === formId,
+    );
+    if (!entry) {
+      return null;
+    }
+    return entry.mandatory === true;
+  }
+
+  private getDocumentRuleFromChecklist(
+    t: WorkflowTransitionDTO,
+    documentId: number,
+  ):
+    | { documentId: number; stages?: string[] | null; mandatory: boolean }
+    | null {
+    const documents =
+      t.checklist?.documents ??
+      ((t.checklist as {
+        requiredDocuments?: Array<{
+          documentId: number;
+          stages?: string[] | null;
+          mandatory: boolean;
+        }> | null;
+      } | undefined)?.requiredDocuments ?? null);
+    if (!Array.isArray(documents)) {
+      return null;
+    }
+    const entry = documents.find(
+      (d) => Number((d as { documentId?: number })?.documentId) === documentId,
+    );
+    return entry ?? null;
   }
 
   private executeFirstMatch(
     caseId: number,
     matches: WorkflowTransitionDTO[],
     comments: string,
+    preferredTransitionCode?: string | null,
   ): Observable<AutoExecuteResult> {
     if (matches.length === 0) {
       return of({
         executed: false,
         message: 'No executable transition matched this action.',
       });
+    }
+
+    const preferredCode = String(preferredTransitionCode || '').trim();
+    if (preferredCode) {
+      const preferred = matches.find(
+        (m) => String(m.transitionCode || '').trim() === preferredCode,
+      );
+      if (preferred) {
+        const isAmbiguous = matches.length > 1;
+        return this.runTransition(caseId, preferred, comments, isAmbiguous);
+      }
     }
 
     if (matches.length > 1) {

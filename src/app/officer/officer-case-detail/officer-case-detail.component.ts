@@ -222,32 +222,56 @@ export class OfficerCaseDetailComponent implements OnInit {
     if (!t?.checklist) {
       return;
     }
-    const c = t.checklist;
-    (c.allowedDocumentIds ?? []).forEach((id: number) => {
+    this.getTransitionDocumentIds(t).forEach((id: number) => {
       this.documentTemplateIdsSet.add(id);
     });
-    (c.conditions ?? []).forEach((cond: any) => {
-      if (cond?.type !== 'FORM_CONDITION') {
-        return;
-      }
-      const moduleType: string | undefined = cond.moduleType;
-      if (moduleType && typeof moduleType === 'string') {
-        const mt = moduleType.toUpperCase().trim();
-        if (/^[A-Z][A-Z0-9_]*$/.test(mt)) {
-          this.moduleFormTypesSet.add(mt);
-        }
-      }
+    this.getTransitionFormModuleTypes(t).forEach((mt) => {
+      this.moduleFormTypesSet.add(mt);
     });
-    (c.allowedFormIds ?? []).forEach((id: number) => {
+    this.getTransitionFormIds(t).forEach((id: number) => {
       const f = this.formDetailsMap[id];
       if (f?.moduleType && typeof f.moduleType === 'string') {
         const mt = f.moduleType.toUpperCase().trim();
-        if (/^[A-Z][A-Z0-9_]*$/.test(mt)) {
+        if (this.isValidModuleTypeCode(mt)) {
           this.moduleFormTypesSet.add(mt);
         }
       }
     });
     this.clampSelectedTabIndex();
+  }
+
+  private isValidModuleTypeCode(value: string): boolean {
+    return /^[A-Z][A-Z0-9_]*$/.test(value);
+  }
+
+  /**
+   * Form module types linked to transition, supporting legacy and new backend shapes:
+   * - formSchema.moduleType
+   * - checklist.conditions[*].moduleType for FORM_* and submitted-form flags
+   */
+  private getTransitionFormModuleTypes(transition: WorkflowTransitionDTO): string[] {
+    const out = new Set<string>();
+    const push = (moduleType?: string | null) => {
+      const mt = String(moduleType || '').toUpperCase().trim();
+      if (mt && this.isValidModuleTypeCode(mt)) {
+        out.add(mt);
+      }
+    };
+
+    push(transition.formSchema?.moduleType);
+
+    const conditions = transition.checklist?.conditions ?? [];
+    conditions.forEach((cond: any) => {
+      const type = String(cond?.type || '').toUpperCase();
+      const flag = String(cond?.flagName || '').toUpperCase();
+      const fromFormType = type.startsWith('FORM');
+      const fromSubmittedFlag = flag.endsWith('_SUBMITTED');
+      if (fromFormType || fromSubmittedFlag) {
+        push(cond?.moduleType);
+      }
+    });
+
+    return Array.from(out);
   }
 
   private clampSelectedTabIndex(): void {
@@ -441,7 +465,21 @@ export class OfficerCaseDetailComponent implements OnInit {
    * Whether this transition can be executed (checklist.canExecute !== false).
    */
   canExecuteTransition(transition: WorkflowTransitionDTO): boolean {
-    return transition.checklist?.canExecute !== false;
+    const checklist = transition.checklist;
+    if (!checklist) return true;
+    if (checklist.canExecute !== false) return true;
+
+    const conditions = checklist.conditions ?? [];
+    if (!Array.isArray(conditions) || conditions.length === 0) {
+      return false;
+    }
+
+    const hasBlockingRequiredCondition = conditions.some((c) => {
+      const passed = (c as { passed?: boolean }).passed === true;
+      const required = (c as { required?: boolean }).required !== false;
+      return required && !passed;
+    });
+    return !hasBlockingRequiredCondition;
   }
 
   /**
@@ -456,16 +494,38 @@ export class OfficerCaseDetailComponent implements OnInit {
    * Form IDs allowed/required for this transition (for display per action).
    */
   getTransitionFormIds(transition: WorkflowTransitionDTO): number[] {
-    const ids = transition.checklist?.allowedFormIds;
-    return Array.isArray(ids) ? ids : [];
+    const ids = new Set<number>();
+    const legacy = transition.checklist?.allowedFormIds;
+    if (Array.isArray(legacy)) {
+      legacy.forEach((id) => ids.add(id));
+    }
+    const richer = transition.checklist?.forms;
+    if (Array.isArray(richer)) {
+      richer.forEach((f) => {
+        const id = Number((f as { formId?: number })?.formId);
+        if (!Number.isNaN(id)) ids.add(id);
+      });
+    }
+    return Array.from(ids);
   }
 
   /**
    * Document IDs allowed/required for this transition (for display per action).
    */
   getTransitionDocumentIds(transition: WorkflowTransitionDTO): number[] {
-    const ids = transition.checklist?.allowedDocumentIds;
-    return Array.isArray(ids) ? ids : [];
+    const ids = new Set<number>();
+    const legacy = transition.checklist?.allowedDocumentIds;
+    if (Array.isArray(legacy)) {
+      legacy.forEach((id) => ids.add(id));
+    }
+    const richer = transition.checklist?.documents;
+    if (Array.isArray(richer)) {
+      richer.forEach((d) => {
+        const id = Number((d as { documentId?: number })?.documentId);
+        if (!Number.isNaN(id)) ids.add(id);
+      });
+    }
+    return Array.from(ids);
   }
 
   /**
@@ -485,13 +545,20 @@ export class OfficerCaseDetailComponent implements OnInit {
    */
   hasFormsOrDocuments(transition: WorkflowTransitionDTO): boolean {
     return this.getTransitionFormIds(transition).length > 0 ||
+           this.getTransitionFormModuleTypes(transition).length > 0 ||
            this.getTransitionDocumentIds(transition).length > 0;
   }
 
   /** Comma-separated form display names for the workflow strip (opening is via sidebar only). */
   getTransitionFormNamesLine(transition: WorkflowTransitionDTO): string {
-    return this.getTransitionFormIds(transition)
+    const namesFromIds = this.getTransitionFormIds(transition)
       .map(id => this.getFormName(id))
+      .join(', ');
+    if (namesFromIds.trim()) {
+      return namesFromIds;
+    }
+    return this.getTransitionFormModuleTypes(transition)
+      .map((mt) => this.humanizeModuleType(mt))
       .join(', ');
   }
 
@@ -507,8 +574,8 @@ export class OfficerCaseDetailComponent implements OnInit {
     const formIds = new Set<number>();
     const documentIds = new Set<number>();
     this.transitions.forEach(t => {
-      (t.checklist?.allowedFormIds ?? []).forEach((id: number) => formIds.add(id));
-      (t.checklist?.allowedDocumentIds ?? []).forEach((id: number) => documentIds.add(id));
+      this.getTransitionFormIds(t).forEach((id: number) => formIds.add(id));
+      this.getTransitionDocumentIds(t).forEach((id: number) => documentIds.add(id));
     });
     // 1) Prefer names from transition checklist if backend sent allowedForms/allowedDocuments
     this.transitions.forEach(t => {
@@ -628,8 +695,8 @@ export class OfficerCaseDetailComponent implements OnInit {
   formatConditionLabel(label: string, transition: WorkflowTransitionDTO): string {
     if (!label || typeof label !== 'string') return label;
     let out = label;
-    const docIds = transition.checklist?.allowedDocumentIds ?? [];
-    const formIds = transition.checklist?.allowedFormIds ?? [];
+    const docIds = this.getTransitionDocumentIds(transition);
+    const formIds = this.getTransitionFormIds(transition);
     // Document(s) [5] → Document(s) {name}
     out = out.replace(/Document\(s\)\s*\[(\d+)\]/g, (_, idStr) => {
       const id = parseInt(idStr, 10);
@@ -676,7 +743,7 @@ export class OfficerCaseDetailComponent implements OnInit {
   /** All unique document template IDs from transitions (allowedDocumentIds). Use when no module-type mapping is available. */
   getTemplateIds(): number[] {
     const ids = new Set<number>();
-    this.transitions.forEach(t => (t.checklist?.allowedDocumentIds ?? []).forEach((id: number) => ids.add(id)));
+    this.transitions.forEach(t => this.getTransitionDocumentIds(t).forEach((id: number) => ids.add(id)));
     return Array.from(ids);
   }
 
@@ -770,6 +837,7 @@ export class OfficerCaseDetailComponent implements OnInit {
           formId: payload.formId,
         },
         payload.remarks || '',
+        this.selectedActionTransition?.transitionCode ?? null,
       )
       .pipe(
         finalize(() => {

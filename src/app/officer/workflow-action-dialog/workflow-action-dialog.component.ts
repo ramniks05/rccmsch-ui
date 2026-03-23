@@ -59,7 +59,21 @@ export class WorkflowActionDialogComponent implements OnInit {
 
   /** Whether this transition can be executed (checklist.canExecute !== false). */
   canExecute(): boolean {
-    return this.transition.checklist?.canExecute !== false;
+    const checklist = this.transition.checklist;
+    if (!checklist) return true;
+    if (checklist.canExecute !== false) return true;
+
+    const conditions = checklist.conditions ?? [];
+    if (!Array.isArray(conditions) || conditions.length === 0) {
+      return false;
+    }
+
+    const hasBlockingRequiredCondition = conditions.some((c) => {
+      const passed = (c as { passed?: boolean }).passed === true;
+      const required = (c as { required?: boolean }).required !== false;
+      return required && !passed;
+    });
+    return !hasBlockingRequiredCondition;
   }
 
   /** Blocking reasons when canExecute is false (prefer formatted with names, else raw). */
@@ -71,14 +85,36 @@ export class WorkflowActionDialogComponent implements OnInit {
 
   /** Form IDs for this action. */
   getFormIds(): number[] {
-    const ids = this.transition.checklist?.allowedFormIds;
-    return Array.isArray(ids) ? ids : [];
+    const ids = new Set<number>();
+    const legacy = this.transition.checklist?.allowedFormIds;
+    if (Array.isArray(legacy)) {
+      legacy.forEach((id) => ids.add(id));
+    }
+    const richer = this.transition.checklist?.forms;
+    if (Array.isArray(richer)) {
+      richer.forEach((f) => {
+        const id = Number((f as { formId?: number })?.formId);
+        if (!Number.isNaN(id)) ids.add(id);
+      });
+    }
+    return Array.from(ids);
   }
 
   /** Document IDs for this action. */
   getDocumentIds(): number[] {
-    const ids = this.transition.checklist?.allowedDocumentIds;
-    return Array.isArray(ids) ? ids : [];
+    const ids = new Set<number>();
+    const legacy = this.transition.checklist?.allowedDocumentIds;
+    if (Array.isArray(legacy)) {
+      legacy.forEach((id) => ids.add(id));
+    }
+    const richer = this.transition.checklist?.documents;
+    if (Array.isArray(richer)) {
+      richer.forEach((d) => {
+        const id = Number((d as { documentId?: number })?.documentId);
+        if (!Number.isNaN(id)) ids.add(id);
+      });
+    }
+    return Array.from(ids);
   }
 
   /** Document actions (Draft, Save & Sign) for this action. */
