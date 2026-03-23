@@ -1,6 +1,9 @@
 import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { CaseDTO } from '../services/officer-case.service';
+import { OfficerWorkflowAutoExecuteService } from '../services/officer-workflow-auto-execute.service';
+import { ModuleFormSubmittedPayload } from '../module-form/module-form.component';
+import { finalize } from 'rxjs/operators';
 
 /** When opening by form ID (e.g. Form 5, Form 7), pass this so the correct form is fetched. */
 export interface FormItemByFormId {
@@ -25,7 +28,8 @@ export interface FormsActionDialogData {
 export class FormsActionDialogComponent {
   constructor(
     public dialogRef: MatDialogRef<FormsActionDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: FormsActionDialogData
+    @Inject(MAT_DIALOG_DATA) public data: FormsActionDialogData,
+    private workflowAuto: OfficerWorkflowAutoExecuteService,
   ) {}
 
   get caseId(): number {
@@ -38,19 +42,26 @@ export class FormsActionDialogComponent {
   }
 
   get formTypes(): string[] {
-    return this.data.formTypes?.length ? this.data.formTypes : ['HEARING'];
+    return this.data.formTypes?.length ? this.data.formTypes : [];
   }
 
   getFormLabel(type: string): string {
-    const labels: Record<string, string> = {
-      HEARING: 'Hearing',
-      FIELD_REPORT: 'Field Report'
-    };
-    return labels[type] || type;
+    if (!type) return 'Form';
+    return type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
   }
 
-  onFormSubmitted(): void {
-    this.dialogRef.close(true);
+  onFormSubmitted(payload: ModuleFormSubmittedPayload): void {
+    this.workflowAuto
+      .tryAfterModuleFormSubmit(
+        this.data.caseId,
+        {
+          moduleType: payload.moduleType,
+          formId: payload.formId,
+        },
+        payload.remarks || '',
+      )
+      .pipe(finalize(() => this.dialogRef.close(true)))
+      .subscribe();
   }
 
   onClose(): void {

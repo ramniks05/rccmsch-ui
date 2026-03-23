@@ -28,7 +28,7 @@ export interface ConditionalLogic {
 
 /** Config for API-driven dropdown options (field.dataSource JSON). */
 export interface DataSourceConfig {
-  type?: string;        // ADMIN_UNITS | COURTS | ACTS | CASE_NATURES | CASE_TYPES | PARTIES
+  type?: string;        // ADMIN_UNITS | COURTS | ACTS | CASE_NATURES | CASE_TYPES | FIELD_OFFICERS | PARTIES
   level?: string;       // STATE | DISTRICT | SUB_DIVISION | CIRCLE
   apiEndpoint?: string; // Custom GET endpoint, e.g. /api/public/form-data-sources/custom
   parentField?: string; // Form field name; when it changes, refetch (e.g. parentId, caseNatureId)

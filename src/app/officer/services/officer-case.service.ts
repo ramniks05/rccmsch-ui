@@ -423,8 +423,7 @@ export class OfficerCaseService {
   /**
    * Submit module form data
    * POST /api/cases/{caseId}/module-forms/{moduleType}/submit
-   * For FIELD_REPORT module, formData should be an object (not stringified)
-   * For other modules, formData can be stringified if needed
+   * Plain object formData is sent as JSON object; strings pass through; other values are stringified.
    */
   submitModuleForm(caseId: number, moduleType: string, formData: any, remarks?: string): Observable<ApiResponse<any>> {
     // Attendance is persisted in dedicated table via attendance endpoints.
@@ -474,12 +473,15 @@ export class OfficerCaseService {
       );
     }
 
-    // For FIELD_REPORT, send formData as object; for others, stringify if it's not already a string
+    // Send object payloads as JSON objects; strings pass through (admin-configured forms vary by backend).
     const payload: any = {
-      formData: moduleType === 'FIELD_REPORT' 
-        ? (typeof formData === 'string' ? JSON.parse(formData) : formData)
-        : (typeof formData === 'string' ? formData : JSON.stringify(formData)),
-      remarks
+      formData:
+        typeof formData === 'object' && formData !== null && !Array.isArray(formData)
+          ? formData
+          : typeof formData === 'string'
+            ? formData
+            : JSON.stringify(formData),
+      remarks,
     };
 
     return this.http.post<ApiResponse<any>>(
@@ -621,7 +623,11 @@ export class OfficerCaseService {
    */
   getActionFormDetails(_caseId: number, formIds: number[]): Observable<ApiResponse<ActionFormDetail[]>> {
     if (!formIds?.length) return of({ success: true, message: '', data: [] });
-    const data: ActionFormDetail[] = formIds.map(id => ({ id, name: `Form ${id}`, moduleType: 'HEARING' }));
+    const data: ActionFormDetail[] = formIds.map(id => ({
+      id,
+      name: `Form ${id}`,
+      moduleType: '',
+    }));
     return of({ success: true, message: '', data });
   }
 

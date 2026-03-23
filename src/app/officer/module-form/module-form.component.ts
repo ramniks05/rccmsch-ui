@@ -6,50 +6,59 @@ import { validateFormData, ValidationErrors } from '../../core/utils/form-valida
 import { FormDataSourceService, parseDataSource } from '../../core/services/form-data-source.service';
 import type { OptionItem } from '../../core/models/form-builder.types';
 
+/** Emitted after successful submit — used to match workflow transitions dynamically. */
+export interface ModuleFormSubmittedPayload {
+  moduleType: string;
+  formId?: number;
+  remarks: string;
+}
+
+/**
+ * Renders admin-configured module forms (any moduleType: HEARING, FIELD_REPORT, REQUEST_FIELD_REPORT, ATTENDANCE, …).
+ * Loads schema from GET …/module-forms/… or …/by-form/{formId}.
+ */
 @Component({
-  selector: 'app-hearing-form',
-  templateUrl: './hearing-form.component.html',
-  styleUrls: ['./hearing-form.component.scss']
+  selector: 'app-module-form',
+  templateUrl: './module-form.component.html',
+  styleUrls: ['./module-form.component.scss'],
 })
-export class HearingFormComponent implements OnInit {
+export class ModuleFormComponent implements OnInit {
   @Input() caseId!: number;
-  /** When set, load and submit form by this form ID (so Form 5 vs Form 7 fetch the correct form). */
+  /** When set, load and submit by form master id (correct form when multiple forms exist). */
   @Input() formId?: number;
-  /** Optional module type when opening without formId (e.g. ATTENDANCE, FIELD_REPORT). */
+  /** Module type code from workflow / admin (required when formId is not set). */
   @Input() moduleType?: string;
-  @Output() formSubmitted = new EventEmitter<void>(); // Emit when form is successfully submitted
-  
-  // Form data
+  /** Case unit id for FIELD_OFFICERS dataSource when the form has no unitId field. */
+  @Input() caseUnitId?: number | null;
+  @Output() formSubmitted = new EventEmitter<ModuleFormSubmittedPayload>();
+
   formSchema: ModuleFormField[] = [];
   formData: Record<string, unknown> = {};
   remarks: string = '';
   submittedData: any = null;
   validationErrors: ValidationErrors = {};
 
-  // UI state
   loading = false;
   submitting = false;
   viewMode = false;
-  /** Actual module type loaded from schema when opening by formId (e.g. HEARING, ATTENDANCE). */
-  currentModuleType: string = 'HEARING';
+  /** Set from schema after load, or from [moduleType] input before load. */
+  currentModuleType = '';
 
-  /** API-driven options cache (fieldName -> OptionItem[]) */
   fieldOptionsMap: Record<string, OptionItem[]> = {};
-  /** Loading state per field for dataSource */
   optionsLoadingMap: Record<string, boolean> = {};
-  /** For ATTENDANCE module display in dynamic form header. */
   latestHearingDateLabel: string | null = null;
   latestHearingDateRaw: string | null = null;
   latestHearingSubmissionId: number | null = null;
 
-  /** Visible fields based on conditional logic (for template) */
+  private resolvedCaseUnitId: number | null = null;
+
   get visibleFields(): ModuleFormField[] {
     return getVisibleFields(this.formSchema, this.formData as Record<string, unknown>) as ModuleFormField[];
   }
 
   constructor(
     private officerCaseService: OfficerCaseService,
-    private formDataSourceService: FormDataSourceService
+    private formDataSourceService: FormDataSourceService,
   ) {}
 
   ngOnInit(): void {
@@ -63,25 +72,31 @@ export class HearingFormComponent implements OnInit {
 
   getModuleDisplayName(): string {
     return this.currentModuleType
-      ? this.currentModuleType.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+      ? this.currentModuleType.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
       : 'Form';
   }
 
-  /**
-   * Load form schema and existing data (combined API call)
-   */
   loadFormWithData(): void {
     this.loading = true;
-    const requestedModuleType = (this.moduleType || this.currentModuleType || 'HEARING').toUpperCase();
-    const load$ = this.formId != null
-      ? this.officerCaseService.getModuleFormWithDataByFormId(this.caseId, this.formId)
-      : this.officerCaseService.getModuleFormWithData(this.caseId, requestedModuleType);
+    const requestedModuleType = (this.moduleType || this.currentModuleType || '').toUpperCase();
+    const load$ =
+      this.formId != null
+        ? this.officerCaseService.getModuleFormWithDataByFormId(this.caseId, this.formId)
+        : !requestedModuleType
+          ? null
+          : this.officerCaseService.getModuleFormWithData(this.caseId, requestedModuleType);
+
+    if (!load$) {
+      this.loading = false;
+      alert('Module type is required when form id is not set.');
+      return;
+    }
+
     load$.subscribe({
       next: (response) => {
         this.loading = false;
-        
+
         if (response.success && response.data) {
-          // Set schema fields
           if (response.data.schema?.fields) {
             this.formSchema = response.data.schema.fields;
             if (response.data.schema?.moduleType) {
@@ -89,23 +104,63 @@ export class HearingFormComponent implements OnInit {
             }
           }
 
-          // Set existing form data if available
           if (response.data.hasExistingData && response.data.formData) {
             this.formData = { ...response.data.formData };
-            this.viewMode = true; // Show in view mode if data exists
-            this.submittedData = { formData: response.data.formData }; // Mark as submitted
+            this.viewMode = true;
+            this.submittedData = { formData: response.data.formData };
           } else {
-            this.initializeFormData(); // Initialize with defaults
+            this.initializeFormData();
           }
-          this.loadDataSourceOptions();
-          this.loadAttendanceHeaderContextIfNeeded();
+          this.resolvedCaseUnitId =
+            this.caseUnitId != null && !Number.isNaN(Number(this.caseUnitId))
+              ? Number(this.caseUnitId)
+              : null;
+          if (
+            this.resolvedCaseUnitId != null &&
+            (this.formData['unitId'] === undefined ||
+              this.formData['unitId'] === null ||
+              this.formData['unitId'] === '')
+          ) {
+            this.formData['unitId'] = this.resolvedCaseUnitId;
+          }
+
+          const needsFieldOfficerDs = this.formSchema.some((f) => {
+            const ds = parseDataSource(f.dataSource);
+            return ds?.type === 'FIELD_OFFICERS';
+          });
+
+          const afterUnit = (): void => {
+            this.loadDataSourceOptions();
+            this.loadAttendanceHeaderContextIfNeeded();
+          };
+
+          if (needsFieldOfficerDs && this.resolvedCaseUnitId == null) {
+            this.officerCaseService.getCaseById(this.caseId).subscribe({
+              next: (res) => {
+                if (res.success && res.data?.unitId != null) {
+                  this.resolvedCaseUnitId = res.data.unitId;
+                  if (
+                    this.formData['unitId'] === undefined ||
+                    this.formData['unitId'] === null ||
+                    this.formData['unitId'] === ''
+                  ) {
+                    this.formData['unitId'] = res.data.unitId;
+                  }
+                }
+                afterUnit();
+              },
+              error: () => afterUnit(),
+            });
+          } else {
+            afterUnit();
+          }
         }
       },
       error: (error: any) => {
         this.loading = false;
-        console.error(`Error loading ${this.currentModuleType} form:`, error);
+        console.error(`Error loading ${this.currentModuleType || 'module'} form:`, error);
         alert(error.error?.message || `Failed to load ${this.getModuleDisplayName()} form`);
-      }
+      },
     });
   }
 
@@ -136,32 +191,27 @@ export class HearingFormComponent implements OnInit {
         this.latestHearingDateLabel = null;
         this.latestHearingDateRaw = null;
         this.latestHearingSubmissionId = null;
-      }
+      },
     });
   }
 
-  /**
-   * Initialize form data with default values
-   */
   initializeFormData(): void {
-    this.formSchema.forEach(field => {
+    this.formSchema.forEach((field) => {
       if (this.formData[field.fieldName] !== undefined) return;
       if (field.defaultValue) {
         this.formData[field.fieldName] = field.defaultValue;
-      } else if (field.fieldType === 'REPEATABLE_SECTION' || field.fieldType === 'DYNAMIC_FILES') {
+      } else if (
+        field.fieldType === 'REPEATABLE_SECTION' ||
+        field.fieldType === 'DYNAMIC_FILES' ||
+        field.fieldType === 'MULTISELECT'
+      ) {
         this.formData[field.fieldName] = [];
       }
     });
   }
 
-  /**
-   * Submit hearing form
-   */
   submitForm(): void {
-    this.validationErrors = validateFormData(
-      this.formSchema,
-      this.formData as Record<string, unknown>
-    );
+    this.validationErrors = validateFormData(this.formSchema, this.formData as Record<string, unknown>);
     if (Object.keys(this.validationErrors).length > 0) {
       const msg = Object.entries(this.validationErrors)
         .map(([k, v]) => `${k}: ${v}`)
@@ -180,15 +230,30 @@ export class HearingFormComponent implements OnInit {
     const submitFormData = isAttendance
       ? {
           ...sanitizedFormData,
-          hearingSubmissionId: this.latestHearingSubmissionId ?? (sanitizedFormData as any).hearingSubmissionId ?? null,
+          hearingSubmissionId:
+            this.latestHearingSubmissionId ?? (sanitizedFormData as any).hearingSubmissionId ?? null,
           hearingDate: this.latestHearingDateRaw ?? (sanitizedFormData as any).hearingDate ?? null,
         }
       : sanitizedFormData;
-    const submit$ = this.formId != null
-      ? (isAttendance
+
+    const moduleForSubmit = this.currentModuleType;
+    if (!moduleForSubmit && this.formId == null) {
+      this.submitting = false;
+      alert('Cannot submit: module type is unknown.');
+      return;
+    }
+
+    const submit$ =
+      this.formId != null
+        ? isAttendance
           ? this.officerCaseService.submitModuleForm(this.caseId, 'ATTENDANCE', submitFormData, this.remarks)
-          : this.officerCaseService.submitModuleFormByFormId(this.caseId, this.formId, submitFormData, this.remarks))
-      : this.officerCaseService.submitModuleForm(this.caseId, this.currentModuleType || 'HEARING', submitFormData, this.remarks);
+          : this.officerCaseService.submitModuleFormByFormId(this.caseId, this.formId, submitFormData, this.remarks)
+        : this.officerCaseService.submitModuleForm(
+            this.caseId,
+            moduleForSubmit,
+            submitFormData,
+            this.remarks,
+          );
     submit$.subscribe({
       next: (response) => {
         alert(`${this.getModuleDisplayName()} form submitted successfully`);
@@ -196,44 +261,35 @@ export class HearingFormComponent implements OnInit {
         this.viewMode = true;
         this.submitting = false;
         this.validationErrors = {};
-        // Notify parent component to reload transitions and case details
-        this.formSubmitted.emit();
+        this.formSubmitted.emit({
+          moduleType: moduleForSubmit,
+          formId: this.formId,
+          remarks: this.remarks || '',
+        });
       },
       error: (error) => {
         console.error('Error submitting form:', error);
         alert(`Failed to submit ${this.getModuleDisplayName()} form`);
         this.submitting = false;
-      }
+      },
     });
   }
 
-  /**
-   * Enable edit mode
-   */
   enableEdit(): void {
     this.viewMode = false;
   }
 
-  /**
-   * Cancel edit
-   */
   cancelEdit(): void {
     if (this.submittedData) {
-      this.loadFormWithData(); // Reload data
+      this.loadFormWithData();
       this.viewMode = true;
     }
   }
 
-  /**
-   * Refresh form data
-   */
   refresh(): void {
     this.loadFormWithData();
   }
 
-  /**
-   * Get field value for display
-   */
   getFieldValue(field: ModuleFormField): any {
     const value = this.formData[field.fieldName];
     if (field.fieldType === 'REPEATABLE_SECTION' || field.fieldType === 'DYNAMIC_FILES') {
@@ -246,6 +302,16 @@ export class HearingFormComponent implements OnInit {
         return value ? new Date(value as string).toLocaleString() : '';
       case 'CHECKBOX':
         return value ? 'Yes' : 'No';
+      case 'MULTISELECT': {
+        if (!Array.isArray(value) || value.length === 0) return '-';
+        const options = this.getOptions(field);
+        return value
+          .map((v) => {
+            const option = options.find((o) => o.value === v || String(o.value) === String(v));
+            return option ? option.label : String(v);
+          })
+          .join(', ');
+      }
       case 'SELECT':
       case 'RADIO': {
         const options = this.getOptions(field);
@@ -255,6 +321,26 @@ export class HearingFormComponent implements OnInit {
       default:
         return value;
     }
+  }
+
+  /** Mat-select multiple binds to an array; normalize from API / partial data. */
+  getMultiSelectValue(field: ModuleFormField): unknown[] {
+    const v = this.formData[field.fieldName];
+    if (Array.isArray(v)) return v;
+    if (v === null || v === undefined || v === '') return [];
+    return [v];
+  }
+
+  onMultiSelectChange(field: ModuleFormField, value: unknown[] | null): void {
+    this.formData[field.fieldName] = Array.isArray(value) ? value : [];
+    this.onFieldChange(field.fieldName, this.formData[field.fieldName]);
+  }
+
+  /** Match option values when API uses number vs string. */
+  multiSelectCompare(a: unknown, b: unknown): boolean {
+    if (a === b) return true;
+    if (a == null || b == null) return false;
+    return String(a) === String(b);
   }
 
   isFieldVisible(field: ModuleFormField): boolean {
@@ -269,19 +355,16 @@ export class HearingFormComponent implements OnInit {
     this.formData[fieldName] = value;
   }
 
-  /** Typed getter for repeatable section value (avoids template type errors). */
   getRepeatableValue(fieldName: string): Record<string, unknown>[] {
     const v = this.formData[fieldName];
     return Array.isArray(v) ? (v as Record<string, unknown>[]) : [];
   }
 
-  /** Typed getter for dynamic files value (avoids template type errors). */
   getDynamicFilesValue(fieldName: string): { fileId: string; fileName: string; fileSize: number }[] {
     const v = this.formData[fieldName];
     return Array.isArray(v) ? (v as { fileId: string; fileName: string; fileSize: number }[]) : [];
   }
 
-  /** Get rich text content as string for binding (template cannot use type casts). */
   getRichTextContent(fieldName: string): string {
     const v = this.formData[fieldName];
     return v != null && typeof v === 'string' ? v : '';
@@ -291,23 +374,26 @@ export class HearingFormComponent implements OnInit {
     this.formData[fieldName] = value;
   }
 
-  /**
-   * When a field value changes, update formData and refetch options for any field that depends on it.
-   */
   onFieldChange(fieldName: string, value: unknown): void {
     this.formData[fieldName] = value;
     this.refreshDataSourceOptionsForDependents(fieldName);
   }
 
-  /**
-   * Load options from API for all fields that have dataSource.
-   */
+  private getFormDataForDataSources(): Record<string, unknown> {
+    const base = this.formData as Record<string, unknown>;
+    const u = base['unitId'];
+    if (this.resolvedCaseUnitId != null && (u === null || u === undefined || u === '')) {
+      return { ...base, unitId: this.resolvedCaseUnitId };
+    }
+    return base;
+  }
+
   loadDataSourceOptions(): void {
     this.formSchema.forEach((field) => {
       if (!parseDataSource(field.dataSource)) return;
       this.optionsLoadingMap[field.fieldName] = true;
       this.formDataSourceService
-        .getOptionsForField(field, this.formData as Record<string, unknown>)
+        .getOptionsForField(field, this.getFormDataForDataSources())
         .subscribe({
           next: (list) => {
             this.fieldOptionsMap[field.fieldName] = list;
@@ -320,16 +406,13 @@ export class HearingFormComponent implements OnInit {
     });
   }
 
-  /**
-   * Refetch options for fields whose dependsOnField is the given field name.
-   */
   refreshDataSourceOptionsForDependents(changedFieldName: string): void {
     this.formSchema.forEach((field) => {
       if (field.dependsOnField !== changedFieldName || !parseDataSource(field.dataSource)) return;
       this.optionsLoadingMap[field.fieldName] = true;
-      this.formData[field.fieldName] = undefined; // clear dependent value
+      this.formData[field.fieldName] = undefined;
       this.formDataSourceService
-        .getOptionsForField(field, this.formData as Record<string, unknown>)
+        .getOptionsForField(field, this.getFormDataForDataSources())
         .subscribe({
           next: (list) => {
             this.fieldOptionsMap[field.fieldName] = list;
@@ -342,9 +425,6 @@ export class HearingFormComponent implements OnInit {
     });
   }
 
-  /**
-   * Get options for select/radio: from API (dataSource) or static fieldOptions.
-   */
   getOptions(field: ModuleFormField): OptionItem[] {
     if (parseDataSource(field.dataSource)) {
       return this.fieldOptionsMap[field.fieldName] ?? [];
@@ -364,9 +444,6 @@ export class HearingFormComponent implements OnInit {
     return !!this.optionsLoadingMap[field.fieldName];
   }
 
-  /**
-   * Check if field type needs options
-   */
   isSelectType(fieldType: FieldType): boolean {
     return ['SELECT', 'MULTISELECT', 'RADIO'].includes(fieldType);
   }

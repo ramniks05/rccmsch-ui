@@ -1,7 +1,8 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { OfficerCaseService, CaseDTO } from '../services/officer-case.service';
-import { ModuleType } from '../../admin/services/module-forms.service';
+import { OfficerWorkflowAutoExecuteService } from '../services/officer-workflow-auto-execute.service';
 
 interface DocumentData {
   id?: number;
@@ -20,13 +21,15 @@ interface DocumentData {
   templateUrl: './document-editor.component.html',
   styleUrls: ['./document-editor.component.scss']
 })
-export class DocumentEditorComponent implements OnInit {
+export class DocumentEditorComponent implements OnInit, OnChanges {
   @Input() caseId!: number;
   @Input() caseData!: CaseDTO;
   /** Template ID (from permission-documents / allowedDocumentIds). Required for officer document APIs. */
   @Input() templateId!: number;
   /** Optional: module type for display only when template doesn't provide it (e.g. NOTICE, ORDERSHEET, JUDGEMENT). */
-  @Input() documentType: ModuleType = 'NOTICE';
+  @Input() documentType: string = 'NOTICE';
+  /** When true (e.g. Order Sheet), start in edit mode so the officer can work the template immediately. */
+  @Input() openInEditMode = false;
   
   // Template & Document data
   template: any = null;
@@ -40,6 +43,9 @@ export class DocumentEditorComponent implements OnInit {
   saving = false;
   editMode = false;
   previewMode = false;
+  /** Template + document requests run in parallel; both must finish before optional auto edit mode. */
+  private templateLoadSettled = false;
+  private documentLoadSettled = false;
   // Workflow-based action permissions for this document template
   allowDraftFromWorkflow = false;
   allowSaveAndSignFromWorkflow = false;
@@ -53,7 +59,9 @@ export class DocumentEditorComponent implements OnInit {
 
   constructor(
     private officerCaseService: OfficerCaseService,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private workflowAuto: OfficerWorkflowAutoExecuteService,
+    private snackBar: MatSnackBar,
   ) {
     this.loadUserRole();
   }
@@ -76,12 +84,51 @@ export class DocumentEditorComponent implements OnInit {
   }
   
   ngOnInit(): void {
+    this.resetLoadFlags();
     if (this.caseId && this.templateId != null) {
       this.loadUserRole(); // Ensure role is loaded
       this.initializePlaceholders();
       this.loadTemplate();
       this.loadDocument();
     }
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    const tidCh = changes['templateId'];
+    const cidCh = changes['caseId'];
+    if (!tidCh && !cidCh) {
+      return;
+    }
+    const tidFirst = !tidCh || tidCh.firstChange;
+    const cidFirst = !cidCh || cidCh.firstChange;
+    if (tidFirst && cidFirst) {
+      return;
+    }
+    this.resetLoadFlags();
+    if (this.caseId && this.templateId != null) {
+      this.initializePlaceholders();
+      this.loadTemplate();
+      this.loadDocument();
+    }
+  }
+
+  private resetLoadFlags(): void {
+    this.templateLoadSettled = false;
+    this.documentLoadSettled = false;
+  }
+
+  private tryApplyOpenInEditMode(): void {
+    if (!this.openInEditMode || !this.template || !this.templateLoadSettled || !this.documentLoadSettled) {
+      return;
+    }
+    if (!this.canEdit()) {
+      return;
+    }
+    setTimeout(() => {
+      if (this.openInEditMode && this.canEdit()) {
+        this.enableEdit();
+      }
+    }, 0);
   }
 
   /**
@@ -178,15 +225,19 @@ export class DocumentEditorComponent implements OnInit {
           this.contentHtml = this.replacePlaceholders(this.template.templateHtml);
         }
         this.loading = false;
+        this.templateLoadSettled = true;
         // Once we know the template (and its ID), load workflow permissions for this document
         if (this.template && this.template.id) {
           this.loadWorkflowDocumentPermissions();
         }
+        this.tryApplyOpenInEditMode();
       },
       error: (error) => {
         console.error('Error loading template:', error);
         alert('Failed to load document template');
         this.loading = false;
+        this.templateLoadSettled = true;
+        this.tryApplyOpenInEditMode();
       }
     });
   }
@@ -260,10 +311,14 @@ export class DocumentEditorComponent implements OnInit {
           }
         }
         this.loading = false;
+        this.documentLoadSettled = true;
+        this.tryApplyOpenInEditMode();
       },
       error: (error) => {
         console.error('Error loading document:', error);
         this.loading = false;
+        this.documentLoadSettled = true;
+        this.tryApplyOpenInEditMode();
       }
     });
   }
@@ -399,6 +454,10 @@ export class DocumentEditorComponent implements OnInit {
           this.documentStatus = returnedStatus as 'DRAFT' | 'FINAL' | 'SIGNED';
           this.editMode = false;
           this.saving = false;
+          this.triggerAutoWorkflowAfterDocumentSave(
+            templateId,
+            String(returnedStatus),
+          );
         },
         error: (error) => {
           console.error('Document update error:', error);
@@ -424,6 +483,10 @@ export class DocumentEditorComponent implements OnInit {
           this.documentStatus = returnedStatus as 'DRAFT' | 'FINAL' | 'SIGNED';
           this.editMode = false;
           this.saving = false;
+          this.triggerAutoWorkflowAfterDocumentSave(
+            templateId,
+            String(returnedStatus),
+          );
         },
         error: (error) => {
           console.error('Document save error:', error);
@@ -433,6 +496,33 @@ export class DocumentEditorComponent implements OnInit {
         }
       });
     }
+  }
+
+  /**
+   * After FINAL/SIGNED save, run any matching executable transition from GET /transitions
+   * (allowedDocumentIds includes this templateId). Skips DRAFT.
+   */
+  private triggerAutoWorkflowAfterDocumentSave(
+    templateId: number,
+    returnedStatus: string,
+  ): void {
+    this.workflowAuto
+      .tryAfterDocumentSave(this.caseId, templateId, returnedStatus)
+      .subscribe((result) => {
+        if (result.executed) {
+          if (result.ambiguous && result.message) {
+            this.snackBar.open(result.message, 'Close', { duration: 6000 });
+          } else {
+            this.snackBar.open(
+              'Workflow step completed for this document.',
+              'Close',
+              { duration: 5000 },
+            );
+          }
+        } else if (result.commentsRequired && result.message) {
+          this.snackBar.open(result.message, 'Close', { duration: 6000 });
+        }
+      });
   }
 
   /**
@@ -471,18 +561,9 @@ export class DocumentEditorComponent implements OnInit {
    * Get document type label
    */
   getDocumentTypeLabel(): string {
-    const labels: Record<ModuleType, string> = {
-      'HEARING': 'Hearing',
-      'NOTICE': 'Notice',
-      'NOTICE_DRAFT': 'Notice Draft',
-      'ORDERSHEET': 'Order Sheet',
-      'JUDGEMENT': 'Judgement',
-      'ATTENDANCE': 'Attendance',
-      'FIELD_REPORT': 'Field Report',
-      'FIELD_REPORT_REQUEST': 'Field Report Request',
-      'SUBMIT_FIELD_REPORT': 'Submit Field Report'
-    };
-    return labels[this.documentType] || this.documentType;
+    const t = this.documentType;
+    if (!t) return 'Document';
+    return String(t).replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
   }
 
   /**
