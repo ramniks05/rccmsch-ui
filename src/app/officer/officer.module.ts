@@ -6,10 +6,8 @@ import { OfficerHomeComponent } from './officer-home/officer-home.component';
 import { OfficerMyCasesComponent } from './officer-my-cases/officer-my-cases.component';
 import { OfficerCaseDetailComponent } from './officer-case-detail/officer-case-detail.component';
 import { WorkflowActionDialogComponent } from './workflow-action-dialog/workflow-action-dialog.component';
-import { HearingFormComponent } from './hearing-form/hearing-form.component';
+import { ModuleFormComponent } from './module-form/module-form.component';
 import { DocumentEditorComponent } from './document-editor/document-editor.component';
-import { FieldReportRequestDialogComponent } from './field-report-request-dialog/field-report-request-dialog.component';
-import { FieldReportViewComponent } from './field-report-view/field-report-view.component';
 import { DocumentsActionDialogComponent } from './documents-action-dialog/documents-action-dialog.component';
 import { FormsActionDialogComponent } from './forms-action-dialog/forms-action-dialog.component';
 import { HearingShiftComponent } from './hearing-shift/hearing-shift.component';
@@ -59,10 +57,8 @@ const routes: Routes = [
     OfficerMyCasesComponent,
     OfficerCaseDetailComponent,
     WorkflowActionDialogComponent,
-    HearingFormComponent,
+    ModuleFormComponent,
     DocumentEditorComponent,
-    FieldReportRequestDialogComponent,
-    FieldReportViewComponent,
     DocumentsActionDialogComponent,
     FormsActionDialogComponent,
     HearingShiftComponent

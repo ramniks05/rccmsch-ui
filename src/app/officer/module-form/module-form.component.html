@@ -1,8 +1,8 @@
-<div class="hearing-form-container">
+<div class="module-form-container">
   <div class="card">
     <div class="card-header bg-info text-white">
       <h5 class="mb-0">
-        <i class="bi bi-calendar-event"></i> {{ getModuleDisplayName() }} Form
+        <i class="bi bi-file-earmark-text"></i> {{ getModuleDisplayName() }} Form
       </h5>
       <div *ngIf="currentModuleType === 'ATTENDANCE' && latestHearingDateLabel" class="small mt-1">
         Latest Hearing Date: {{ latestHearingDateLabel }}
@@ -27,8 +27,8 @@
         <!-- View Mode Header -->
         <div *ngIf="viewMode && submittedData" class="alert alert-success d-flex justify-content-between align-items-center">
           <div>
-            <i class="bi bi-check-circle"></i> 
-            <strong>Hearing form submitted</strong>
+            <i class="bi bi-check-circle"></i>
+            <strong>Form submitted</strong>
             <span *ngIf="submittedData.submittedAt"> on {{ submittedData.submittedAt | date:'medium' }}</span>
           </div>
           <button class="btn btn-sm btn-primary" (click)="enableEdit()">
@@ -40,7 +40,7 @@
         <div class="row g-3">
           <div *ngFor="let field of visibleFields" [class.col-md-6]="field.fieldType !== 'REPEATABLE_SECTION' && field.fieldType !== 'DYNAMIC_FILES'" [class.col-12]="field.fieldType === 'REPEATABLE_SECTION' || field.fieldType === 'DYNAMIC_FILES'">
             <div class="mb-3">
-              <label *ngIf="field.fieldType !== 'REPEATABLE_SECTION' && field.fieldType !== 'DYNAMIC_FILES'" [for]="field.fieldName" class="form-label">
+              <label *ngIf="field.fieldType !== 'REPEATABLE_SECTION' && field.fieldType !== 'DYNAMIC_FILES' && field.fieldType !== 'MULTISELECT'" [for]="field.fieldName" class="form-label">
                 {{ field.fieldLabel }}
                 <span *ngIf="isFieldRequired(field)" class="text-danger">*</span>
               </label>
@@ -51,7 +51,7 @@
               </div>
 
               <!-- Text Input -->
-              <input 
+              <input
                 *ngIf="!viewMode && field.fieldType === 'TEXT'"
                 [id]="field.fieldName"
                 type="text"
@@ -61,7 +61,7 @@
                 [required]="field.isRequired">
 
               <!-- Text Area -->
-              <textarea 
+              <textarea
                 *ngIf="!viewMode && field.fieldType === 'TEXTAREA'"
                 [id]="field.fieldName"
                 class="form-control"
@@ -78,12 +78,12 @@
                 [placeholder]="field.placeholder || 'Enter content...'"
                 [height]="'400px'"
               ></app-rich-text-editor>
-              
+
               <!-- Rich Text View Mode -->
               <div *ngIf="viewMode && field.fieldType === 'RICH_TEXT'" class="rich-text-view" [innerHTML]="formData[field.fieldName]"></div>
 
               <!-- Number Input -->
-              <input 
+              <input
                 *ngIf="!viewMode && field.fieldType === 'NUMBER'"
                 [id]="field.fieldName"
                 type="number"
@@ -93,7 +93,7 @@
                 [required]="field.isRequired">
 
               <!-- Date Input -->
-              <input 
+              <input
                 *ngIf="!viewMode && field.fieldType === 'DATE'"
                 [id]="field.fieldName"
                 type="date"
@@ -102,7 +102,7 @@
                 [required]="field.isRequired">
 
               <!-- DateTime Input -->
-              <input 
+              <input
                 *ngIf="!viewMode && field.fieldType === 'DATETIME'"
                 [id]="field.fieldName"
                 type="datetime-local"
@@ -112,7 +112,7 @@
 
               <!-- Select Dropdown (supports dataSource API) -->
               <div *ngIf="!viewMode && field.fieldType === 'SELECT'" class="position-relative">
-                <select 
+                <select
                   [id]="field.fieldName"
                   class="form-select"
                   [ngModel]="formData[field.fieldName]"
@@ -127,26 +127,38 @@
                 <span *ngIf="isOptionsLoading(field)" class="position-absolute end-0 top-50 translate-middle-y me-2 spinner-border spinner-border-sm text-primary" role="status"></span>
               </div>
 
-              <!-- Multi-Select (supports dataSource API) -->
-              <div *ngIf="!viewMode && field.fieldType === 'MULTISELECT'" class="position-relative">
-                <select 
-                  [id]="field.fieldName"
-                  class="form-select"
-                  multiple
-                  [ngModel]="formData[field.fieldName]"
-                  (ngModelChange)="onFieldChange(field.fieldName, $event)"
-                  [required]="field.isRequired"
-                  [disabled]="isOptionsLoading(field)">
-                  <option *ngFor="let option of getOptions(field)" [value]="option.value">
-                    {{ option.label }}
-                  </option>
-                </select>
-                <span *ngIf="isOptionsLoading(field)" class="position-absolute end-0 top-50 translate-middle-y me-2 spinner-border spinner-border-sm text-primary" role="status"></span>
+              <!-- Multi-Select: Material dropdown (searchable-style panel, chip-style selection summary) -->
+              <div *ngIf="!viewMode && field.fieldType === 'MULTISELECT'" class="module-multiselect-wrap">
+                <mat-form-field appearance="outline" class="module-multiselect-field w-100">
+                  <mat-label>
+                    {{ field.fieldLabel }}
+                    <span *ngIf="isFieldRequired(field)" class="text-danger">*</span>
+                  </mat-label>
+                  <mat-select
+                    [id]="field.fieldName"
+                    multiple
+                    [compareWith]="multiSelectCompare"
+                    [ngModel]="getMultiSelectValue(field)"
+                    (ngModelChange)="onMultiSelectChange(field, $event)"
+                    [disabled]="isOptionsLoading(field)"
+                    [placeholder]="field.placeholder || 'Select one or more'"
+                    panelClass="module-multiselect-panel">
+                    <mat-option *ngFor="let option of getOptions(field)" [value]="option.value">
+                      {{ option.label }}
+                    </mat-option>
+                  </mat-select>
+                  <mat-spinner
+                    *ngIf="isOptionsLoading(field)"
+                    matSuffix
+                    diameter="20"
+                    class="module-multiselect-spinner">
+                  </mat-spinner>
+                </mat-form-field>
               </div>
 
               <!-- Checkbox -->
               <div *ngIf="!viewMode && field.fieldType === 'CHECKBOX'" class="form-check">
-                <input 
+                <input
                   [id]="field.fieldName"
                   type="checkbox"
                   class="form-check-input"
@@ -160,7 +172,7 @@
               <div *ngIf="!viewMode && field.fieldType === 'RADIO'">
                 <span *ngIf="isOptionsLoading(field)" class="spinner-border spinner-border-sm text-primary me-2" role="status"></span>
                 <div *ngFor="let option of getOptions(field)" class="form-check">
-                  <input 
+                  <input
                     [id]="field.fieldName + '_' + option.value"
                     type="radio"
                     class="form-check-input"
@@ -177,7 +189,7 @@
               </div>
 
               <!-- File Upload -->
-              <input 
+              <input
                 *ngIf="!viewMode && field.fieldType === 'FILE'"
                 [id]="field.fieldName"
                 type="file"
@@ -218,7 +230,7 @@
         <!-- Remarks -->
         <div class="mb-3 mt-3">
           <label for="remarks" class="form-label">Remarks</label>
-          <textarea 
+          <textarea
             *ngIf="!viewMode"
             id="remarks"
             class="form-control"
@@ -232,10 +244,10 @@
 
         <!-- Action Buttons -->
         <div class="d-flex gap-2">
-          <button 
+          <button
             *ngIf="!viewMode"
-            class="btn btn-primary" 
-            (click)="submitForm()" 
+            class="btn btn-primary"
+            (click)="submitForm()"
             [disabled]="submitting">
             <span *ngIf="!submitting">
               <i class="bi bi-save"></i> Submit
@@ -244,9 +256,9 @@
               <span class="spinner-border spinner-border-sm me-2"></span> Submitting...
             </span>
           </button>
-          <button 
+          <button
             *ngIf="!viewMode && submittedData"
-            class="btn btn-secondary" 
+            class="btn btn-secondary"
             (click)="cancelEdit()"
             [disabled]="submitting">
             <i class="bi bi-x-circle"></i> Cancel

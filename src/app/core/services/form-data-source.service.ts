@@ -68,18 +68,32 @@ export class FormDataSourceService {
     const ds = parseDataSource(field.dataSource);
     if (!ds) return of([]);
 
-    const valueKey = ds.valueKey ?? 'id';
-    const labelKey = ds.labelKey ?? 'name';
-    const parentValue = ds.parentField ? formData[ds.parentField] : undefined;
+    const parentFieldName: string | undefined =
+      ds.type === 'FIELD_OFFICERS'
+        ? (ds.parentField ?? 'unitId')
+        : ds.parentField ?? undefined;
+    const parentValue =
+      parentFieldName != null ? formData[parentFieldName] : undefined;
+
+    const valueKey =
+      ds.valueKey ?? (ds.type === 'FIELD_OFFICERS' ? 'officerId' : 'id');
+    const labelKey =
+      ds.labelKey ?? (ds.type === 'FIELD_OFFICERS' ? 'officerName' : 'name');
 
     // If this source depends on a parent and parent is empty, return empty
-    if (ds.parentField != null && (parentValue === null || parentValue === undefined || parentValue === '')) {
+    if (
+      parentFieldName != null &&
+      (parentValue === null || parentValue === undefined || parentValue === '')
+    ) {
       return of([]);
     }
 
-    const parentParam = ds.parentField != null && parentValue != null && parentValue !== ''
-      ? `&${ds.parentField}=${encodeURIComponent(String(parentValue))}`
-      : '';
+    const parentParam =
+      parentFieldName != null &&
+      parentValue != null &&
+      parentValue !== ''
+        ? `&${parentFieldName}=${encodeURIComponent(String(parentValue))}`
+        : '';
 
     let url: string;
     if (ds.type === 'ADMIN_UNITS') {
@@ -95,6 +109,8 @@ export class FormDataSourceService {
     } else if (ds.type === 'CASE_TYPES') {
       if (parentValue == null || parentValue === '') return of([]);
       url = `${this.baseUrl}/public/form-data-sources/case-types?caseNatureId=${encodeURIComponent(String(parentValue))}`;
+    } else if (ds.type === 'FIELD_OFFICERS') {
+      url = `${this.baseUrl}/admin/postings/field-officers/unit/${encodeURIComponent(String(parentValue))}`;
     } else if (ds.apiEndpoint) {
       const path = ds.apiEndpoint.startsWith('/') ? ds.apiEndpoint.slice(1) : ds.apiEndpoint;
       const sep = path.includes('?') ? '&' : '?';

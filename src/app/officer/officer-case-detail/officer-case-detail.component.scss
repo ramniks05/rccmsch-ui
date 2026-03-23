@@ -7,8 +7,8 @@
 
 // ── Base ──────────────────────────────────────────────────────────────────────
 .case-detail-container {
-  padding: 16px 16px 32px;
-  max-width: 90%;
+  padding: 12px 16px 28px;
+  max-width: min(1400px, 98vw);
   margin: auto;
   background: transparent;
   min-height: 100vh;
@@ -116,7 +116,34 @@
 }
 
 // ── Case Content ──────────────────────────────────────────────────────────────
-.case-content { display: flex; flex-direction: column; }
+.case-content { display: flex; flex-direction: column; gap: 0; }
+
+// ── Case overview frame: metadata + workflow as one card ─────────────────────
+.case-overview-frame {
+  margin-bottom: 20px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(26, 53, 88, 0.06);
+  overflow: hidden;
+  background: #ffffff;
+
+  > .hero-card {
+    border-radius: 0;
+  }
+
+  > .case-action-bar {
+    border: none;
+  }
+
+  .action-workflow-unified {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .action-step-panel {
+    border-top: none;
+  }
+}
 
 // ── Hero Card ─────────────────────────────────────────────────────────────────
 .hero-card {
@@ -186,6 +213,10 @@
     gap: 24px 32px;
   }
 
+  .hero-fields--compact {
+    gap: 20px 40px;
+  }
+
   .hero-field {
     min-width: 120px;
 
@@ -212,78 +243,315 @@
   background: #eff6ff;
   border: 1px solid #bfdbfe;
   border-top: none;
-  padding: 10px 20px;
+  padding: 8px 16px;
   margin-bottom: 0;
 
   .pending-with-content {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
 
     mat-icon {
       color: #1d4ed8;
-      font-size: 20px;
+      font-size: 18px;
       flex-shrink: 0;
-    }
-
-    .pending-with-label {
-      font-size: 12px;
-      color: #3b82f6;
-      font-weight: 500;
-      margin-right: 6px;
     }
 
     .pending-with-role {
       font-size: 13px;
-      font-weight: 700;
+      font-weight: 600;
       color: #1e3a8a;
     }
   }
 }
 
-// ── Tabs ──────────────────────────────────────────────────────────────────────
-.case-tabs {
-  background: transparent;
+// ── Workflow action bar (above sidebar: choose action first) ───────────────────
+.case-action-bar {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-top: 1px solid #e5e7eb;
+}
 
-  ::ng-deep .mat-mdc-tab-header {
-    background: #f8f9fb !important;
-    border: 1px solid #e5e7eb !important;
-    border-top: none !important;
-    padding: 0 12px;
-  }
+.pending-with-card + .case-action-bar {
+  border-top: none;
+}
 
-  ::ng-deep .mat-mdc-tab {
-    font-family: 'Segoe UI', system-ui, sans-serif !important;
-    font-size: 13px !important;
-    font-weight: 500 !important;
-    color: #6b7280 !important;
-    min-width: 90px !important;
-    height: 44px !important;
-    opacity: 1 !important;
-  }
+.action-bar-loading,
+.action-bar-error,
+.action-bar-empty {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  font-size: 13px;
+  color: #4b5563;
+}
 
-  ::ng-deep .mat-mdc-tab.mdc-tab--active {
-    color: #1a3558 !important;
-  }
+.action-bar-error {
+  flex-wrap: wrap;
+  background: #fef2f2;
+  border-bottom: 1px solid #fecaca;
 
-  ::ng-deep .mdc-tab-indicator__content--underline {
-    border-color: #1a3558 !important;
-    border-width: 2px !important;
-  }
-
-  ::ng-deep .mat-mdc-tab-body-wrapper {
-    background: #ffffff !important;
-    border: 1px solid #e5e7eb !important;
-    border-top: none !important;
-    border-radius: 0 0 12px 12px !important;
+  mat-icon {
+    flex-shrink: 0;
   }
 }
 
-.tab-content {
-  padding: 24px;
+.action-bar-empty {
+  color: #6b7280;
+
+  mat-icon {
+    color: #9ca3af;
+    font-size: 22px !important;
+    width: 22px !important;
+    height: 22px !important;
+  }
+}
+
+.action-picker-section-elevated {
+  border-bottom: none;
+}
+
+.case-sidebar-hint {
+  margin: 0 0 8px;
+  padding: 8px 10px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #6b7280;
+  background: #f9fafb;
+  border-radius: 6px;
+}
+
+.action-tab-empty {
+  padding: 28px 16px;
+}
+
+.action-picker-head--compact {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 10px 16px 6px;
+  border-bottom: 1px solid #eef2f7;
+
+  .action-picker-head-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+  }
+
+  .action-picker-head-sub {
+    font-size: 12px;
+    font-weight: 400;
+    color: #6b7280;
+    line-height: 1.4;
+  }
+}
+
+.action-step-body {
+  padding: 12px 16px 16px;
+}
+
+.action-blocking--compact {
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+
+  .blocking-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: #92400e;
+    margin-bottom: 6px;
+  }
+
+  ul {
+    margin: 0;
+    padding-left: 18px;
+
+    li {
+      font-size: 12.5px;
+      color: #78350f;
+      line-height: 1.45;
+    }
+  }
+}
+
+.action-description--compact {
+  margin: 0 0 10px;
+  font-size: 12.5px;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+.action-forms-docs--readonly {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 8px;
+  padding: 8px 0 0;
+
+  .action-meta-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    flex-wrap: wrap;
+
+    .meta-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: #6b7280;
+      min-width: 5rem;
+      padding-top: 2px;
+    }
+  }
+
+  .action-name-list {
+    flex: 1;
+    min-width: 0;
+    font-size: 13px;
+    font-weight: 500;
+    color: #374151;
+    line-height: 1.45;
+  }
+
+  .action-doc-actions-hint {
+    font-weight: 400;
+    font-size: 12px;
+    color: #6b7280;
+  }
+}
+
+.action-step-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.action-cta-note {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+// ── Sidebar + main panel (replaces horizontal mat-tabs) ─────────────────────────
+.case-workspace {
+  display: flex;
+  align-items: stretch;
+  min-height: 420px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+  overflow: hidden;
+}
+
+.case-sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  background: #f8f9fb;
+  border-right: 1px solid #e5e7eb;
+  padding: 10px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.case-sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px 10px 12px;
+  border: none;
+  border-left: 3px solid transparent;
+  background: transparent;
+  color: #4b5563;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+
+  &:hover {
+    background: rgba(26, 53, 88, 0.06);
+    color: #1a3558;
+  }
+}
+
+.case-sidebar-item-active {
+  background: #ffffff;
+  color: #1a3558;
+  border-left-color: #1a3558;
+  box-shadow: inset 0 0 0 1px #e5e7eb;
+}
+
+.case-sidebar-item-emphasis:not(.case-sidebar-item-active) {
+  border-left-color: rgba(217, 119, 6, 0.45);
+}
+
+.case-sidebar-icon {
+  font-size: 20px !important;
+  width: 20px !important;
+  height: 20px !important;
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+.case-sidebar-item-active .case-sidebar-icon {
+  color: #1a3558;
+}
+
+.case-sidebar-label {
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.case-main-panel {
+  flex: 1;
+  min-width: 0;
+  background: #ffffff;
+  overflow: auto;
+}
+
+.tab-content {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.tab-content--compact {
+  padding: 16px 18px;
+  gap: 14px;
+}
+
+.section-header--minimal {
+  padding: 10px 14px;
+  background: #fafbfc;
+  gap: 0;
+
+  .section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+  }
+
+  .section-icon {
+    display: none;
+  }
+}
+
+.detail-grid--readable {
+  .detail-cell--span-subject {
+    grid-column: 1 / -1;
+    border-right: none;
+  }
 }
 
 // ── Detail Section ────────────────────────────────────────────────────────────
@@ -442,6 +710,150 @@
   &.priority-high   { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
   &.priority-medium { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
   &.priority-low    { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+}
+
+// ── Action picker (top strip: checkbox + name; details below for selection only) ─
+.action-picker-section {
+  border-bottom: 1px solid #e5e7eb;
+  background: #ffffff;
+}
+
+.action-picker-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  padding: 14px 18px 10px;
+
+  .action-picker-head-icon {
+    color: #1a3558;
+    font-size: 22px;
+    width: 22px;
+    height: 22px;
+  }
+
+  .action-picker-head-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #111827;
+  }
+
+  .action-picker-head-hint {
+    flex: 1 1 100%;
+    font-size: 12px;
+    color: #6b7280;
+    line-height: 1.4;
+    padding-left: 30px;
+  }
+}
+
+.action-picker-list {
+  padding: 0 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.action-picker-list.action-picker-list-horizontal {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 10px;
+  padding: 0 16px 12px;
+
+  .action-picker-row {
+    flex: 1 1 200px;
+    min-width: 180px;
+    max-width: 360px;
+  }
+}
+
+.action-step-panel {
+  border-top: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.action-step-panel-inner {
+  border-radius: 0;
+  border: none;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.action-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #ffffff;
+  cursor: pointer;
+  transition: border-color 0.12s, box-shadow 0.12s;
+
+  &:hover {
+    border-color: #93c5fd;
+    box-shadow: 0 1px 4px rgba(26, 53, 88, 0.06);
+  }
+
+  &.action-picker-row-active {
+    border-color: #1a3558;
+    box-shadow: 0 0 0 1px rgba(26, 53, 88, 0.12);
+  }
+}
+
+.action-picker-checkbox {
+  flex-shrink: 0;
+}
+
+.action-picker-type-icon {
+  font-size: 20px !important;
+  width: 20px !important;
+  height: 20px !important;
+  flex-shrink: 0;
+
+  &.action-approve { color: #16a34a; }
+  &.action-reject  { color: #dc2626; }
+  &.action-return  { color: #d97706; }
+  &.action-default { color: #1a3558; }
+}
+
+.action-picker-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.action-picker-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #111827;
+  line-height: 1.3;
+}
+
+.action-picker-code {
+  font-size: 11px;
+  font-family: 'Courier New', monospace;
+  color: #9ca3af;
+}
+
+.action-detail-empty {
+  padding: 18px 12px;
+  text-align: center;
+
+  p {
+    margin: 0;
+    font-size: 13px;
+    color: #6b7280;
+    line-height: 1.5;
+  }
+}
+
+.action-list-single {
+  padding-top: 4px;
 }
 
 // ── Action List (per-transition cards) ────────────────────────────────────────
@@ -822,6 +1234,50 @@
     .detail-cell:nth-child(4n) { border-right: none; }
     .detail-cell:nth-last-child(-n+2) { border-bottom: none; }
     .detail-cell:nth-last-child(-n+4) { border-bottom: 1px solid #f3f4f6; }
+  }
+}
+
+@media (max-width: 900px) {
+  .case-workspace {
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .case-sidebar {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 8px 8px 10px;
+    border-right: none;
+    border-bottom: 1px solid #e5e7eb;
+    gap: 6px;
+  }
+
+  .case-sidebar-item {
+    flex: 1 1 auto;
+    min-width: calc(50% - 8px);
+    padding: 8px 10px;
+    border-left: none;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+  }
+
+  .case-sidebar-item-active {
+    border-color: #1a3558;
+    box-shadow: none;
+  }
+
+  .action-picker-list.action-picker-list-horizontal {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 10px;
+
+    .action-picker-row {
+      flex: 0 0 min(88vw, 300px);
+      max-width: none;
+    }
   }
 }
 

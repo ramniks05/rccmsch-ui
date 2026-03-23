@@ -5,32 +5,38 @@
 
 <mat-dialog-content class="forms-dialog-content">
   <p class="dialog-hint">Complete the form below and submit. Close when done to return to the action.</p>
+  <p *ngIf="!formItem && formTypes.length === 0" class="dialog-hint empty-forms-hint">
+    No module forms are configured for this case workflow.
+  </p>
   <!-- Open by form ID: single form so Form 5 and Form 7 load the correct form -->
   <div *ngIf="formItem" class="single-form">
-    <app-hearing-form
+    <app-module-form
       [caseId]="caseId"
+      [caseUnitId]="data.caseData?.unitId ?? null"
       [formId]="formItem.formId"
-      (formSubmitted)="onFormSubmitted()">
-    </app-hearing-form>
+      (formSubmitted)="onFormSubmitted($event)">
+    </app-module-form>
   </div>
   <!-- Open by form types (e.g. from "Open Forms" tab) -->
   <mat-tab-group *ngIf="!formItem && formTypes.length > 1" class="form-tabs">
     <mat-tab *ngFor="let type of formTypes" [label]="getFormLabel(type)">
       <div class="tab-panel">
-        <app-hearing-form
+        <app-module-form
           [caseId]="caseId"
+          [caseUnitId]="data.caseData?.unitId ?? null"
           [moduleType]="type"
-          (formSubmitted)="onFormSubmitted()">
-        </app-hearing-form>
+          (formSubmitted)="onFormSubmitted($event)">
+        </app-module-form>
       </div>
     </mat-tab>
   </mat-tab-group>
   <div *ngIf="!formItem && formTypes.length === 1" class="single-form">
-    <app-hearing-form
+    <app-module-form
       [caseId]="caseId"
+      [caseUnitId]="data.caseData?.unitId ?? null"
       [moduleType]="formTypes[0]"
-      (formSubmitted)="onFormSubmitted()">
-    </app-hearing-form>
+      (formSubmitted)="onFormSubmitted($event)">
+    </app-module-form>
   </div>
 </mat-dialog-content>
 

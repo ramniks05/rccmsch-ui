@@ -251,7 +251,9 @@
                   [(ngModel)]="fieldForm.dataSource"
                   placeholder="Enter JSON describing API data source"></textarea>
                 <small class="form-text text-muted">
-                  Types: ADMIN_UNITS, COURTS, ACTS, CASE_NATURES, CASE_TYPES.
+                  Types: ADMIN_UNITS, COURTS, ACTS, CASE_NATURES, CASE_TYPES, FIELD_OFFICERS.
+                  FIELD_OFFICERS calls GET /admin/postings/field-officers/unit/ with the resolved unit id; set parentField to unitId
+                  (default). Case unit id is applied automatically in the field report form when unitId is not on the form.
                   For repeatable sections (e.g. attendance parties) you can also use a PARTIES data source
                   with includeTypes for PETITIONER and RESPONDENT. Use parentField for cascading
                   (for example, link case types to a selected case nature).

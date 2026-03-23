@@ -3,7 +3,10 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
 import { OfficerCaseService, CaseDTO, WorkflowTransitionDTO, WorkflowHistory, ActionFormDetail, ActionDocumentDetail } from '../services/officer-case.service';
+import { OfficerWorkflowAutoExecuteService } from '../services/officer-workflow-auto-execute.service';
+import { ModuleFormSubmittedPayload } from '../module-form/module-form.component';
 import { forkJoin, of } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 import { WorkflowActionDialogComponent } from '../workflow-action-dialog/workflow-action-dialog.component';
 import { DocumentsActionDialogComponent } from '../documents-action-dialog/documents-action-dialog.component';
 import { FormsActionDialogComponent } from '../forms-action-dialog/forms-action-dialog.component';
@@ -33,20 +36,31 @@ export class OfficerCaseDetailComponent implements OnInit {
 
   parsedCaseData: Record<string, any> = {};
   
-  // Track which module types are required
-  requiredModules = {
-    hearing: false,
-    notice: false,
-    ordersheet: false,
-    judgement: false,
-    fieldReport: false
-  };
+  /**
+   * Module form types to show as tabs (from transitions + form detail API). Admin-configured; not a fixed HEARING/FIELD_REPORT list.
+   */
+  private readonly moduleFormTypesSet = new Set<string>();
+  /**
+   * Document template IDs to show as tabs (from transition checklist allowedDocumentIds).
+   */
+  private readonly documentTemplateIdsSet = new Set<number>();
   
   /** Pending-with value from case details API; set when case loads so it always shows when present */
   pendingWithDisplay = '';
 
-  /** Bound to mat-tab-group selectedIndex so we can switch tabs (e.g. "Go to Documents"). */
+  /** Index into the vertical sidebar list (Case Info → module forms → documents → History). Workflow execute is only at the top. */
   selectedTabIndex = 0;
+
+  /**
+   * In the Actions tab, which transition is selected (checkbox). Only that action’s forms / conditions
+   * and Execute control are shown below.
+   */
+  selectedActionTransitionId: number | null = null;
+  /**
+   * When true, after transitions/form metadata load, select the Order Sheet document tab if present.
+   * Cleared when the user picks another sidebar item; set again after module form submit so workflow refresh focuses the sheet.
+   */
+  private autoSelectOrderSheetPending = true;
 
   /** Form ID → name and moduleType (fetched from API for display and opening). */
   formDetailsMap: Record<number, ActionFormDetail> = {};
@@ -63,6 +77,7 @@ export class OfficerCaseDetailComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private caseService: OfficerCaseService,
+    private workflowAuto: OfficerWorkflowAutoExecuteService,
     private snackBar: MatSnackBar,
     private dialog: MatDialog,
     private cdr: ChangeDetectorRef
@@ -73,6 +88,9 @@ export class OfficerCaseDetailComponent implements OnInit {
     this.route.params.subscribe(params => {
       this.caseId = +params['id'];
       if (this.caseId) {
+        this.autoSelectOrderSheetPending = true;
+        this.selectedTabIndex = 0;
+        this.selectedActionTransitionId = null;
         this.loadCaseDetails();
         this.loadAvailableTransitions();
         this.loadWorkflowHistory();
@@ -155,7 +173,8 @@ export class OfficerCaseDetailComponent implements OnInit {
         this.loadingTransitions = false;
         if (response.success && response.data) {
           this.transitions = response.data;
-          this.determineRequiredModules();
+          this.syncSelectedActionAfterTransitionsLoad();
+          this.populateSidebarForSelectedAction();
           this.loadActionFormAndDocumentDetails();
           
           // If no transitions available, show appropriate message
@@ -166,6 +185,7 @@ export class OfficerCaseDetailComponent implements OnInit {
         } else {
           // Response indicates no actions available
           this.transitions = [];
+          this.selectedActionTransitionId = null;
           this.transitionError = null; // No error, just no actions
         }
       },
@@ -177,12 +197,14 @@ export class OfficerCaseDetailComponent implements OnInit {
         if (err?.status === 404 || err?.error?.message?.toLowerCase().includes('no action') || 
             err?.error?.message?.toLowerCase().includes('no transition')) {
           this.transitions = [];
+          this.selectedActionTransitionId = null;
           this.transitionError = null; // No error, just no actions available
         } else {
           // Real error occurred
           const errorMsg = err?.error?.message || err?.message || 'Failed to load available actions';
           this.transitionError = errorMsg;
           this.transitions = [];
+          this.selectedActionTransitionId = null;
           this.snackBar.open(errorMsg, 'Close', { duration: 5000 });
         }
       }
@@ -190,71 +212,206 @@ export class OfficerCaseDetailComponent implements OnInit {
   }
 
   /**
-   * Determine which module types are required based on available transitions
+   * Sidebar module forms + document tabs come only from the **currently selected** workflow action
+   * (allowedFormIds → module types, allowedDocumentIds → templates). Nothing is shown until an action is chosen.
    */
-  determineRequiredModules(): void {
-    // Reset all to false
-    this.requiredModules = {
-      hearing: false,
-      notice: false,
-      ordersheet: false,
-      judgement: false,
-      fieldReport: false
-    };
-
-    // Check each transition
-    this.transitions.forEach((transition: WorkflowTransitionDTO) => {
-      // Check if there's a formSchema (form available for this transition)
-      if (transition.formSchema) {
-        const moduleType = transition.formSchema.moduleType.toUpperCase();
-        
-        if (moduleType === 'HEARING') {
-          this.requiredModules.hearing = true;
-        } else if (moduleType === 'NOTICE') {
-          this.requiredModules.notice = true;
-        } else if (moduleType === 'ORDERSHEET') {
-          this.requiredModules.ordersheet = true;
-        } else if (moduleType === 'JUDGEMENT') {
-          this.requiredModules.judgement = true;
-        } else if (moduleType === 'FIELD_REPORT') {
-          this.requiredModules.fieldReport = true;
+  private populateSidebarForSelectedAction(): void {
+    this.moduleFormTypesSet.clear();
+    this.documentTemplateIdsSet.clear();
+    const t = this.selectedActionTransition;
+    if (!t?.checklist) {
+      return;
+    }
+    const c = t.checklist;
+    (c.allowedDocumentIds ?? []).forEach((id: number) => {
+      this.documentTemplateIdsSet.add(id);
+    });
+    (c.conditions ?? []).forEach((cond: any) => {
+      if (cond?.type !== 'FORM_CONDITION') {
+        return;
+      }
+      const moduleType: string | undefined = cond.moduleType;
+      if (moduleType && typeof moduleType === 'string') {
+        const mt = moduleType.toUpperCase().trim();
+        if (/^[A-Z][A-Z0-9_]*$/.test(mt)) {
+          this.moduleFormTypesSet.add(mt);
         }
       }
-
-      // Also check checklist conditions for module requirements
-      if (transition.checklist?.conditions) {
-        transition.checklist.conditions.forEach(condition => {
-          if (condition.type === 'FORM_FIELD' && condition.moduleType) {
-            const moduleType = condition.moduleType.toUpperCase();
-            
-            if (moduleType === 'HEARING') {
-              this.requiredModules.hearing = true;
-            } else if (moduleType === 'NOTICE') {
-              this.requiredModules.notice = true;
-            } else if (moduleType === 'ORDERSHEET') {
-              this.requiredModules.ordersheet = true;
-            } else if (moduleType === 'JUDGEMENT') {
-              this.requiredModules.judgement = true;
-            } else if (moduleType === 'FIELD_REPORT') {
-              this.requiredModules.fieldReport = true;
-            }
-          }
-        });
-      }
-
-      // If a transition is a NOTICE-related document action with allowedDocumentIds,
-      // ensure the Notice tab is available so officer can draft the notice in its own tab.
-      if (
-        transition.transitionCode &&
-        transition.transitionCode.toUpperCase().includes('NOTICE') &&
-        transition.checklist?.allowedDocumentIds &&
-        transition.checklist.allowedDocumentIds.length > 0
-      ) {
-        this.requiredModules.notice = true;
+    });
+    (c.allowedFormIds ?? []).forEach((id: number) => {
+      const f = this.formDetailsMap[id];
+      if (f?.moduleType && typeof f.moduleType === 'string') {
+        const mt = f.moduleType.toUpperCase().trim();
+        if (/^[A-Z][A-Z0-9_]*$/.test(mt)) {
+          this.moduleFormTypesSet.add(mt);
+        }
       }
     });
+    this.clampSelectedTabIndex();
+  }
 
-    console.log('Required modules:', this.requiredModules);
+  private clampSelectedTabIndex(): void {
+    const n = this.sidebarNavItems.length;
+    if (n === 0) {
+      return;
+    }
+    const lastIndex = this.sidebarNavItems[n - 1].index;
+    if (this.selectedTabIndex > lastIndex) {
+      this.selectedTabIndex = lastIndex;
+    }
+  }
+
+  /** Module types only for forms actually linked to this case’s actions (allowedFormIds + API), not every workflow form. */
+  get moduleFormTypesForTabs(): string[] {
+    return Array.from(this.moduleFormTypesSet).sort();
+  }
+
+  /** Sorted document template IDs for document tabs. */
+  get documentTemplateIdsForTabs(): number[] {
+    return Array.from(this.documentTemplateIdsSet).sort((a, b) => a - b);
+  }
+
+  /** Sidebar: Case Info + module forms + documents for the **selected action only** + History (workflow actions live at the top). */
+  get sidebarNavItems(): { index: number; label: string; icon: string; emphasize?: boolean }[] {
+    const items: { index: number; label: string; icon: string; emphasize?: boolean }[] = [];
+    let idx = 0;
+    items.push({ index: idx++, label: 'Overview', icon: 'folder_open' });
+    for (const mt of this.moduleFormTypesForTabs) {
+      items.push({
+        index: idx++,
+        label: this.humanizeModuleType(mt),
+        icon: 'dynamic_form',
+      });
+    }
+    for (const tid of this.documentTemplateIdsForTabs) {
+      items.push({
+        index: idx++,
+        label: this.getDocumentName(tid),
+        icon: 'description',
+        emphasize: this.isOrderSheetTemplateId(tid),
+      });
+    }
+    items.push({ index: idx++, label: 'History', icon: 'history' });
+    return items;
+  }
+
+  /** First tab index for module forms (always 1). */
+  get moduleFormsTabStartIndex(): number {
+    return 1;
+  }
+
+  /** First tab index for document templates. */
+  get documentsTabStartIndex(): number {
+    return 1 + this.moduleFormTypesForTabs.length;
+  }
+
+  get historyTabIndex(): number {
+    return 1 + this.moduleFormTypesForTabs.length + this.documentTemplateIdsForTabs.length;
+  }
+
+  selectSidebarTab(index: number): void {
+    this.selectedTabIndex = index;
+    this.autoSelectOrderSheetPending = false;
+  }
+
+  /** Currently selected workflow action (sidebar forms/docs + top execute panel apply to this only). */
+  get selectedActionTransition(): WorkflowTransitionDTO | null {
+    if (this.selectedActionTransitionId == null) {
+      return null;
+    }
+    return this.transitions.find(t => t.id === this.selectedActionTransitionId) ?? null;
+  }
+
+  private syncSelectedActionAfterTransitionsLoad(): void {
+    if (!this.transitions.length) {
+      this.selectedActionTransitionId = null;
+      return;
+    }
+    const still = this.transitions.find(t => t.id === this.selectedActionTransitionId);
+    if (!still) {
+      this.selectedActionTransitionId = null;
+    }
+  }
+
+  onActionCheckboxChange(transition: WorkflowTransitionDTO, checked: boolean): void {
+    if (checked) {
+      this.selectedActionTransitionId = transition.id;
+      this.afterSelectedActionChanged();
+    } else if (this.selectedActionTransitionId === transition.id) {
+      this.selectedActionTransitionId = null;
+      this.autoSelectOrderSheetPending = false;
+      this.populateSidebarForSelectedAction();
+      this.selectedTabIndex = 0;
+      this.cdr.markForCheck();
+    }
+  }
+
+  selectActionTransitionRow(transition: WorkflowTransitionDTO): void {
+    if (this.selectedActionTransitionId === transition.id) {
+      return;
+    }
+    this.selectedActionTransitionId = transition.id;
+    this.afterSelectedActionChanged();
+  }
+
+  /** Rebuild sidebar (forms/documents) for the new action; optionally open Order Sheet tab. */
+  private afterSelectedActionChanged(): void {
+    this.populateSidebarForSelectedAction();
+    this.autoSelectOrderSheetPending = true;
+    const hadOrderSheet = this.getOrderSheetTemplateId() != null;
+    this.focusOrderSheetTabIfPending();
+    if (!hadOrderSheet) {
+      this.selectedTabIndex = 0;
+    }
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * Order Sheet: match by display name, module type, or known template id (see DOCUMENT_DISPLAY_NAMES_FALLBACK).
+   */
+  isOrderSheetTemplateId(templateId: number): boolean {
+    const name = (this.getDocumentName(templateId) || '').toLowerCase();
+    const mt = String(this.documentDetailsMap[templateId]?.moduleType || '').toUpperCase();
+    if (name.includes('order sheet') || name.includes('ordersheet')) {
+      return true;
+    }
+    if (mt.includes('ORDERSHEET') || mt.includes('ORDER_SHEET')) {
+      return true;
+    }
+    if (OfficerCaseDetailComponent.DOCUMENT_DISPLAY_NAMES_FALLBACK[templateId] === 'Order Sheet') {
+      return true;
+    }
+    return false;
+  }
+
+  private getOrderSheetTemplateId(): number | null {
+    for (const tid of this.documentTemplateIdsForTabs) {
+      if (this.isOrderSheetTemplateId(tid)) {
+        return tid;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * After metadata loads, optionally move focus to the Order Sheet tab (see autoSelectOrderSheetPending).
+   */
+  private focusOrderSheetTabIfPending(): void {
+    if (!this.autoSelectOrderSheetPending || !this.caseData) {
+      return;
+    }
+    const tid = this.getOrderSheetTemplateId();
+    if (tid == null) {
+      this.autoSelectOrderSheetPending = false;
+      return;
+    }
+    const pos = this.documentTemplateIdsForTabs.indexOf(tid);
+    if (pos < 0) {
+      return;
+    }
+    this.selectedTabIndex = this.documentsTabStartIndex + pos;
+    this.autoSelectOrderSheetPending = false;
+    this.cdr.markForCheck();
   }
 
   /**
@@ -331,26 +488,18 @@ export class OfficerCaseDetailComponent implements OnInit {
            this.getTransitionDocumentIds(transition).length > 0;
   }
 
-  /**
-   * Index of the first document tab (Notice / Order Sheet / Judgement) in the tab group.
-   * Tabs order: Case Info (0), Hearing?, Notice?, Order Sheet?, Judgement?, Field Report?, Actions, History.
-   */
-  getFirstDocumentTabIndex(): number {
-    let i = 1; // after Case Info (0)
-    if (this.requiredModules.hearing) i++;
-    return i; // next is first document tab (Notice) or Order Sheet or Judgement
+  /** Comma-separated form display names for the workflow strip (opening is via sidebar only). */
+  getTransitionFormNamesLine(transition: WorkflowTransitionDTO): string {
+    return this.getTransitionFormIds(transition)
+      .map(id => this.getFormName(id))
+      .join(', ');
   }
 
-  /**
-   * Index of the first form tab (Hearing or Field Report) in the tab group.
-   */
-  getFirstFormTabIndex(): number {
-    if (this.requiredModules.hearing) return 1;
-    let i = 1;
-    if (this.requiredModules.notice) i++;
-    if (this.requiredModules.ordersheet) i++;
-    if (this.requiredModules.judgement) i++;
-    return i; // Field Report tab
+  /** Comma-separated document display names for the workflow strip (opening is via sidebar only). */
+  getTransitionDocumentNamesLine(transition: WorkflowTransitionDTO): string {
+    return this.getTransitionDocumentIds(transition)
+      .map(id => this.getDocumentName(id))
+      .join(', ');
   }
 
   /** Load form and document details: prefer names from transition (allowedForms/allowedDocuments), else from conditions (moduleType), else stub. */
@@ -377,6 +526,8 @@ export class OfficerCaseDetailComponent implements OnInit {
     const fIds = Array.from(formIds).filter(id => !this.formDetailsMap[id]);
     const dIds = Array.from(documentIds).filter(id => !this.documentDetailsMap[id]);
     if (fIds.length === 0 && dIds.length === 0) {
+      this.populateSidebarForSelectedAction();
+      this.focusOrderSheetTabIfPending();
       this.cdr.detectChanges();
       return;
     }
@@ -398,6 +549,8 @@ export class OfficerCaseDetailComponent implements OnInit {
       // Re-derive so any form/document that got stub now gets name from conditions if we can
       this.deriveFormNamesFromConditions();
       this.deriveDocumentNamesFromConditions();
+      this.populateSidebarForSelectedAction();
+      this.focusOrderSheetTabIfPending();
       this.cdr.detectChanges();
     });
   }
@@ -527,66 +680,17 @@ export class OfficerCaseDetailComponent implements OnInit {
     return Array.from(ids);
   }
 
-  /** Open a specific form by ID: pass formId so the correct form (5 vs 7) is fetched and shown. */
-  openFormById(formId: number, _transition: WorkflowTransitionDTO): void {
-    if (!this.caseData) return;
-    const name = this.getFormName(formId);
-    const formItem = { formId, name };
-    this.dialog.open(FormsActionDialogComponent, {
-      width: '740px',
-      maxWidth: '95vw',
-      maxHeight: '90vh',
-      data: { caseId: this.caseId, caseData: this.caseData, formItem },
-      disableClose: false
-    }).afterClosed().subscribe((submitted) => {
-      if (submitted) {
-        this.loadAvailableTransitions();
-        this.loadCaseDetails();
-      }
-    });
-  }
-
-  /** Open a specific document by template ID: call API on click to get name, then show document editor in dialog (APIs use template ID). */
-  openDocumentById(documentId: number, _transition: WorkflowTransitionDTO): void {
-    if (!this.caseData) return;
-    this.caseService.getActionDocumentDetails(this.caseId, [documentId]).subscribe({
-      next: (res) => {
-        const detail = res.data?.[0];
-        const name = detail?.name ?? this.getDocumentName(documentId);
-        const documentTemplates = [{ templateId: documentId, name }];
-        this.dialog.open(DocumentsActionDialogComponent, {
-          width: '920px',
-          maxWidth: '95vw',
-          maxHeight: '90vh',
-          data: { caseId: this.caseId, caseData: this.caseData, documentTemplates },
-          disableClose: false
-        }).afterClosed().subscribe(() => {
-          this.loadAvailableTransitions();
-          this.loadCaseDetails();
-        });
-      },
-      error: () => {
-        this.snackBar.open('Could not load document. Please try again.', 'Close', { duration: 4000 });
-      }
-    });
-  }
-
   /** Open Documents in a modal so officer can edit and Save as Draft / Save & Sign (by template ID). */
   goToDocumentsTab(): void {
     if (!this.caseData) return;
     const documentTemplates: { templateId: number; name: string }[] = [];
-    // Prefer template IDs by module type if we have them; otherwise use all allowedDocumentIds from transitions
-    const types: ('NOTICE' | 'ORDERSHEET' | 'JUDGEMENT')[] = [];
-    if (this.requiredModules.notice) types.push('NOTICE');
-    if (this.requiredModules.ordersheet) types.push('ORDERSHEET');
-    if (this.requiredModules.judgement) types.push('JUDGEMENT');
-    for (const mt of types) {
-      const tid = this.getTemplateIdForModuleType(mt);
-      if (tid != null) documentTemplates.push({ templateId: tid, name: this.getDocumentName(tid) });
-    }
+    this.documentTemplateIdsForTabs.forEach(tid =>
+      documentTemplates.push({ templateId: tid, name: this.getDocumentName(tid) }),
+    );
     if (documentTemplates.length === 0) {
-      const templateIds = this.getTemplateIds();
-      templateIds.forEach(tid => documentTemplates.push({ templateId: tid, name: this.getDocumentName(tid) }));
+      this.getTemplateIds().forEach(tid =>
+        documentTemplates.push({ templateId: tid, name: this.getDocumentName(tid) }),
+      );
     }
     if (documentTemplates.length === 0) {
       this.snackBar.open('No document templates available for this case.', 'Close', { duration: 4000 });
@@ -607,10 +711,11 @@ export class OfficerCaseDetailComponent implements OnInit {
   /** Open Forms in a modal so officer can complete and submit. */
   goToFormsTab(): void {
     if (!this.caseData) return;
-    const formTypes: string[] = [];
-    if (this.requiredModules.hearing) formTypes.push('HEARING');
-    if (this.requiredModules.fieldReport) formTypes.push('FIELD_REPORT');
-    if (formTypes.length === 0) formTypes.push('HEARING');
+    const formTypes = [...this.moduleFormTypesForTabs];
+    if (formTypes.length === 0) {
+      this.snackBar.open('No module forms are linked to this case workflow yet.', 'Close', { duration: 5000 });
+      return;
+    }
     this.dialog.open(FormsActionDialogComponent, {
       width: '740px',
       maxWidth: '95vw',
@@ -652,16 +757,49 @@ export class OfficerCaseDetailComponent implements OnInit {
   }
 
   /**
-   * Handle hearing form submission - reload transitions and case details
+   * After hearing/attendance (or other module form) submit: try workflow auto-execute from
+   * transition metadata, then refresh case/transitions/history.
    */
-  onHearingFormSubmitted(): void {
-    console.log('Hearing form submitted, reloading transitions and case details...');
-    // Reload case details to get updated state
-    this.loadCaseDetails();
-    // Reload transitions to update action availability based on hearing date assignment
-    this.loadAvailableTransitions();
-    // Reload history to show the hearing form submission
-    this.loadWorkflowHistory();
+  onModuleFormSubmitted(payload: ModuleFormSubmittedPayload): void {
+    this.autoSelectOrderSheetPending = true;
+    this.workflowAuto
+      .tryAfterModuleFormSubmit(
+        this.caseId,
+        {
+          moduleType: payload.moduleType,
+          formId: payload.formId,
+        },
+        payload.remarks || '',
+      )
+      .pipe(
+        finalize(() => {
+          this.loadCaseDetails();
+          this.loadAvailableTransitions();
+          this.loadWorkflowHistory();
+        }),
+      )
+      .subscribe((result) => {
+        if (result.commentsRequired) {
+          this.snackBar.open(
+            result.message ||
+              'Form saved. Add remarks or complete the action from the Actions tab.',
+            'Close',
+            { duration: 6000 },
+          );
+          return;
+        }
+        if (result.executed) {
+          if (result.ambiguous && result.message) {
+            this.snackBar.open(result.message, 'Close', { duration: 6000 });
+          } else {
+            this.snackBar.open('Action completed successfully!', 'Close', {
+              duration: 5000,
+            });
+          }
+        } else if (result.message) {
+          this.snackBar.open(result.message, 'Close', { duration: 5000 });
+        }
+      });
   }
 
   /**
