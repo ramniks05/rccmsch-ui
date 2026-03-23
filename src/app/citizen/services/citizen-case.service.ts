@@ -428,6 +428,10 @@ export class CitizenCaseService {
       moduleType: string;
       moduleTypeLabel: string;
       status: string;
+      hasPdf?: boolean;
+      pdfPath?: string;
+      pdfGeneratedAt?: string;
+      digitalSignApplied?: boolean;
       hasContent: boolean;
       createdAt?: string;
       signedAt?: string;
@@ -441,6 +445,10 @@ export class CitizenCaseService {
         moduleType: string;
         moduleTypeLabel: string;
         status: string;
+        hasPdf?: boolean;
+        pdfPath?: string;
+        pdfGeneratedAt?: string;
+        digitalSignApplied?: boolean;
         hasContent: boolean;
         createdAt?: string;
         signedAt?: string;
@@ -535,6 +543,10 @@ export class CitizenCaseService {
     contentHtml: string;
     contentData?: string;
     status: string;
+    hasPdf?: boolean;
+    pdfPath?: string;
+    pdfGeneratedAt?: string;
+    digitalSignApplied?: boolean;
     signedByOfficerId?: number;
     signedAt?: string;
     createdAt?: string;
@@ -549,6 +561,10 @@ export class CitizenCaseService {
       contentHtml: string;
       contentData?: string;
       status: string;
+      hasPdf?: boolean;
+      pdfPath?: string;
+      pdfGeneratedAt?: string;
+      digitalSignApplied?: boolean;
       signedByOfficerId?: number;
       signedAt?: string;
       createdAt?: string;
@@ -581,6 +597,10 @@ export class CitizenCaseService {
     contentHtml: string;
     contentData?: string;
     status: string;
+    hasPdf?: boolean;
+    pdfPath?: string;
+    pdfGeneratedAt?: string;
+    digitalSignApplied?: boolean;
     signedByOfficerId?: number;
     signedAt?: string;
     createdAt?: string;
@@ -596,6 +616,10 @@ export class CitizenCaseService {
       contentHtml: string;
       contentData?: string;
       status: string;
+      hasPdf?: boolean;
+      pdfPath?: string;
+      pdfGeneratedAt?: string;
+      digitalSignApplied?: boolean;
       signedByOfficerId?: number;
       signedAt?: string;
       createdAt?: string;
@@ -616,6 +640,20 @@ export class CitizenCaseService {
         }
         return throwError(() => error);
       })
+    );
+  }
+
+  /**
+   * GET /api/cases/{caseId}/documents/{documentId}/pdf
+   * Fetch document PDF as blob using auth headers.
+   */
+  getCaseDocumentPdf(caseId: number, documentId: number): Observable<Blob> {
+    return this.http.get(
+      `${this.apiUrl}/cases/${caseId}/documents/${documentId}/pdf`,
+      {
+        headers: this.getHeaders(),
+        responseType: 'blob',
+      },
     );
   }
 

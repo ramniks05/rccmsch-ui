@@ -1,5 +1,12 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import {
   CitizenCaseService,
@@ -29,7 +36,7 @@ export interface FormDataGroup {
   templateUrl: './case-details.component.html',
   styleUrls: ['./case-details.component.scss'],
 })
-export class CaseDetailsComponent implements OnInit {
+export class CaseDetailsComponent implements OnInit, OnDestroy {
   @ViewChild('pdfContent', { static: false }) pdfContent!: ElementRef;
   caseId!: number;
   case: Case | null = null;
@@ -39,6 +46,10 @@ export class CaseDetailsComponent implements OnInit {
     moduleType: string;
     moduleTypeLabel: string;
     status: string;
+    hasPdf?: boolean;
+    pdfPath?: string;
+    pdfGeneratedAt?: string;
+    digitalSignApplied?: boolean;
     hasContent: boolean;
     createdAt?: string;
     signedAt?: string;
@@ -61,6 +72,10 @@ export class CaseDetailsComponent implements OnInit {
     contentHtml: string;
     contentData?: string;
     status: string;
+    hasPdf?: boolean;
+    pdfPath?: string;
+    pdfGeneratedAt?: string;
+    digitalSignApplied?: boolean;
     signedByOfficerId?: number;
     signedAt?: string;
     createdAt?: string;
@@ -76,6 +91,10 @@ export class CaseDetailsComponent implements OnInit {
     contentHtml: string;
     contentData?: string;
     status: string;
+    hasPdf?: boolean;
+    pdfPath?: string;
+    pdfGeneratedAt?: string;
+    digitalSignApplied?: boolean;
     signedByOfficerId?: number;
     signedAt?: string;
     createdAt?: string;
@@ -91,6 +110,10 @@ export class CaseDetailsComponent implements OnInit {
     contentHtml: string;
     contentData?: string;
     status: string;
+    hasPdf?: boolean;
+    pdfPath?: string;
+    pdfGeneratedAt?: string;
+    digitalSignApplied?: boolean;
     signedByOfficerId?: number;
     signedAt?: string;
     createdAt?: string;
@@ -108,15 +131,21 @@ export class CaseDetailsComponent implements OnInit {
 
   // Track which notice is being acknowledged (for multiple notices)
   acknowledgingNoticeId: number | null = null;
+  selectedNoticeId: number | null = null;
+  selectedOrdersheetId: number | null = null;
+  selectedJudgementId: number | null = null;
 
   /** Pending-with value from case detail API (e.g. "Dealing Assistant"); set when case loads */
   pendingWithDisplay = '';
+  private pdfObjectUrls = new Map<number, string>();
+  private pdfLoading = new Set<number>();
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private caseService: CitizenCaseService,
     private snackBar: MatSnackBar,
+    private sanitizer: DomSanitizer,
   ) {}
 
   ngOnInit(): void {
@@ -126,6 +155,12 @@ export class CaseDetailsComponent implements OnInit {
         this.loadCaseDetail();
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    this.pdfObjectUrls.forEach((url) => URL.revokeObjectURL(url));
+    this.pdfObjectUrls.clear();
+    this.pdfLoading.clear();
   }
 
   /**
@@ -196,23 +231,50 @@ export class CaseDetailsComponent implements OnInit {
    */
   loadAvailableDocuments(): void {
     // Load all Notices if available
-    if (this.documents.some((d) => d.moduleType === 'NOTICE' && d.hasContent)) {
+    if (
+      this.documents.some(
+        (d) => d.moduleType === 'NOTICE' && (d.hasContent || d.hasPdf),
+      )
+    ) {
       this.loadAllNotices();
     }
 
     // Load all Ordersheets if available
     if (
-      this.documents.some((d) => d.moduleType === 'ORDERSHEET' && d.hasContent)
+      this.documents.some(
+        (d) => d.moduleType === 'ORDERSHEET' && (d.hasContent || d.hasPdf),
+      )
     ) {
       this.loadAllOrdersheets();
     }
 
     // Load all Judgements if available
     if (
-      this.documents.some((d) => d.moduleType === 'JUDGEMENT' && d.hasContent)
+      this.documents.some(
+        (d) => d.moduleType === 'JUDGEMENT' && (d.hasContent || d.hasPdf),
+      )
     ) {
       this.loadAllJudgements();
     }
+  }
+
+  private mergeDocumentMetadata<T extends { id?: number; moduleType?: string }>(
+    docs: T[],
+    moduleType: string,
+  ): T[] {
+    const details = this.documents.filter((d) => d.moduleType === moduleType);
+    const byId = new Map<number, (typeof this.documents)[number]>();
+    details.forEach((d) => {
+      if (d.documentId != null) byId.set(d.documentId, d);
+    });
+
+    return docs.map((doc, idx) => {
+      const detail =
+        (doc.id != null ? byId.get(doc.id) : undefined) ??
+        details[idx] ??
+        undefined;
+      return detail ? ({ ...doc, ...detail } as T) : doc;
+    });
   }
 
   /**
@@ -455,7 +517,10 @@ export class CaseDetailsComponent implements OnInit {
       next: (response) => {
         this.isLoadingNotice = false;
         if (response.success && response.data) {
-          this.notices = response.data || [];
+          this.notices = this.mergeDocumentMetadata(
+            response.data || [],
+            'NOTICE',
+          );
           // Sort by creation date (newest first)
           this.notices.sort((a, b) => {
             const dateA = new Date(a.createdAt || 0).getTime();
@@ -465,6 +530,8 @@ export class CaseDetailsComponent implements OnInit {
           if (this.notices.length === 0) {
             this.noticeNotAvailable = true;
           }
+          this.syncSelectedDocumentId('NOTICE');
+          this.preloadPdfUrls(this.notices);
         } else {
           this.noticeNotAvailable = true;
         }
@@ -494,7 +561,10 @@ export class CaseDetailsComponent implements OnInit {
         next: (response) => {
           this.isLoadingOrdersheet = false;
           if (response.success && response.data) {
-            this.ordersheets = response.data || [];
+            this.ordersheets = this.mergeDocumentMetadata(
+              response.data || [],
+              'ORDERSHEET',
+            );
             // Sort by creation date (newest first)
             this.ordersheets.sort((a, b) => {
               const dateA = new Date(a.createdAt || 0).getTime();
@@ -504,6 +574,8 @@ export class CaseDetailsComponent implements OnInit {
             if (this.ordersheets.length === 0) {
               this.ordersheetNotAvailable = true;
             }
+            this.syncSelectedDocumentId('ORDERSHEET');
+            this.preloadPdfUrls(this.ordersheets);
           } else {
             this.ordersheetNotAvailable = true;
           }
@@ -530,7 +602,10 @@ export class CaseDetailsComponent implements OnInit {
       next: (response) => {
         this.isLoadingJudgement = false;
         if (response.success && response.data) {
-          this.judgements = response.data || [];
+          this.judgements = this.mergeDocumentMetadata(
+            response.data || [],
+            'JUDGEMENT',
+          );
           // Sort by creation date (newest first)
           this.judgements.sort((a, b) => {
             const dateA = new Date(a.createdAt || 0).getTime();
@@ -540,6 +615,8 @@ export class CaseDetailsComponent implements OnInit {
           if (this.judgements.length === 0) {
             this.judgementNotAvailable = true;
           }
+          this.syncSelectedDocumentId('JUDGEMENT');
+          this.preloadPdfUrls(this.judgements);
         } else {
           this.judgementNotAvailable = true;
         }
@@ -574,6 +651,11 @@ export class CaseDetailsComponent implements OnInit {
    * Download/Print document
    */
   downloadDocument(document: any, documentType: string): void {
+    if (this.hasPdfForDisplay(document)) {
+      this.downloadPdf(document, documentType);
+      return;
+    }
+
     if (!document || !document.contentHtml) {
       this.snackBar.open('Document content not available', 'Close', {
         duration: 3000,
@@ -1178,6 +1260,196 @@ export class CaseDetailsComponent implements OnInit {
       printWindow.document.close();
       setTimeout(() => printWindow.focus(), 300);
     }
+  }
+
+  hasPdfForDisplay(document: any): boolean {
+    return this.isPdfAvailable(document);
+  }
+
+  getPdfEmbedUrl(document: any): SafeResourceUrl | null {
+    if (!this.isPdfAvailable(document)) return null;
+    const docId = this.getDocumentRuntimeId(document);
+    if (docId == null) return null;
+
+    const blobUrl = this.pdfObjectUrls.get(docId);
+    if (blobUrl) {
+      return this.sanitizer.bypassSecurityTrustResourceUrl(blobUrl);
+    }
+    this.fetchPdfObjectUrl(docId);
+    return null;
+  }
+
+  downloadPdf(document: any, documentType: string): void {
+    const docId = this.getDocumentRuntimeId(document);
+    if (docId == null) {
+      this.snackBar.open('PDF link not available for this document.', 'Close', {
+        duration: 4000,
+      });
+      return;
+    }
+
+    const existing = this.pdfObjectUrls.get(docId);
+    if (existing) {
+      this.triggerPdfDownload(existing, documentType, docId);
+      return;
+    }
+
+    this.caseService.getCaseDocumentPdf(this.caseId, docId).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const old = this.pdfObjectUrls.get(docId);
+        if (old) URL.revokeObjectURL(old);
+        this.pdfObjectUrls.set(docId, url);
+        this.triggerPdfDownload(url, documentType, docId);
+      },
+      error: () => {
+        this.snackBar.open(
+          `Could not download ${documentType} PDF.`,
+          'Close',
+          { duration: 4000 },
+        );
+      },
+    });
+  }
+
+  private triggerPdfDownload(
+    objectUrl: string,
+    documentType: string,
+    docId: number,
+  ): void {
+    const a = document.createElement('a');
+    a.href = objectUrl;
+    a.download = `${documentType}-${this.case?.caseNumber || this.caseId}-${docId}.pdf`;
+    a.rel = 'noopener';
+    a.click();
+  }
+
+  private isPdfAvailable(document: any): boolean {
+    return (
+      document?.hasPdf === true ||
+      !!document?.pdfPath ||
+      !!document?.pdfUrl ||
+      !!document?.fileUrl
+    );
+  }
+
+  private getDocumentRuntimeId(document: any): number | null {
+    const raw = document?.id ?? document?.documentId;
+    const id = Number(raw);
+    return Number.isNaN(id) ? null : id;
+  }
+
+  private preloadPdfUrls(docs: any[]): void {
+    docs.forEach((d) => {
+      if (!this.isPdfAvailable(d)) return;
+      const id = this.getDocumentRuntimeId(d);
+      if (id == null) return;
+      this.fetchPdfObjectUrl(id);
+    });
+  }
+
+  private fetchPdfObjectUrl(documentId: number): void {
+    if (
+      this.pdfObjectUrls.has(documentId) ||
+      this.pdfLoading.has(documentId) ||
+      !this.caseId
+    ) {
+      return;
+    }
+    this.pdfLoading.add(documentId);
+    this.caseService.getCaseDocumentPdf(this.caseId, documentId).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const old = this.pdfObjectUrls.get(documentId);
+        if (old) URL.revokeObjectURL(old);
+        this.pdfObjectUrls.set(documentId, url);
+        this.pdfLoading.delete(documentId);
+      },
+      error: () => {
+        this.pdfLoading.delete(documentId);
+      },
+    });
+  }
+
+  openDocument(
+    document: any,
+    moduleType: 'NOTICE' | 'ORDERSHEET' | 'JUDGEMENT',
+  ): void {
+    const id = this.getDocumentRuntimeId(document);
+    if (id == null) return;
+    if (moduleType === 'NOTICE') this.selectedNoticeId = id;
+    if (moduleType === 'ORDERSHEET') this.selectedOrdersheetId = id;
+    if (moduleType === 'JUDGEMENT') this.selectedJudgementId = id;
+    if (this.hasPdfForDisplay(document)) {
+      this.fetchPdfObjectUrl(id);
+    }
+  }
+
+  getOpenedDocument(
+    moduleType: 'NOTICE' | 'ORDERSHEET' | 'JUDGEMENT',
+  ): any | null {
+    const docs =
+      moduleType === 'NOTICE'
+        ? this.notices
+        : moduleType === 'ORDERSHEET'
+          ? this.ordersheets
+          : this.judgements;
+    const selectedId =
+      moduleType === 'NOTICE'
+        ? this.selectedNoticeId
+        : moduleType === 'ORDERSHEET'
+          ? this.selectedOrdersheetId
+          : this.selectedJudgementId;
+    if (selectedId == null) return null;
+    return (
+      docs.find((d) => this.getDocumentRuntimeId(d) === selectedId) ?? null
+    );
+  }
+
+  isOpenedDocument(
+    document: any,
+    moduleType: 'NOTICE' | 'ORDERSHEET' | 'JUDGEMENT',
+  ): boolean {
+    const id = this.getDocumentRuntimeId(document);
+    if (id == null) return false;
+    const selectedId =
+      moduleType === 'NOTICE'
+        ? this.selectedNoticeId
+        : moduleType === 'ORDERSHEET'
+          ? this.selectedOrdersheetId
+          : this.selectedJudgementId;
+    return selectedId === id;
+  }
+
+  isLatestNotice(document: any): boolean {
+    if (!this.notices.length) return false;
+    const firstId = this.getDocumentRuntimeId(this.notices[0]);
+    const id = this.getDocumentRuntimeId(document);
+    return id != null && firstId != null && id === firstId;
+  }
+
+  private syncSelectedDocumentId(
+    moduleType: 'NOTICE' | 'ORDERSHEET' | 'JUDGEMENT',
+  ): void {
+    const docs =
+      moduleType === 'NOTICE'
+        ? this.notices
+        : moduleType === 'ORDERSHEET'
+          ? this.ordersheets
+          : this.judgements;
+    const currentId =
+      moduleType === 'NOTICE'
+        ? this.selectedNoticeId
+        : moduleType === 'ORDERSHEET'
+          ? this.selectedOrdersheetId
+          : this.selectedJudgementId;
+    const stillExists =
+      currentId != null &&
+      docs.some((d) => this.getDocumentRuntimeId(d) === currentId);
+    if (stillExists) return;
+    if (moduleType === 'NOTICE') this.selectedNoticeId = null;
+    if (moduleType === 'ORDERSHEET') this.selectedOrdersheetId = null;
+    if (moduleType === 'JUDGEMENT') this.selectedJudgementId = null;
   }
 
   /**

@@ -175,131 +175,151 @@
                   *ngIf="!isLoadingNotice && notices.length > 0"
                   class="documents-list"
                 >
-                  <mat-accordion>
-                    <mat-expansion-panel
-                      *ngFor="let notice of notices; let i = index"
-                      [expanded]="i === 0"
-                    >
-                      <mat-expansion-panel-header>
-                        <mat-panel-title>
-                          <div class="panel-title-content">
-                            <mat-icon>description</mat-icon>
-                            <span>{{ getDocumentTitle(notice, i) }}</span>
-                            <span
-                              class="document-badge"
-                              [class]="'status-' + notice.status.toLowerCase()"
-                            >
-                              {{ notice.status }}
-                            </span>
-                          </div>
-                        </mat-panel-title>
-                        <mat-panel-description>
-                          <span *ngIf="notice.createdAt">{{
-                            notice.createdAt | date: "medium"
-                          }}</span>
-                          <span *ngIf="notice.signedAt" class="signed-badge">
-                            <mat-icon>verified</mat-icon>
-                            Signed
-                          </span>
-                        </mat-panel-description>
-                      </mat-expansion-panel-header>
+                  <div
+                    class="document-list-row"
+                    *ngFor="let notice of notices; let i = index"
+                  >
+                    <div class="panel-title-content">
+                      <mat-icon>{{
+                        hasPdfForDisplay(notice) ? "picture_as_pdf" : "description"
+                      }}</mat-icon>
+                      <span>{{ getDocumentTitle(notice, i) }}</span>
+                      <span
+                        class="document-badge"
+                        [class]="'status-' + notice.status.toLowerCase()"
+                      >
+                        {{ notice.status }}
+                      </span>
+                    </div>
+                    <div class="document-list-actions">
+                      <button
+                        mat-stroked-button
+                        color="primary"
+                        (click)="openDocument(notice, 'NOTICE')"
+                      >
+                        <mat-icon>open_in_new</mat-icon>
+                        {{ isOpenedDocument(notice, 'NOTICE') ? "Opened" : "Open" }}
+                      </button>
+                      <button
+                        mat-raised-button
+                        color="primary"
+                        (click)="downloadDocument(notice, 'Notice')"
+                      >
+                        <mat-icon>{{
+                          hasPdfForDisplay(notice) ? "picture_as_pdf" : "print"
+                        }}</mat-icon>
+                        {{
+                          hasPdfForDisplay(notice)
+                            ? "Download PDF"
+                            : "Print / Download"
+                        }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
 
-                      <div class="document-content">
-                        <div class="document-header">
-                          <div class="document-info">
-                            <span
-                              class="document-status"
-                              [class]="'status-' + notice.status.toLowerCase()"
-                            >
-                              {{ notice.status }}
-                            </span>
-                            <span *ngIf="notice.signedAt" class="document-date">
-                              Signed: {{ notice.signedAt | date: "medium" }}
-                            </span>
-                            <span
-                              *ngIf="notice.createdAt"
-                              class="document-date"
-                            >
-                              Created: {{ notice.createdAt | date: "medium" }}
-                            </span>
-                          </div>
-                          <button
-                            mat-raised-button
-                            color="primary"
-                            (click)="downloadDocument(notice, 'Notice')"
-                          >
-                            <mat-icon>print</mat-icon>
-                            Print / Download
-                          </button>
-                        </div>
-                        <div
-                          class="document-body"
-                          [innerHTML]="notice.contentHtml"
-                        ></div>
-
-                        <!-- Acknowledge Button (only for latest notice) -->
-                        <div
-                          class="document-actions"
-                          *ngIf="i === 0 && canAcknowledgeNotice(notice.id)"
-                        >
-                          <mat-divider class="my-3"></mat-divider>
-                          <div class="acknowledge-section">
-                            <p class="text-muted mb-2">
-                              <mat-icon>info</mat-icon>
-                              Please acknowledge that you have received and
-                              reviewed this notice.
-                            </p>
-                            <mat-form-field
-                              appearance="outline"
-                              class="full-width mb-3"
-                            >
-                              <mat-label>Comments (Optional)</mat-label>
-                              <input
-                                matInput
-                                [(ngModel)]="acknowledgeComments"
-                                placeholder="Notice received and acknowledged"
-                              />
-                            </mat-form-field>
-                            <button
-                              mat-raised-button
-                              color="primary"
-                              (click)="acknowledgeNotice(notice.id)"
-                              [disabled]="isAcceptingNotice"
-                            >
-                              <mat-icon>{{
-                                isAcceptingNotice &&
-                                acknowledgingNoticeId === notice.id
-                                  ? "hourglass_empty"
-                                  : "check_circle"
-                              }}</mat-icon>
-                              {{
-                                isAcceptingNotice &&
-                                acknowledgingNoticeId === notice.id
-                                  ? "Acknowledging..."
-                                  : "Acknowledge Receipt"
-                              }}
-                            </button>
-                          </div>
-                        </div>
-
-                        <!-- Already Acknowledged -->
-                        <div
-                          class="already-acknowledged"
-                          *ngIf="i === 0 && !canAcknowledgeNotice(notice.id)"
-                        >
-                          <mat-divider class="my-3"></mat-divider>
-                          <div class="alert alert-success">
-                            <mat-icon>check_circle</mat-icon>
-                            <strong>Notice Acknowledged</strong>
-                            <p>
-                              You have already acknowledged receipt of this
-                              notice.
-                            </p>
-                          </div>
-                        </div>
+                <div
+                  *ngIf="!isLoadingNotice && getOpenedDocument('NOTICE') as notice"
+                  class="document-content"
+                >
+                  <div class="document-header">
+                    <div class="document-info">
+                      <span
+                        class="document-status"
+                        [class]="'status-' + notice.status.toLowerCase()"
+                      >
+                        {{ notice.status }}
+                      </span>
+                      <span *ngIf="notice.signedAt" class="document-date">
+                        Signed: {{ notice.signedAt | date: "medium" }}
+                      </span>
+                      <span *ngIf="notice.createdAt" class="document-date">
+                        Created: {{ notice.createdAt | date: "medium" }}
+                      </span>
+                    </div>
+                  </div>
+                  <ng-container
+                    *ngIf="hasPdfForDisplay(notice); else noticeHtmlFallback"
+                  >
+                    <div class="document-pdf">
+                      <div class="document-pdf-header">
+                        <mat-icon color="warn">picture_as_pdf</mat-icon>
+                        <span>Signed PDF available</span>
                       </div>
-                    </mat-expansion-panel>
-                  </mat-accordion>
+                      <ng-container
+                        *ngIf="getPdfEmbedUrl(notice) as pdfUrl; else noticePdfLoading"
+                      >
+                        <iframe
+                          [src]="pdfUrl"
+                          width="100%"
+                          height="560"
+                          title="Notice PDF"
+                        ></iframe>
+                      </ng-container>
+                      <ng-template #noticePdfLoading>
+                        <div class="loading-container">
+                          <mat-spinner diameter="30"></mat-spinner>
+                          <p>Loading PDF preview...</p>
+                        </div>
+                      </ng-template>
+                    </div>
+                  </ng-container>
+                  <ng-template #noticeHtmlFallback>
+                    <div class="document-body" [innerHTML]="notice.contentHtml"></div>
+                  </ng-template>
+
+                  <!-- Acknowledge Button (only for latest notice) -->
+                  <div
+                    class="document-actions"
+                    *ngIf="isLatestNotice(notice) && canAcknowledgeNotice(notice.id)"
+                  >
+                    <mat-divider class="my-3"></mat-divider>
+                    <div class="acknowledge-section">
+                      <p class="text-muted mb-2">
+                        <mat-icon>info</mat-icon>
+                        Please acknowledge that you have received and reviewed
+                        this notice.
+                      </p>
+                      <mat-form-field appearance="outline" class="full-width mb-3">
+                        <mat-label>Comments (Optional)</mat-label>
+                        <input
+                          matInput
+                          [(ngModel)]="acknowledgeComments"
+                          placeholder="Notice received and acknowledged"
+                        />
+                      </mat-form-field>
+                      <button
+                        mat-raised-button
+                        color="primary"
+                        (click)="acknowledgeNotice(notice.id)"
+                        [disabled]="isAcceptingNotice"
+                      >
+                        <mat-icon>{{
+                          isAcceptingNotice && acknowledgingNoticeId === notice.id
+                            ? "hourglass_empty"
+                            : "check_circle"
+                        }}</mat-icon>
+                        {{
+                          isAcceptingNotice && acknowledgingNoticeId === notice.id
+                            ? "Acknowledging..."
+                            : "Acknowledge Receipt"
+                        }}
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Already Acknowledged -->
+                  <div
+                    class="already-acknowledged"
+                    *ngIf="isLatestNotice(notice) && !canAcknowledgeNotice(notice.id)"
+                  >
+                    <mat-divider class="my-3"></mat-divider>
+                    <div class="alert alert-success">
+                      <mat-icon>check_circle</mat-icon>
+                      <strong>Notice Acknowledged</strong>
+                      <p>You have already acknowledged receipt of this notice.</p>
+                    </div>
+                  </div>
                 </div>
 
                 <!-- Notice Not Available -->
@@ -339,81 +359,115 @@
                   *ngIf="!isLoadingOrdersheet && ordersheets.length > 0"
                   class="documents-list"
                 >
-                  <mat-accordion>
-                    <mat-expansion-panel
-                      *ngFor="let ordersheet of ordersheets; let i = index"
-                      [expanded]="i === 0"
-                    >
-                      <mat-expansion-panel-header>
-                        <mat-panel-title>
-                          <div class="panel-title-content">
-                            <mat-icon>description</mat-icon>
-                            <span>{{ getDocumentTitle(ordersheet, i) }}</span>
-                            <span
-                              class="document-badge"
-                              [class]="
-                                'status-' + ordersheet.status.toLowerCase()
-                              "
-                            >
-                              {{ ordersheet.status }}
-                            </span>
-                          </div>
-                        </mat-panel-title>
-                        <mat-panel-description>
-                          <span *ngIf="ordersheet.createdAt">{{
-                            ordersheet.createdAt | date: "medium"
-                          }}</span>
-                          <span
-                            *ngIf="ordersheet.signedAt"
-                            class="signed-badge"
-                          >
-                            <mat-icon>verified</mat-icon>
-                            Signed
-                          </span>
-                        </mat-panel-description>
-                      </mat-expansion-panel-header>
+                  <div
+                    class="document-list-row"
+                    *ngFor="let ordersheet of ordersheets; let i = index"
+                  >
+                    <div class="panel-title-content">
+                      <mat-icon>{{
+                        hasPdfForDisplay(ordersheet)
+                          ? "picture_as_pdf"
+                          : "description"
+                      }}</mat-icon>
+                      <span>{{ getDocumentTitle(ordersheet, i) }}</span>
+                      <span
+                        class="document-badge"
+                        [class]="'status-' + ordersheet.status.toLowerCase()"
+                      >
+                        {{ ordersheet.status }}
+                      </span>
+                    </div>
+                    <div class="document-list-actions">
+                      <button
+                        mat-stroked-button
+                        color="primary"
+                        (click)="openDocument(ordersheet, 'ORDERSHEET')"
+                      >
+                        <mat-icon>open_in_new</mat-icon>
+                        {{
+                          isOpenedDocument(ordersheet, "ORDERSHEET")
+                            ? "Opened"
+                            : "Open"
+                        }}
+                      </button>
+                      <button
+                        mat-raised-button
+                        color="primary"
+                        (click)="downloadDocument(ordersheet, 'Ordersheet')"
+                      >
+                        <mat-icon>{{
+                          hasPdfForDisplay(ordersheet)
+                            ? "picture_as_pdf"
+                            : "print"
+                        }}</mat-icon>
+                        {{
+                          hasPdfForDisplay(ordersheet)
+                            ? "Download PDF"
+                            : "Print / Download"
+                        }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
 
-                      <div class="document-content">
-                        <div class="document-header">
-                          <div class="document-info">
-                            <span
-                              class="document-status"
-                              [class]="
-                                'status-' + ordersheet.status.toLowerCase()
-                              "
-                            >
-                              {{ ordersheet.status }}
-                            </span>
-                            <span
-                              *ngIf="ordersheet.signedAt"
-                              class="document-date"
-                            >
-                              Signed: {{ ordersheet.signedAt | date: "medium" }}
-                            </span>
-                            <span
-                              *ngIf="ordersheet.createdAt"
-                              class="document-date"
-                            >
-                              Created:
-                              {{ ordersheet.createdAt | date: "medium" }}
-                            </span>
-                          </div>
-                          <button
-                            mat-raised-button
-                            color="primary"
-                            (click)="downloadDocument(ordersheet, 'Ordersheet')"
-                          >
-                            <mat-icon>print</mat-icon>
-                            Print / Download
-                          </button>
-                        </div>
-                        <div
-                          class="document-body"
-                          [innerHTML]="ordersheet.contentHtml"
-                        ></div>
+                <div
+                  *ngIf="
+                    !isLoadingOrdersheet &&
+                    getOpenedDocument('ORDERSHEET') as ordersheet
+                  "
+                  class="document-content"
+                >
+                  <div class="document-header">
+                    <div class="document-info">
+                      <span
+                        class="document-status"
+                        [class]="'status-' + ordersheet.status.toLowerCase()"
+                      >
+                        {{ ordersheet.status }}
+                      </span>
+                      <span *ngIf="ordersheet.signedAt" class="document-date">
+                        Signed: {{ ordersheet.signedAt | date: "medium" }}
+                      </span>
+                      <span *ngIf="ordersheet.createdAt" class="document-date">
+                        Created: {{ ordersheet.createdAt | date: "medium" }}
+                      </span>
+                    </div>
+                  </div>
+                  <ng-container
+                    *ngIf="hasPdfForDisplay(ordersheet); else ordersheetHtmlFallback"
+                  >
+                    <div class="document-pdf">
+                      <div class="document-pdf-header">
+                        <mat-icon color="warn">picture_as_pdf</mat-icon>
+                        <span>Signed PDF available</span>
                       </div>
-                    </mat-expansion-panel>
-                  </mat-accordion>
+                      <ng-container
+                        *ngIf="
+                          getPdfEmbedUrl(ordersheet) as pdfUrl;
+                          else ordersheetPdfLoading
+                        "
+                      >
+                        <iframe
+                          [src]="pdfUrl"
+                          width="100%"
+                          height="560"
+                          title="Ordersheet PDF"
+                        ></iframe>
+                      </ng-container>
+                      <ng-template #ordersheetPdfLoading>
+                        <div class="loading-container">
+                          <mat-spinner diameter="30"></mat-spinner>
+                          <p>Loading PDF preview...</p>
+                        </div>
+                      </ng-template>
+                    </div>
+                  </ng-container>
+                  <ng-template #ordersheetHtmlFallback>
+                    <div
+                      class="document-body"
+                      [innerHTML]="ordersheet.contentHtml"
+                    ></div>
+                  </ng-template>
                 </div>
 
                 <!-- Ordersheet Not Available -->
@@ -454,78 +508,113 @@
                   *ngIf="!isLoadingJudgement && judgements.length > 0"
                   class="documents-list"
                 >
-                  <mat-accordion>
-                    <mat-expansion-panel
-                      *ngFor="let judgement of judgements; let i = index"
-                      [expanded]="i === 0"
-                    >
-                      <mat-expansion-panel-header>
-                        <mat-panel-title>
-                          <div class="panel-title-content">
-                            <mat-icon>gavel</mat-icon>
-                            <span>{{ getDocumentTitle(judgement, i) }}</span>
-                            <span
-                              class="document-badge"
-                              [class]="
-                                'status-' + judgement.status.toLowerCase()
-                              "
-                            >
-                              {{ judgement.status }}
-                            </span>
-                          </div>
-                        </mat-panel-title>
-                        <mat-panel-description>
-                          <span *ngIf="judgement.createdAt">{{
-                            judgement.createdAt | date: "medium"
-                          }}</span>
-                          <span *ngIf="judgement.signedAt" class="signed-badge">
-                            <mat-icon>verified</mat-icon>
-                            Signed
-                          </span>
-                        </mat-panel-description>
-                      </mat-expansion-panel-header>
+                  <div
+                    class="document-list-row"
+                    *ngFor="let judgement of judgements; let i = index"
+                  >
+                    <div class="panel-title-content">
+                      <mat-icon>{{
+                        hasPdfForDisplay(judgement) ? "picture_as_pdf" : "gavel"
+                      }}</mat-icon>
+                      <span>{{ getDocumentTitle(judgement, i) }}</span>
+                      <span
+                        class="document-badge"
+                        [class]="'status-' + judgement.status.toLowerCase()"
+                      >
+                        {{ judgement.status }}
+                      </span>
+                    </div>
+                    <div class="document-list-actions">
+                      <button
+                        mat-stroked-button
+                        color="primary"
+                        (click)="openDocument(judgement, 'JUDGEMENT')"
+                      >
+                        <mat-icon>open_in_new</mat-icon>
+                        {{
+                          isOpenedDocument(judgement, "JUDGEMENT")
+                            ? "Opened"
+                            : "Open"
+                        }}
+                      </button>
+                      <button
+                        mat-raised-button
+                        color="primary"
+                        (click)="downloadDocument(judgement, 'Judgement')"
+                      >
+                        <mat-icon>{{
+                          hasPdfForDisplay(judgement)
+                            ? "picture_as_pdf"
+                            : "print"
+                        }}</mat-icon>
+                        {{
+                          hasPdfForDisplay(judgement)
+                            ? "Download PDF"
+                            : "Print / Download"
+                        }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
 
-                      <div class="document-content">
-                        <div class="document-header">
-                          <div class="document-info">
-                            <span
-                              class="document-status"
-                              [class]="
-                                'status-' + judgement.status.toLowerCase()
-                              "
-                            >
-                              {{ judgement.status }}
-                            </span>
-                            <span
-                              *ngIf="judgement.signedAt"
-                              class="document-date"
-                            >
-                              Signed: {{ judgement.signedAt | date: "medium" }}
-                            </span>
-                            <span
-                              *ngIf="judgement.createdAt"
-                              class="document-date"
-                            >
-                              Created:
-                              {{ judgement.createdAt | date: "medium" }}
-                            </span>
-                          </div>
-                          <button
-                            mat-raised-button
-                            color="primary"
-                            (click)="downloadDocument(judgement, 'Judgement')"
-                          >
-                            <mat-icon>print</mat-icon>
-                            Print / Download
-                          </button>
-                        </div>
-                        <div
-                          class="document-body"
-                          [innerHTML]="judgement.contentHtml"
-                        ></div>
+                <div
+                  *ngIf="
+                    !isLoadingJudgement &&
+                    getOpenedDocument('JUDGEMENT') as judgement
+                  "
+                  class="document-content"
+                >
+                  <div class="document-header">
+                    <div class="document-info">
+                      <span
+                        class="document-status"
+                        [class]="'status-' + judgement.status.toLowerCase()"
+                      >
+                        {{ judgement.status }}
+                      </span>
+                      <span *ngIf="judgement.signedAt" class="document-date">
+                        Signed: {{ judgement.signedAt | date: "medium" }}
+                      </span>
+                      <span *ngIf="judgement.createdAt" class="document-date">
+                        Created: {{ judgement.createdAt | date: "medium" }}
+                      </span>
+                    </div>
+                  </div>
+                  <ng-container
+                    *ngIf="hasPdfForDisplay(judgement); else judgementHtmlFallback"
+                  >
+                    <div class="document-pdf">
+                      <div class="document-pdf-header">
+                        <mat-icon color="warn">picture_as_pdf</mat-icon>
+                        <span>Signed PDF available</span>
                       </div>
-                    </mat-expansion-panel>
-                  </mat-accordion>
+                      <ng-container
+                        *ngIf="
+                          getPdfEmbedUrl(judgement) as pdfUrl;
+                          else judgementPdfLoading
+                        "
+                      >
+                        <iframe
+                          [src]="pdfUrl"
+                          width="100%"
+                          height="560"
+                          title="Judgement PDF"
+                        ></iframe>
+                      </ng-container>
+                      <ng-template #judgementPdfLoading>
+                        <div class="loading-container">
+                          <mat-spinner diameter="30"></mat-spinner>
+                          <p>Loading PDF preview...</p>
+                        </div>
+                      </ng-template>
+                    </div>
+                  </ng-container>
+                  <ng-template #judgementHtmlFallback>
+                    <div
+                      class="document-body"
+                      [innerHTML]="judgement.contentHtml"
+                    ></div>
+                  </ng-template>
                 </div>
 
                 <!-- Judgement Not Available -->

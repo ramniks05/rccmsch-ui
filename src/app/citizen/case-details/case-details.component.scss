@@ -482,6 +482,24 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
+
+    .document-list-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+    }
+
+    .document-list-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
     
     mat-accordion {
       width: 100%;
