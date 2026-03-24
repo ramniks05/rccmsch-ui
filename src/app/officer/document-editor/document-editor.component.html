@@ -13,30 +13,30 @@
         </small>
       </div>
       <div class="btn-group">
-        <button 
-          *ngIf="!editMode && canEdit()" 
-          class="btn btn-sm btn-light" 
+        <button
+          *ngIf="!editMode && canEdit()"
+          class="btn btn-sm btn-light"
           (click)="enableEdit()"
           [disabled]="loading">
           <i class="bi bi-pencil"></i> Edit
         </button>
-        <button 
-          class="btn btn-sm btn-light" 
+        <button
+          class="btn btn-sm btn-light"
           (click)="togglePreview()"
           [disabled]="loading">
           <i class="bi" [ngClass]="previewMode ? 'bi-eye-slash' : 'bi-eye'"></i>
           {{ previewMode ? 'Hide' : 'Show' }} Preview
         </button>
-        <button 
+        <button
           *ngIf="document"
-          class="btn btn-sm btn-light" 
+          class="btn btn-sm btn-light"
           (click)="printDocument()"
           [disabled]="loading">
           <i class="bi bi-printer"></i> Print
         </button>
-        <button 
+        <button
           *ngIf="document"
-          class="btn btn-sm btn-light" 
+          class="btn btn-sm btn-light"
           (click)="exportToPDF()"
           [disabled]="loading">
           <i class="bi bi-file-pdf"></i> PDF
@@ -85,12 +85,12 @@
         <!-- Preview Mode -->
         <div *ngIf="previewMode" class="document-preview mb-3">
           <div class="preview-label fw-bold mb-2">Preview:</div>
-          <div class="preview-content border rounded p-4 bg-white" [innerHTML]="getSanitizedHtml()"></div>
+          <div class="preview-content border-0 bg-transparent" [innerHTML]="getSanitizedHtml()"></div>
         </div>
 
         <!-- Read-only View -->
         <div *ngIf="!editMode && !previewMode && document" class="document-view">
-          <div class="border rounded p-4 bg-light" [innerHTML]="getSanitizedHtml()"></div>
+          <div [innerHTML]="getSanitizedHtml()"></div>
         </div>
 
         <!-- No Document Yet -->
@@ -101,9 +101,9 @@
         <!-- Action Buttons -->
         <div *ngIf="editMode" class="d-flex gap-2 mt-3">
           <!-- Save as Draft (shown only when workflow allows draft for this document) -->
-          <button 
+          <button
             *ngIf="allowDraftFromWorkflow"
-            class="btn btn-secondary" 
+            class="btn btn-secondary"
             (click)="saveDraft()"
             [disabled]="saving">
             <span *ngIf="!saving">
@@ -113,18 +113,18 @@
               <span class="spinner-border spinner-border-sm me-2"></span> Saving...
             </span>
           </button>
-          
+
           <!-- Save & Sign (shown when workflow allows Save & Sign for this document) -->
-          <button 
+          <button
             *ngIf="allowSaveAndSignFromWorkflow"
-            class="btn btn-success" 
+            class="btn btn-success"
             (click)="signDocument()"
             [disabled]="saving">
             <i class="bi bi-pen"></i> Save &amp; Sign
           </button>
-          
-          <button 
-            class="btn btn-outline-secondary" 
+
+          <button
+            class="btn btn-outline-secondary"
             (click)="cancelEdit()"
             [disabled]="saving">
             <i class="bi bi-x-circle"></i> Cancel
@@ -138,7 +138,7 @@
               <h6 class="card-title">Document Information</h6>
               <div class="row">
                 <div class="col-md-6">
-                  <p class="mb-1"><strong>Status:</strong> 
+                  <p class="mb-1"><strong>Status:</strong>
                     <span class="badge" [ngClass]="getStatusBadgeClass()">{{ documentStatus }}</span>
                   </p>
                   <p class="mb-1" *ngIf="document.createdAt">

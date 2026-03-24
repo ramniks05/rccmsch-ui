@@ -35,7 +35,7 @@ export class OfficerCaseDetailComponent implements OnInit {
   executing = false;
 
   parsedCaseData: Record<string, any> = {};
-  
+
   /**
    * Module form types to show as tabs (from transitions + form detail API). Admin-configured; not a fixed HEARING/FIELD_REPORT list.
    */
@@ -44,7 +44,7 @@ export class OfficerCaseDetailComponent implements OnInit {
    * Document template IDs to show as tabs (from transition checklist allowedDocumentIds).
    */
   private readonly documentTemplateIdsSet = new Set<number>();
-  
+
   /** Pending-with value from case details API; set when case loads so it always shows when present */
   pendingWithDisplay = '';
 
@@ -176,7 +176,7 @@ export class OfficerCaseDetailComponent implements OnInit {
           this.syncSelectedActionAfterTransitionsLoad();
           this.populateSidebarForSelectedAction();
           this.loadActionFormAndDocumentDetails();
-          
+
           // If no transitions available, show appropriate message
           if (this.transitions.length === 0) {
             // No error, just no actions available - this is handled in the template
@@ -192,9 +192,9 @@ export class OfficerCaseDetailComponent implements OnInit {
       error: (err) => {
         this.loadingTransitions = false;
         console.error('Error loading transitions:', err);
-        
+
         // Check if it's a case where no actions are available (not a real error)
-        if (err?.status === 404 || err?.error?.message?.toLowerCase().includes('no action') || 
+        if (err?.status === 404 || err?.error?.message?.toLowerCase().includes('no action') ||
             err?.error?.message?.toLowerCase().includes('no transition')) {
           this.transitions = [];
           this.selectedActionTransitionId = null;
@@ -299,7 +299,7 @@ export class OfficerCaseDetailComponent implements OnInit {
   get sidebarNavItems(): { index: number; label: string; icon: string; emphasize?: boolean }[] {
     const items: { index: number; label: string; icon: string; emphasize?: boolean }[] = [];
     let idx = 0;
-    items.push({ index: idx++, label: 'Overview', icon: 'folder_open' });
+    items.push({ index: idx++, label: 'Application Details', icon: 'folder_open' });
     for (const mt of this.moduleFormTypesForTabs) {
       items.push({
         index: idx++,
@@ -871,6 +871,18 @@ export class OfficerCaseDetailComponent implements OnInit {
   }
 
   /**
+   * Handle document save event from document editor.
+   * Refresh case details, transitions, and history to ensure all blocking reasons are updated
+   * and the Run step button is enabled/disabled appropriately.
+   */
+  onDocumentSaved(): void {
+    console.log('Document saved, refreshing case data...');
+    this.loadCaseDetails();
+    this.loadAvailableTransitions();
+    this.loadWorkflowHistory();
+  }
+
+  /**
    * Execute workflow transition
    */
   executeTransition(transitionCode: string, comments: string): void {
@@ -926,7 +938,7 @@ export class OfficerCaseDetailComponent implements OnInit {
         return String(msg).trim();
       }
     }
-    
+
     // Handle specific error cases
     if (err?.status === 400) {
       return 'Invalid request. Please check the action requirements and try again.';
@@ -939,7 +951,7 @@ export class OfficerCaseDetailComponent implements OnInit {
     } else if (err?.status >= 500) {
       return 'Server error occurred. Please try again later.';
     }
-    
+
     // Return specific error message if available, otherwise a helpful generic message
     return err?.error?.message || err?.message || 'Failed to execute action. Please try again.';
   }

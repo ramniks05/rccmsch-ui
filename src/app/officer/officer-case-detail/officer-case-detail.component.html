@@ -87,9 +87,12 @@
             <div class="hf-label">Next Hearing</div>
             <div class="hf-value">{{ caseData.nextHearingDate | date: 'dd/MM/yyyy' }}</div>
           </div>
-          <div class="hero-field" *ngIf="pendingWithDisplay">
+          <div class="hero-field hero-field--pending" *ngIf="pendingWithDisplay">
             <div class="hf-label">Pending with</div>
-            <div class="hf-value pending-with-value">{{ pendingWithDisplay }}</div>
+            <div class="hf-value pending-with-value">
+              <mat-icon class="pending-icon">schedule</mat-icon>
+              <span>{{ pendingWithDisplay }}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -199,11 +202,10 @@
           </div>
         </div>
         </div>
-      </div>
-    </div>
 
     <!-- Vertical sidebar + main panel -->
-    <div class="case-workspace">
+
+         <div class="case-workspace">
 
       <nav class="case-sidebar" aria-label="Case sections">
         <p class="case-sidebar-hint" *ngIf="!loadingTransitions && transitions.length > 0 && !selectedActionTransition">
@@ -334,7 +336,8 @@
             [caseData]="caseData"
             [preferredTransitionCode]="selectedActionTransition?.transitionCode ?? null"
             [templateId]="tid"
-            [openInEditMode]="isOrderSheetTemplateId(tid)">
+            [openInEditMode]="isOrderSheetTemplateId(tid)"
+            (documentSaved)="onDocumentSaved()">
           </app-document-editor>
         </div>
       </ng-container>
@@ -386,6 +389,8 @@
           </div>
         </div>
 
+      </div>
+    </div>
       </div>
     </div>
 

@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, OnInit, Input, OnChanges, SimpleChanges, Output, EventEmitter } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { OfficerCaseService, CaseDTO } from '../services/officer-case.service';
@@ -32,14 +32,17 @@ export class DocumentEditorComponent implements OnInit, OnChanges {
   @Input() documentType: string = 'NOTICE';
   /** When true (e.g. Order Sheet), start in edit mode so the officer can work the template immediately. */
   @Input() openInEditMode = false;
-  
+
+  /** Emits when a document is successfully saved. */
+  @Output() documentSaved = new EventEmitter<DocumentData>();
+
   // Template & Document data
   template: any = null;
   document: DocumentData | null = null;
   contentHtml: string = '';
   contentData: any = {};
   documentStatus: 'DRAFT' | 'FINAL' | 'SIGNED' = 'DRAFT';
-  
+
   // UI state
   loading = false;
   saving = false;
@@ -51,10 +54,10 @@ export class DocumentEditorComponent implements OnInit, OnChanges {
   // Workflow-based action permissions for this document template
   allowDraftFromWorkflow = false;
   allowSaveAndSignFromWorkflow = false;
-  
+
   // Placeholders for replacement
   placeholderValues: Record<string, string> = {};
-  
+
   // User role for access control
   userRoleCode: string = '';
   userRoleName: string = '';
@@ -67,7 +70,7 @@ export class DocumentEditorComponent implements OnInit, OnChanges {
   ) {
     this.loadUserRole();
   }
-  
+
   /**
    * Load user role from localStorage
    */
@@ -84,7 +87,7 @@ export class DocumentEditorComponent implements OnInit, OnChanges {
       console.error('Error loading user role:', e);
     }
   }
-  
+
   ngOnInit(): void {
     this.resetLoadFlags();
     if (this.caseId && this.templateId != null) {
@@ -154,7 +157,7 @@ export class DocumentEditorComponent implements OnInit, OnChanges {
     const posting = officerData?.posting || {};
     const designation = posting.roleName || posting.designation || this.caseData.assignedToRole || '';
     const officerName = posting.officerName || this.caseData.assignedToOfficerName || '';
-    
+
     // Extract court name - priority: caseData > posting > default
     let courtName = 'Court Name'; // Default fallback
     if ((this.caseData as any).courtName) {
@@ -166,23 +169,23 @@ export class DocumentEditorComponent implements OnInit, OnChanges {
     }
 
     // Digital Signature ID - can be userId, officerId, or custom field
-    const digitalSignatureId = officerData?.userId?.toString() || 
-                               posting.officerId?.toString() || 
-                               this.caseData.assignedToOfficerId?.toString() || 
+    const digitalSignatureId = officerData?.userId?.toString() ||
+                               posting.officerId?.toString() ||
+                               this.caseData.assignedToOfficerId?.toString() ||
                                '';
 
     // Parse caseData JSON to extract form fields (including respondent name)
     let parsedCaseData: Record<string, any> = {};
     let respondentName = '';
-    
+
     if (this.caseData.caseData) {
       try {
         parsedCaseData = JSON.parse(this.caseData.caseData);
-        
+
         // Try multiple possible field names for respondent
         // Common variations: respondentName, respondent, respondent_name, etc.
-        respondentName = parsedCaseData['respondentName'] || 
-                        parsedCaseData['respondent'] || 
+        respondentName = parsedCaseData['respondentName'] ||
+                        parsedCaseData['respondent'] ||
                         parsedCaseData['respondent_name'] ||
                         parsedCaseData['Respondent Name'] ||
                         parsedCaseData['Respondent'] ||
@@ -410,10 +413,10 @@ export class DocumentEditorComponent implements OnInit, OnChanges {
     }
 
     this.saving = true;
-    
+
     // Ensure status is exactly as expected (uppercase, no whitespace)
     const normalizedStatus = status.trim().toUpperCase() as 'DRAFT' | 'FINAL' | 'SIGNED';
-    
+
     const templateId = this.templateId ?? this.template?.id;
     if (templateId == null) {
       alert('Template ID is required to save document.');
@@ -442,7 +445,7 @@ export class DocumentEditorComponent implements OnInit, OnChanges {
           const returnedStatus = response.data?.status || status;
           console.log('Requested status:', status);
           console.log('Returned status from backend:', returnedStatus);
-          
+
           if (returnedStatus !== status) {
             console.warn('⚠️ WARNING: Status mismatch!');
             console.warn('Requested:', status, 'but backend returned:', returnedStatus);
@@ -450,12 +453,16 @@ export class DocumentEditorComponent implements OnInit, OnChanges {
           } else {
             console.log('✅ Status matches correctly');
           }
-          
+
           alert(`Document updated successfully. Status: ${returnedStatus}`);
           this.document = response.data;
           this.documentStatus = returnedStatus as 'DRAFT' | 'FINAL' | 'SIGNED';
           this.editMode = false;
           this.saving = false;
+          // Notify parent component that document has been saved
+          if (this.document) {
+            this.documentSaved.emit(this.document);
+          }
           this.triggerAutoWorkflowAfterDocumentSave(
             templateId,
             String(returnedStatus),
@@ -485,6 +492,10 @@ export class DocumentEditorComponent implements OnInit, OnChanges {
           this.documentStatus = returnedStatus as 'DRAFT' | 'FINAL' | 'SIGNED';
           this.editMode = false;
           this.saving = false;
+          // Notify parent component that document has been saved
+          if (this.document) {
+            this.documentSaved.emit(this.document);
+          }
           this.triggerAutoWorkflowAfterDocumentSave(
             templateId,
             String(returnedStatus),

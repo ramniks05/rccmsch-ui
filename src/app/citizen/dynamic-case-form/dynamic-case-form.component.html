@@ -35,7 +35,7 @@
             >
               <mat-option [value]="null">-- Select Filing Type --</mat-option>
               <mat-option *ngFor="let caseType of caseTypes" [value]="caseType.id">
-                {{ caseType.typeName }} ({{ caseType.courtLevel }})
+                {{ caseType.typeName }}
               </mat-option>
             </mat-select>
             <mat-icon matPrefix>description</mat-icon>
