@@ -463,10 +463,10 @@ export class DocumentEditorComponent implements OnInit, OnChanges {
           if (this.document) {
             this.documentSaved.emit(this.document);
           }
-          this.triggerAutoWorkflowAfterDocumentSave(
-            templateId,
-            String(returnedStatus),
-          );
+          // this.triggerAutoWorkflowAfterDocumentSave(
+          //   templateId,
+          //   String(returnedStatus),
+          // );
         },
         error: (error) => {
           console.error('Document update error:', error);
@@ -496,10 +496,10 @@ export class DocumentEditorComponent implements OnInit, OnChanges {
           if (this.document) {
             this.documentSaved.emit(this.document);
           }
-          this.triggerAutoWorkflowAfterDocumentSave(
-            templateId,
-            String(returnedStatus),
-          );
+          // this.triggerAutoWorkflowAfterDocumentSave(
+          //   templateId,
+          //   String(returnedStatus),
+          // );
         },
         error: (error) => {
           console.error('Document save error:', error);
