@@ -12,7 +12,7 @@
   <div *ngIf="formItem" class="single-form">
     <app-module-form
       [caseId]="caseId"
-      [caseUnitId]="data.caseData?.unitId ?? null"
+      [caseUnitId]="data.caseData.unitId ?? null"
       [formId]="formItem.formId"
       (formSubmitted)="onFormSubmitted($event)">
     </app-module-form>
@@ -23,7 +23,7 @@
       <div class="tab-panel">
         <app-module-form
           [caseId]="caseId"
-          [caseUnitId]="data.caseData?.unitId ?? null"
+          [caseUnitId]="data.caseData.unitId ?? null"
           [moduleType]="type"
           (formSubmitted)="onFormSubmitted($event)">
         </app-module-form>
@@ -33,7 +33,7 @@
   <div *ngIf="!formItem && formTypes.length === 1" class="single-form">
     <app-module-form
       [caseId]="caseId"
-      [caseUnitId]="data.caseData?.unitId ?? null"
+      [caseUnitId]="data.caseData.unitId ?? null"
       [moduleType]="formTypes[0]"
       (formSubmitted)="onFormSubmitted($event)">
     </app-module-form>
