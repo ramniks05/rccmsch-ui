@@ -1,9 +1,14 @@
 <div class="case-detail-container">
-
   <!-- Header -->
   <div class="header-section">
     <div class="header-left">
-      <button mat-icon-button (click)="refresh()" [disabled]="loading" class="refresh-icon-btn" matTooltip="Refresh">
+      <button
+        mat-icon-button
+        (click)="refresh()"
+        [disabled]="loading"
+        class="refresh-icon-btn"
+        matTooltip="Refresh"
+      >
         <mat-icon>refresh</mat-icon>
       </button>
     </div>
@@ -25,12 +30,13 @@
   <div *ngIf="error && !loading" class="error-container">
     <mat-icon color="warn">error_outline</mat-icon>
     <p>{{ error }}</p>
-    <button mat-flat-button color="primary" (click)="loadCaseDetails()">Retry</button>
+    <button mat-flat-button color="primary" (click)="loadCaseDetails()">
+      Retry
+    </button>
   </div>
 
   <!-- Case Details -->
   <div *ngIf="!loading && !error && caseData" class="case-content">
-
     <!-- Workflow Error Banner -->
     <div *ngIf="transitionError" class="workflow-error-banner" role="alert">
       <mat-icon>warning_amber</mat-icon>
@@ -38,361 +44,580 @@
         <strong>Could not complete action</strong>
         <p class="workflow-error-reason">{{ transitionError }}</p>
       </div>
-      <button mat-icon-button (click)="clearTransitionError()" aria-label="Dismiss">
+      <button
+        mat-icon-button
+        (click)="clearTransitionError()"
+        aria-label="Dismiss"
+      >
         <mat-icon>close</mat-icon>
       </button>
     </div>
 
     <!-- One frame: case metadata (hero) + workflow (actions + step) -->
     <div class="case-overview-frame" *ngIf="caseData">
-
-    <div class="hero-card">
-      <div class="hero-inner">
-        <div class="hero-top">
-          <div class="hero-accent-bar"></div>
-          <div class="hero-case-info">
-            <div class="hero-case-label">Case Number</div>
-            <div class="hero-case-number">{{ caseData.caseNumber }}</div>
-          </div>
-        </div>
-        <div class="hero-fields">
-          <div class="hero-field">
-            <div class="hf-label">Status</div>
-            <div class="hf-value">
-              <span [class]="'status-pill ' + getStatusClass(caseData.currentStateName || caseData.status)">
-                <span class="status-dot"></span>
-                {{ caseData.currentStateName || caseData.status }}
-              </span>
+      <div class="hero-card">
+        <div class="hero-inner">
+          <div class="hero-top">
+            <div class="hero-accent-bar"></div>
+            <div class="hero-case-info">
+              <div class="hero-case-label">Case Number</div>
+              <div class="hero-case-number">{{ caseData.caseNumber }}</div>
             </div>
           </div>
-          <div class="hero-field">
-            <div class="hf-label">Applicant</div>
-            <div class="hf-value">{{ caseData.applicantName }}</div>
-          </div>
-          <div class="hero-field">
-            <div class="hf-label">Case Type</div>
-            <div class="hf-value">{{ caseData.caseTypeName }}</div>
-          </div>
-          <div class="hero-field">
-            <div class="hf-label">Priority</div>
-            <div class="hf-value">
-              <span [class]="'priority-pill ' + getPriorityClass(caseData.priority)">{{ caseData.priority }}</span>
+          <div class="hero-fields">
+            <!-- Status -->
+            <div class="hero-field hero-field--status">
+              <div class="hf-label">Status</div>
+              <div class="hf-value">
+                <span
+                  [class]="
+                    'status-pill ' +
+                    getStatusClass(caseData.currentStateName || caseData.status)
+                  "
+                >
+                  <span class="status-dot"></span>
+                  {{ caseData.currentStateName || caseData.status }}
+                </span>
+              </div>
             </div>
-          </div>
-          <div class="hero-field">
-            <div class="hf-label">Application Date</div>
-            <div class="hf-value">{{ caseData.applicationDate | date: 'dd/MM/yyyy' }}</div>
-          </div>
-          <div class="hero-field" *ngIf="caseData.nextHearingDate">
-            <div class="hf-label">Next Hearing</div>
-            <div class="hf-value">{{ caseData.nextHearingDate | date: 'dd/MM/yyyy' }}</div>
-          </div>
-          <div class="hero-field hero-field--pending" *ngIf="pendingWithDisplay">
-            <div class="hf-label">Pending with</div>
-            <div class="hf-value pending-with-value">
-              <mat-icon class="pending-icon">schedule</mat-icon>
-              <span>{{ pendingWithDisplay }}</span>
+            <div class="hero-field">
+              <div class="hf-label">Applicant</div>
+              <div class="hf-value">{{ caseData.applicantName }}</div>
+            </div>
+            <div class="hero-field">
+              <div class="hf-label">Case Type</div>
+              <div class="hf-value">{{ caseData.caseTypeName }}</div>
+            </div>
+            <div class="hero-field">
+              <div class="hf-label">Priority</div>
+              <div class="hf-value">
+                <span
+                  [class]="
+                    'priority-pill ' + getPriorityClass(caseData.priority)
+                  "
+                  >{{ caseData.priority }}</span
+                >
+              </div>
+            </div>
+            <div class="hero-field">
+              <div class="hf-label">Application Date</div>
+              <div class="hf-value">
+                {{ caseData.applicationDate | date: "dd/MM/yyyy" }}
+              </div>
+            </div>
+            <!-- Next Hearing -->
+            <div
+              class="hero-field hero-field--hearing"
+              *ngIf="caseData.nextHearingDate"
+            >
+              <div class="hf-label">Next Hearing</div>
+              <div class="hf-value">
+                {{ caseData.nextHearingDate | date: "dd/MM/yyyy" }}
+              </div>
+            </div>
+            <div
+              class="hero-field hero-field--pending"
+              *ngIf="pendingWithDisplay"
+            >
+              <div class="hf-label">Pending with</div>
+              <div class="hf-value pending-with-value">
+                <mat-icon class="pending-icon">schedule</mat-icon>
+                <span>{{ pendingWithDisplay }}</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="case-action-bar">
-      <div *ngIf="loadingTransitions" class="action-bar-loading">
-        <mat-spinner diameter="24"></mat-spinner>
-        <span>Loading…</span>
-      </div>
-
-      <div *ngIf="!loadingTransitions && transitionError" class="action-bar-error">
-        <mat-icon color="warn">error_outline</mat-icon>
-        <span>{{ transitionError }}</span>
-        <button mat-stroked-button color="primary" type="button" (click)="loadAvailableTransitions()">
-          <mat-icon>refresh</mat-icon>
-          Retry
-        </button>
-      </div>
-
-      <div *ngIf="!loadingTransitions && !transitionError && transitions.length === 0" class="action-bar-empty">
-        <mat-icon>check_circle_outline</mat-icon>
-        <span>No actions for this step.</span>
-      </div>
-
-      <div *ngIf="!loadingTransitions && !transitionError && transitions.length > 0" class="action-workflow-unified">
-        <div class="action-picker-section">
-        <div class="action-picker-head action-picker-head--compact">
-          <span class="action-picker-head-title">Workflow</span>
-          <span class="action-picker-head-sub">Pick an action, then open forms and documents from the sidebar.</span>
+      <div class="case-action-bar">
+        <div *ngIf="loadingTransitions" class="action-bar-loading">
+          <mat-spinner diameter="24"></mat-spinner>
+          <span>Loading…</span>
         </div>
-        <div class="action-picker-list action-picker-list-horizontal" role="list">
-          <div
-            *ngFor="let transition of transitions"
-            class="action-picker-row"
-            [class.action-picker-row-active]="selectedActionTransitionId === transition.id"
-            role="listitem"
-            (click)="selectActionTransitionRow(transition)"
-            [matTooltip]="transition.transitionCode">
-            <mat-checkbox
-              class="action-picker-checkbox"
-              [checked]="selectedActionTransitionId === transition.id"
-              (click)="$event.stopPropagation()"
-              (change)="onActionCheckboxChange(transition, $event.checked)">
-            </mat-checkbox>
-            <mat-icon [class]="'action-picker-type-icon ' + getActionClass(transition.transitionCode)">
-              {{ transition.transitionCode.includes('APPROVE') ? 'check_circle' :
-                 transition.transitionCode.includes('REJECT')  ? 'cancel' :
-                 transition.transitionCode.includes('RETURN')  ? 'undo' : 'play_arrow' }}
-            </mat-icon>
-            <div class="action-picker-main">
-              <span class="action-picker-name">{{ transition.transitionName }}</span>
+
+        <div
+          *ngIf="!loadingTransitions && transitionError"
+          class="action-bar-error"
+        >
+          <mat-icon color="warn">error_outline</mat-icon>
+          <span>{{ transitionError }}</span>
+          <button
+            mat-stroked-button
+            color="primary"
+            type="button"
+            (click)="loadAvailableTransitions()"
+          >
+            <mat-icon>refresh</mat-icon>
+            Retry
+          </button>
+        </div>
+
+        <div
+          *ngIf="
+            !loadingTransitions && !transitionError && transitions.length === 0
+          "
+          class="action-bar-empty"
+        >
+          <mat-icon>check_circle_outline</mat-icon>
+          <span>No actions for this step.</span>
+        </div>
+
+        <div
+          *ngIf="
+            !loadingTransitions && !transitionError && transitions.length > 0
+          "
+          class="action-workflow-unified"
+        >
+          <div class="action-picker-section">
+            <div class="action-picker-head action-picker-head--compact">
+              <span class="action-picker-head-title">WORKFLOW</span>
+              <span class="action-picker-head-sub"
+                >Pick an action, then open forms and documents from the
+                sidebar.</span
+              >
             </div>
-            <span *ngIf="transition.requiresComment" class="comment-required" matTooltip="Comment required">*</span>
-            <span *ngIf="canExecuteTransition(transition)" class="action-badge ready">Ready</span>
-            <span *ngIf="!canExecuteTransition(transition)" class="action-badge blocked">Blocked</span>
+            <div
+              class="action-picker-list action-picker-list-horizontal"
+              role="list"
+            >
+              <div
+                *ngFor="let transition of transitions"
+                class="action-picker-row"
+                [class.action-picker-row-active]="
+                  selectedActionTransitionId === transition.id
+                "
+                role="listitem"
+                (click)="selectActionTransitionRow(transition)"
+                [matTooltip]="transition.transitionCode"
+              >
+                <mat-checkbox
+                  class="action-picker-checkbox"
+                  [checked]="selectedActionTransitionId === transition.id"
+                  (click)="$event.stopPropagation()"
+                  (change)="onActionCheckboxChange(transition, $event.checked)"
+                >
+                </mat-checkbox>
+                <mat-icon
+                  [class]="
+                    'action-picker-type-icon ' +
+                    getActionClass(transition.transitionCode)
+                  "
+                >
+                  {{
+                    transition.transitionCode.includes("APPROVE")
+                      ? "check_circle"
+                      : transition.transitionCode.includes("REJECT")
+                        ? "cancel"
+                        : transition.transitionCode.includes("RETURN")
+                          ? "undo"
+                          : "play_arrow"
+                  }}
+                </mat-icon>
+                <div class="action-picker-main">
+                  <span class="action-picker-name">{{
+                    transition.transitionName
+                  }}</span>
+                </div>
+                <span
+                  *ngIf="transition.requiresComment"
+                  class="comment-required"
+                  matTooltip="Comment required"
+                  >*</span
+                >
+                <span
+                  *ngIf="canExecuteTransition(transition)"
+                  class="action-badge ready"
+                  >Ready</span
+                >
+                <span
+                  *ngIf="!canExecuteTransition(transition)"
+                  class="action-badge blocked"
+                  >Blocked</span
+                >
+              </div>
+            </div>
           </div>
-        </div>
-        </div>
 
-        <div class="action-step-panel">
-          <div class="action-step-panel-inner">
-
-            <div *ngIf="!selectedActionTransition" class="action-detail-empty action-tab-empty">
-              <p>Select an action to see the next step.</p>
-            </div>
-
-            <div *ngIf="selectedActionTransition as transition" class="action-step-body">
-              <div *ngIf="!canExecuteTransition(transition) && getFormattedBlockingReasons(transition).length"
-                   class="action-blocking action-blocking--compact">
-                <span class="blocking-label">Before you can continue</span>
-                <ul>
-                  <li *ngFor="let reason of getFormattedBlockingReasons(transition)">{{ reason }}</li>
-                </ul>
+          <div class="action-step-panel">
+            <div class="action-step-panel-inner">
+              <div
+                *ngIf="!selectedActionTransition"
+                class="action-detail-empty action-tab-empty"
+              >
+                <p>Select an action to see the next step.</p>
               </div>
 
-              <p *ngIf="transition.description" class="action-description action-description--compact">{{ transition.description }}</p>
-
-              <div *ngIf="hasFormsOrDocuments(transition)" class="action-forms-docs action-forms-docs--readonly">
-                <div *ngIf="getTransitionFormIds(transition).length" class="action-meta-row">
-                  <span class="meta-label">Forms</span>
-                  <div class="action-name-list">{{ getTransitionFormNamesLine(transition) }}</div>
+              <div
+                *ngIf="selectedActionTransition as transition"
+                class="action-step-body"
+              >
+                <div
+                  *ngIf="
+                    !canExecuteTransition(transition) &&
+                    getFormattedBlockingReasons(transition).length
+                  "
+                  class="action-blocking action-blocking--compact"
+                >
+                  <span class="blocking-label">Before you can continue</span>
+                  <ul>
+                    <li
+                      *ngFor="
+                        let reason of getFormattedBlockingReasons(transition)
+                      "
+                    >
+                      {{ reason }}
+                    </li>
+                  </ul>
                 </div>
-                <div *ngIf="getTransitionDocumentIds(transition).length" class="action-meta-row">
-                  <span class="meta-label">Documents</span>
-                  <div class="action-name-list">
-                    {{ getTransitionDocumentNamesLine(transition) }}
-                    <span *ngIf="getTransitionDocumentActions(transition)" class="action-doc-actions-hint">
-                      · {{ getTransitionDocumentActions(transition) }}
-                    </span>
+
+                <p
+                  *ngIf="transition.description"
+                  class="action-description action-description--compact"
+                >
+                  {{ transition.description }}
+                </p>
+
+                <div
+                  *ngIf="hasFormsOrDocuments(transition)"
+                  class="action-forms-docs action-forms-docs--readonly"
+                >
+                  <div
+                    *ngIf="getTransitionFormIds(transition).length"
+                    class="action-meta-row"
+                  >
+                    <span class="meta-label">Forms</span>
+                    <div class="action-name-list">
+                      {{ getTransitionFormNamesLine(transition) }}
+                    </div>
+                  </div>
+                  <div
+                    *ngIf="getTransitionDocumentIds(transition).length"
+                    class="action-meta-row"
+                  >
+                    <span class="meta-label">Documents</span>
+                    <div class="action-name-list">
+                      {{ getTransitionDocumentNamesLine(transition) }}
+                      <span
+                        *ngIf="getTransitionDocumentActions(transition)"
+                        class="action-doc-actions-hint"
+                      >
+                        · {{ getTransitionDocumentActions(transition) }}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div class="action-step-cta">
-                <button
-                  mat-raised-button
-                  [class]="'action-btn ' + getActionClass(transition.transitionCode)"
-                  (click)="handleActionClick(transition)"
-                  [disabled]="executing || !canExecuteTransition(transition)">
-                  <mat-icon>play_arrow</mat-icon>
-                  Run step
-                </button>
-                <span *ngIf="transition.requiresComment" class="action-cta-note">Comment required</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        </div>
-
-    <!-- Vertical sidebar + main panel -->
-
-         <div class="case-workspace">
-
-      <nav class="case-sidebar" aria-label="Case sections">
-        <p class="case-sidebar-hint" *ngIf="!loadingTransitions && transitions.length > 0 && !selectedActionTransition">
-          Pick an action above first.
-        </p>
-        <button
-          type="button"
-          *ngFor="let item of sidebarNavItems"
-          class="case-sidebar-item"
-          [class.case-sidebar-item-active]="selectedTabIndex === item.index"
-          [class.case-sidebar-item-emphasis]="item.emphasize"
-          (click)="selectSidebarTab(item.index)">
-          <mat-icon class="case-sidebar-icon" aria-hidden="true">{{ item.icon }}</mat-icon>
-          <span class="case-sidebar-label">{{ item.label }}</span>
-        </button>
-      </nav>
-
-      <div class="case-main-panel">
-
-      <!-- ── Case overview (single grid) ── -->
-      <div *ngIf="selectedTabIndex === 0" class="tab-content tab-content--compact">
-
-          <div class="detail-section">
-            <div class="section-header section-header--minimal">
-              <span class="section-title">Case overview</span>
-            </div>
-            <div class="detail-grid detail-grid--readable">
-              <div class="detail-cell">
-                <div class="cell-label">Case number</div>
-                <div class="cell-value mono">{{ caseData.caseNumber }}</div>
-              </div>
-              <div class="detail-cell">
-                <div class="cell-label">Status</div>
-                <div class="cell-value">
-                  <span [class]="'status-pill ' + getStatusClass(caseData.currentStateName || caseData.status)">
-                    <span class="status-dot"></span>
-                    {{ caseData.currentStateName || caseData.status }}
+                <div class="action-step-cta">
+                  <button
+                    mat-raised-button
+                    [class]="
+                      'action-btn ' + getActionClass(transition.transitionCode)
+                    "
+                    [class.action-btn--enabled]="
+                      !executing && canExecuteTransition(transition)
+                    "
+                    (click)="handleActionClick(transition)"
+                    [disabled]="executing || !canExecuteTransition(transition)"
+                  >
+                    <mat-icon>play_arrow</mat-icon>
+                    {{ transition.transitionCode }}
+                  </button>
+                  <span
+                    *ngIf="transition.requiresComment"
+                    class="action-cta-note"
+                  >
+                    Comment required
                   </span>
                 </div>
               </div>
-              <div class="detail-cell">
-                <div class="cell-label">Type</div>
-                <div class="cell-value">{{ caseData.caseTypeName }}</div>
-              </div>
-              <div class="detail-cell">
-                <div class="cell-label">Nature</div>
-                <div class="cell-value">{{ caseData.caseNatureName }}</div>
-              </div>
-              <div class="detail-cell">
-                <div class="cell-label">Priority</div>
-                <div class="cell-value">
-                  <span [class]="'priority-pill ' + getPriorityClass(caseData.priority)">{{ caseData.priority }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vertical sidebar + main panel -->
+        <div class="case-workspace">
+          <nav class="case-sidebar" aria-label="Case sections">
+            <p
+              class="case-sidebar-hint"
+              *ngIf="
+                !loadingTransitions &&
+                transitions.length > 0 &&
+                !selectedActionTransition
+              "
+            >
+              Pick an action above first.
+            </p>
+            <button
+              type="button"
+              *ngFor="let item of sidebarNavItems"
+              class="case-sidebar-item"
+              [class.case-sidebar-item-active]="selectedTabIndex === item.index"
+              [class.case-sidebar-item-emphasis]="item.emphasize"
+              (click)="selectSidebarTab(item.index)"
+            >
+              <mat-icon class="case-sidebar-icon" aria-hidden="true">{{
+                item.icon
+              }}</mat-icon>
+              <span class="case-sidebar-label">{{ item.label }}</span>
+
+              <!-- Required indicator -->
+              <span
+                *ngIf="item.required"
+                class="case-sidebar-required"
+                matTooltip="Required"
+                matTooltipPosition="right"
+              >
+                <mat-icon>error</mat-icon>
+              </span>
+
+              <!-- Active dot (existing) -->
+              <span
+                class="case-sidebar-active-dot"
+                *ngIf="selectedTabIndex === item.index"
+              ></span>
+            </button>
+          </nav>
+
+          <div class="case-main-panel">
+            <!-- ── Case overview (single grid) ── -->
+            <div
+              *ngIf="selectedTabIndex === 0"
+              class="tab-content tab-content--compact"
+            >
+              <div class="detail-section">
+                <div class="section-header section-header--minimal">
+                  <span class="section-title">Case overview</span>
+                </div>
+                <div class="detail-grid detail-grid--readable">
+                  <div class="detail-cell">
+                    <div class="cell-label">Case number</div>
+                    <div class="cell-value mono">{{ caseData.caseNumber }}</div>
+                  </div>
+                  <div class="detail-cell">
+                    <div class="cell-label">Status</div>
+                    <div class="cell-value case-status">
+                      <span
+                        [class]="
+                          'status-pill ' +
+                          getStatusClass(
+                            caseData.currentStateName || caseData.status
+                          )
+                        "
+                      >
+                        <span class="status-dot"></span>
+                        {{ caseData.currentStateName || caseData.status }}
+                      </span>
+                    </div>
+                  </div>
+                  <div class="detail-cell">
+                    <div class="cell-label">Type</div>
+                    <div class="cell-value">{{ caseData.caseTypeName }}</div>
+                  </div>
+                  <div class="detail-cell">
+                    <div class="cell-label">Nature</div>
+                    <div class="cell-value">{{ caseData.caseNatureName }}</div>
+                  </div>
+                  <div class="detail-cell">
+                    <div class="cell-label">Priority</div>
+                    <div class="cell-value">
+                      <span
+                        [class]="
+                          'priority-pill ' + getPriorityClass(caseData.priority)
+                        "
+                        >{{ caseData.priority }}</span
+                      >
+                    </div>
+                  </div>
+                  <div class="detail-cell">
+                    <div class="cell-label">Applied</div>
+                    <div class="cell-value">
+                      {{ caseData.applicationDate | date: "dd/MM/yyyy" }}
+                    </div>
+                  </div>
+                  <div
+                    class="detail-cell"
+                    *ngIf="caseData.nextHearingDate"
+                  >
+                    <div class="cell-label">Next hearing</div>
+                    <div class="cell-value hearing-date">
+                      {{ caseData.nextHearingDate | date: "dd/MM/yyyy" }}
+                    </div>
+                  </div>
+                  <div
+                    class="detail-cell"
+                    *ngIf="caseData.assignedToOfficerName"
+                  >
+                    <div class="cell-label">Assigned</div>
+                    <div class="cell-value">
+                      {{ caseData.assignedToOfficerName }}
+                      <span class="role-tag" *ngIf="caseData.assignedToRole">{{
+                        caseData.assignedToRole
+                      }}</span>
+                    </div>
+                  </div>
+                  <div class="detail-cell" *ngIf="caseData.assignedToUnitName">
+                    <div class="cell-label">Unit</div>
+                    <div class="cell-value">
+                      {{ caseData.assignedToUnitName }}
+                    </div>
+                  </div>
+                  <div class="detail-cell">
+                    <div class="cell-label">Applicant</div>
+                    <div class="cell-value">{{ caseData.applicantName }}</div>
+                  </div>
+                  <div class="detail-cell">
+                    <div class="cell-label">Mobile</div>
+                    <div class="cell-value">{{ caseData.applicantMobile }}</div>
+                  </div>
+                  <div class="detail-cell" *ngIf="caseData.applicantEmail">
+                    <div class="cell-label">Email</div>
+                    <div class="cell-value">{{ caseData.applicantEmail }}</div>
+                  </div>
+                  <div class="detail-cell detail-cell--span-subject">
+                    <div class="cell-label">Subject</div>
+                    <div class="cell-value narrative">
+                      {{ caseData.subject }}
+                    </div>
+                  </div>
+                  <div
+                    class="detail-cell detail-cell--span-subject"
+                    *ngIf="caseData.description"
+                  >
+                    <div class="cell-label">Description</div>
+                    <div class="cell-value narrative">
+                      {{ caseData.description }}
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div class="detail-cell">
-                <div class="cell-label">Applied</div>
-                <div class="cell-value">{{ caseData.applicationDate | date: 'dd/MM/yyyy' }}</div>
-              </div>
-              <div class="detail-cell" *ngIf="caseData.nextHearingDate">
-                <div class="cell-label">Next hearing</div>
-                <div class="cell-value">{{ caseData.nextHearingDate | date: 'dd/MM/yyyy' }}</div>
-              </div>
-              <div class="detail-cell" *ngIf="caseData.assignedToOfficerName">
-                <div class="cell-label">Assigned</div>
-                <div class="cell-value">
-                  {{ caseData.assignedToOfficerName }}
-                  <span class="role-tag" *ngIf="caseData.assignedToRole">{{ caseData.assignedToRole }}</span>
+
+              <div class="detail-section" *ngIf="hasParsedCaseData()">
+                <div class="section-header section-header--minimal">
+                  <span class="section-title">Extra form fields</span>
+                </div>
+                <div class="detail-grid detail-grid--readable">
+                  <div
+                    class="detail-cell"
+                    *ngFor="let item of parsedCaseData | keyvalue"
+                  >
+                    <div class="cell-label">{{ item.key | titlecase }}</div>
+                    <div class="cell-value">{{ item.value }}</div>
+                  </div>
                 </div>
               </div>
-              <div class="detail-cell" *ngIf="caseData.assignedToUnitName">
-                <div class="cell-label">Unit</div>
-                <div class="cell-value">{{ caseData.assignedToUnitName }}</div>
+            </div>
+
+            <!-- ── Module forms (admin-configured module types from workflow) ── -->
+            <ng-container
+              *ngFor="let mt of moduleFormTypesForTabs; let mi = index"
+            >
+              <div
+                *ngIf="selectedTabIndex === moduleFormsTabStartIndex + mi"
+                class="tab-content"
+              >
+                <app-module-form
+                  [caseId]="caseData.id"
+                  [caseUnitId]="caseData.unitId ?? null"
+                  [moduleType]="mt"
+                  (formSubmitted)="onModuleFormSubmitted($event)"
+                >
+                </app-module-form>
               </div>
-              <div class="detail-cell">
-                <div class="cell-label">Applicant</div>
-                <div class="cell-value">{{ caseData.applicantName }}</div>
+            </ng-container>
+
+            <!-- ── Documents (one tab per template ID from workflow checklist) ── -->
+            <ng-container
+              *ngFor="let tid of documentTemplateIdsForTabs; let di = index"
+            >
+              <div
+                *ngIf="selectedTabIndex === documentsTabStartIndex + di"
+                class="tab-content"
+              >
+                <app-document-editor
+                  [caseId]="caseData.id"
+                  [caseData]="caseData"
+                  [preferredTransitionCode]="
+                    selectedActionTransition?.transitionCode ?? null
+                  "
+                  [templateId]="tid"
+                  [openInEditMode]="isOrderSheetTemplateId(tid)"
+                  (documentSaved)="onDocumentSaved()"
+                >
+                </app-document-editor>
               </div>
-              <div class="detail-cell">
-                <div class="cell-label">Mobile</div>
-                <div class="cell-value">{{ caseData.applicantMobile }}</div>
-              </div>
-              <div class="detail-cell" *ngIf="caseData.applicantEmail">
-                <div class="cell-label">Email</div>
-                <div class="cell-value">{{ caseData.applicantEmail }}</div>
-              </div>
-              <div class="detail-cell detail-cell--span-subject">
-                <div class="cell-label">Subject</div>
-                <div class="cell-value narrative">{{ caseData.subject }}</div>
-              </div>
-              <div class="detail-cell detail-cell--span-subject" *ngIf="caseData.description">
-                <div class="cell-label">Description</div>
-                <div class="cell-value narrative">{{ caseData.description }}</div>
+            </ng-container>
+
+            <!-- ── History ── -->
+            <div
+              *ngIf="selectedTabIndex === historyTabIndex"
+              class="tab-content"
+            >
+              <div class="detail-section">
+                <div class="section-header">
+                  <div class="section-icon"><mat-icon>history</mat-icon></div>
+                  <span class="section-title">History</span>
+                </div>
+
+                <div *ngIf="loadingHistory" class="loading-inline">
+                  <mat-spinner diameter="22"></mat-spinner>
+                  <span>Loading history...</span>
+                </div>
+
+                <div
+                  *ngIf="!loadingHistory && history.length === 0"
+                  class="empty-state"
+                >
+                  <mat-icon>history_toggle_off</mat-icon>
+                  <p>No history available</p>
+                </div>
+
+                <div
+                  *ngIf="!loadingHistory && history.length > 0"
+                  class="timeline"
+                >
+                  <div
+                    *ngFor="let entry of history; let last = last"
+                    class="timeline-item"
+                    [class.last]="last"
+                  >
+                    <div class="timeline-connector">
+                      <div class="timeline-dot"></div>
+                      <div class="timeline-line" *ngIf="!last"></div>
+                    </div>
+                    <div class="timeline-body">
+                      <div class="timeline-header">
+                        <span class="timeline-action">{{
+                          entry.transitionName
+                        }}</span>
+                        <span class="timeline-date">{{
+                          entry.performedAt | date: "dd MMM yyyy · HH:mm"
+                        }}</span>
+                      </div>
+                      <div class="timeline-meta">
+                        <span class="meta-officer">{{
+                          entry.performedByOfficerName
+                        }}</span>
+                        <span class="meta-role">{{
+                          entry.performedByRole
+                        }}</span>
+                        <span class="meta-divider">·</span>
+                        <span class="meta-states"
+                          >{{ entry.fromStateCode }} →
+                          {{ entry.toStateCode }}</span
+                        >
+                      </div>
+                      <div class="timeline-comment" *ngIf="entry.comments">
+                        <mat-icon>format_quote</mat-icon>
+                        <span>{{ entry.comments }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-
-          <div class="detail-section" *ngIf="hasParsedCaseData()">
-            <div class="section-header section-header--minimal">
-              <span class="section-title">Extra form fields</span>
-            </div>
-            <div class="detail-grid detail-grid--readable">
-              <div class="detail-cell" *ngFor="let item of parsedCaseData | keyvalue">
-                <div class="cell-label">{{ item.key | titlecase }}</div>
-                <div class="cell-value">{{ item.value }}</div>
-              </div>
-            </div>
-          </div>
-
         </div>
-
-      <!-- ── Module forms (admin-configured module types from workflow) ── -->
-      <ng-container *ngFor="let mt of moduleFormTypesForTabs; let mi = index">
-        <div *ngIf="selectedTabIndex === moduleFormsTabStartIndex + mi" class="tab-content">
-          <app-module-form
-            [caseId]="caseData.id"
-            [caseUnitId]="caseData.unitId ?? null"
-            [moduleType]="mt"
-            (formSubmitted)="onModuleFormSubmitted($event)">
-          </app-module-form>
-        </div>
-      </ng-container>
-
-      <!-- ── Documents (one tab per template ID from workflow checklist) ── -->
-      <ng-container *ngFor="let tid of documentTemplateIdsForTabs; let di = index">
-        <div *ngIf="selectedTabIndex === documentsTabStartIndex + di" class="tab-content">
-          <app-document-editor
-            [caseId]="caseData.id"
-            [caseData]="caseData"
-            [preferredTransitionCode]="selectedActionTransition?.transitionCode ?? null"
-            [templateId]="tid"
-            [openInEditMode]="isOrderSheetTemplateId(tid)"
-            (documentSaved)="onDocumentSaved()">
-          </app-document-editor>
-        </div>
-      </ng-container>
-
-      <!-- ── History ── -->
-      <div *ngIf="selectedTabIndex === historyTabIndex" class="tab-content">
-          <div class="detail-section">
-            <div class="section-header">
-              <div class="section-icon"><mat-icon>history</mat-icon></div>
-              <span class="section-title">History</span>
-            </div>
-
-            <div *ngIf="loadingHistory" class="loading-inline">
-              <mat-spinner diameter="22"></mat-spinner>
-              <span>Loading history...</span>
-            </div>
-
-            <div *ngIf="!loadingHistory && history.length === 0" class="empty-state">
-              <mat-icon>history_toggle_off</mat-icon>
-              <p>No history available</p>
-            </div>
-
-            <div *ngIf="!loadingHistory && history.length > 0" class="timeline">
-              <div *ngFor="let entry of history; let last = last"
-                   class="timeline-item" [class.last]="last">
-                <div class="timeline-connector">
-                  <div class="timeline-dot"></div>
-                  <div class="timeline-line" *ngIf="!last"></div>
-                </div>
-                <div class="timeline-body">
-                  <div class="timeline-header">
-                    <span class="timeline-action">{{ entry.transitionName }}</span>
-                    <span class="timeline-date">{{ entry.performedAt | date: 'dd MMM yyyy · HH:mm' }}</span>
-                  </div>
-                  <div class="timeline-meta">
-                    <span class="meta-officer">{{ entry.performedByOfficerName }}</span>
-                    <span class="meta-role">{{ entry.performedByRole }}</span>
-                    <span class="meta-divider">·</span>
-                    <span class="meta-states">{{ entry.fromStateCode }} → {{ entry.toStateCode }}</span>
-                  </div>
-                  <div class="timeline-comment" *ngIf="entry.comments">
-                    <mat-icon>format_quote</mat-icon>
-                    <span>{{ entry.comments }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
       </div>
     </div>
-      </div>
-    </div>
-
   </div>
 </div>

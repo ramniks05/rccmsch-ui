@@ -69,13 +69,20 @@
   .refresh-icon-btn {
     width: 32px !important;
     height: 32px !important;
+    padding: 8px 5px;
     background: transparent !important;
     border: none !important;
     color: #9ca3af !important;
     transition: color 0.15s !important;
 
-    &:hover { color: #1a3558 !important; }
-    mat-icon { font-size: 18px; }
+    &:hover {
+      color: #1a3558 !important;
+    }
+
+    mat-icon {
+      font-size: 18px;
+      line-height: 18px;
+    }
   }
 }
 

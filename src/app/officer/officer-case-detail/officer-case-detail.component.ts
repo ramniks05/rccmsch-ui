@@ -173,6 +173,11 @@ export class OfficerCaseDetailComponent implements OnInit {
         this.loadingTransitions = false;
         if (response.success && response.data) {
           this.transitions = response.data;
+          if (this.transitions.length == 1) {
+            this.selectedActionTransitionId = this.transitions[0].id;
+            this.populateSidebarForSelectedAction();
+            this.loadActionFormAndDocumentDetails();
+          }
           this.syncSelectedActionAfterTransitionsLoad();
           this.populateSidebarForSelectedAction();
           this.loadActionFormAndDocumentDetails();
@@ -296,28 +301,34 @@ export class OfficerCaseDetailComponent implements OnInit {
   }
 
   /** Sidebar: Case Info + module forms + documents for the **selected action only** + History (workflow actions live at the top). */
-  get sidebarNavItems(): { index: number; label: string; icon: string; emphasize?: boolean }[] {
-    const items: { index: number; label: string; icon: string; emphasize?: boolean }[] = [];
-    let idx = 0;
-    items.push({ index: idx++, label: 'Application Details', icon: 'folder_open' });
-    for (const mt of this.moduleFormTypesForTabs) {
-      items.push({
-        index: idx++,
-        label: this.humanizeModuleType(mt),
-        icon: 'dynamic_form',
-      });
-    }
-    for (const tid of this.documentTemplateIdsForTabs) {
-      items.push({
-        index: idx++,
-        label: this.getDocumentName(tid),
-        icon: 'description',
-        emphasize: this.isOrderSheetTemplateId(tid),
-      });
-    }
-    items.push({ index: idx++, label: 'History', icon: 'history' });
-    return items;
+  get sidebarNavItems(): { index: number; label: string; icon: string; emphasize?: boolean; required?: boolean }[] {
+  const items: { index: number; label: string; icon: string; emphasize?: boolean; required?: boolean }[] = [];
+  let idx = 0;
+
+  items.push({ index: idx++, label: 'Application Details', icon: 'folder_open' });
+
+  for (const mt of this.moduleFormTypesForTabs) {
+    items.push({
+      index: idx++,
+      label: this.humanizeModuleType(mt),
+      icon: 'dynamic_form',
+      required: true,  // all module forms are required
+    });
   }
+
+  for (const tid of this.documentTemplateIdsForTabs) {
+    items.push({
+      index: idx++,
+      label: this.getDocumentName(tid),
+      icon: 'description',
+      emphasize: this.isOrderSheetTemplateId(tid),
+      required: true,  // all workflow documents are required
+    });
+  }
+
+  items.push({ index: idx++, label: 'Application History', icon: 'history' });
+  return items;
+}
 
   /** First tab index for module forms (always 1). */
   get moduleFormsTabStartIndex(): number {
