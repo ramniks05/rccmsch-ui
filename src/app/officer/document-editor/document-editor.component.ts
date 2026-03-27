@@ -1,4 +1,12 @@
-import { Component, OnInit, Input, OnChanges, SimpleChanges, Output, EventEmitter } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  Input,
+  OnChanges,
+  SimpleChanges,
+  Output,
+  EventEmitter,
+} from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { OfficerCaseService, CaseDTO } from '../services/officer-case.service';
@@ -19,7 +27,7 @@ interface DocumentData {
 @Component({
   selector: 'app-document-editor',
   templateUrl: './document-editor.component.html',
-  styleUrls: ['./document-editor.component.scss']
+  styleUrls: ['./document-editor.component.scss'],
 })
 export class DocumentEditorComponent implements OnInit, OnChanges {
   @Input() caseId!: number;
@@ -61,6 +69,7 @@ export class DocumentEditorComponent implements OnInit, OnChanges {
   // User role for access control
   userRoleCode: string = '';
   userRoleName: string = '';
+  isFullscreen = false;
 
   constructor(
     private officerCaseService: OfficerCaseService,
@@ -123,7 +132,12 @@ export class DocumentEditorComponent implements OnInit, OnChanges {
   }
 
   private tryApplyOpenInEditMode(): void {
-    if (!this.openInEditMode || !this.template || !this.templateLoadSettled || !this.documentLoadSettled) {
+    if (
+      !this.openInEditMode ||
+      !this.template ||
+      !this.templateLoadSettled ||
+      !this.documentLoadSettled
+    ) {
       return;
     }
     if (!this.canEdit()) {
@@ -134,6 +148,15 @@ export class DocumentEditorComponent implements OnInit, OnChanges {
         this.enableEdit();
       }
     }, 0);
+  }
+
+  toggleFullscreen(): void {
+    this.isFullscreen = !this.isFullscreen;
+    document.body.style.overflow = this.isFullscreen ? 'hidden' : '';
+  }
+
+  ngOnDestroy(): void {
+    document.body.style.overflow = '';
   }
 
   /**
@@ -155,8 +178,13 @@ export class DocumentEditorComponent implements OnInit, OnChanges {
 
     // Extract officer information
     const posting = officerData?.posting || {};
-    const designation = posting.roleName || posting.designation || this.caseData.assignedToRole || '';
-    const officerName = posting.officerName || this.caseData.assignedToOfficerName || '';
+    const designation =
+      posting.roleName ||
+      posting.designation ||
+      this.caseData.assignedToRole ||
+      '';
+    const officerName =
+      posting.officerName || this.caseData.assignedToOfficerName || '';
 
     // Extract court name - priority: caseData > posting > default
     let courtName = 'Court Name'; // Default fallback
@@ -169,10 +197,11 @@ export class DocumentEditorComponent implements OnInit, OnChanges {
     }
 
     // Digital Signature ID - can be userId, officerId, or custom field
-    const digitalSignatureId = officerData?.userId?.toString() ||
-                               posting.officerId?.toString() ||
-                               this.caseData.assignedToOfficerId?.toString() ||
-                               '';
+    const digitalSignatureId =
+      officerData?.userId?.toString() ||
+      posting.officerId?.toString() ||
+      this.caseData.assignedToOfficerId?.toString() ||
+      '';
 
     // Parse caseData JSON to extract form fields (including respondent name)
     let parsedCaseData: Record<string, any> = {};
@@ -184,12 +213,13 @@ export class DocumentEditorComponent implements OnInit, OnChanges {
 
         // Try multiple possible field names for respondent
         // Common variations: respondentName, respondent, respondent_name, etc.
-        respondentName = parsedCaseData['respondentName'] ||
-                        parsedCaseData['respondent'] ||
-                        parsedCaseData['respondent_name'] ||
-                        parsedCaseData['Respondent Name'] ||
-                        parsedCaseData['Respondent'] ||
-                        '';
+        respondentName =
+          parsedCaseData['respondentName'] ||
+          parsedCaseData['respondent'] ||
+          parsedCaseData['respondent_name'] ||
+          parsedCaseData['Respondent Name'] ||
+          parsedCaseData['Respondent'] ||
+          '';
       } catch (e) {
         console.error('Error parsing caseData:', e);
       }
@@ -204,7 +234,9 @@ export class DocumentEditorComponent implements OnInit, OnChanges {
       '{{caseType}}': this.caseData.caseTypeName || '',
       '{{subject}}': this.caseData.subject || '',
       '{{description}}': this.caseData.description || '',
-      '{{applicationDate}}': this.caseData.applicationDate ? new Date(this.caseData.applicationDate).toLocaleDateString() : '',
+      '{{applicationDate}}': this.caseData.applicationDate
+        ? new Date(this.caseData.applicationDate).toLocaleDateString()
+        : '',
       '{{currentDate}}': new Date().toLocaleDateString(),
       '{{currentDateTime}}': new Date().toLocaleString(),
       '{{officerName}}': officerName,
@@ -212,7 +244,7 @@ export class DocumentEditorComponent implements OnInit, OnChanges {
       '{{designation}}': designation,
       '{{digitalSignatureId}}': digitalSignatureId,
       '{{respondentName}}': respondentName,
-      '{{status}}': this.caseData.statusName || this.caseData.status || ''
+      '{{status}}': this.caseData.statusName || this.caseData.status || '',
     };
   }
 
@@ -222,29 +254,33 @@ export class DocumentEditorComponent implements OnInit, OnChanges {
   loadTemplate(): void {
     if (this.templateId == null) return;
     this.loading = true;
-    this.officerCaseService.getDocumentTemplate(this.caseId, this.templateId).subscribe({
-      next: (response) => {
-        this.template = response.data;
-        if (this.template && !this.document) {
-          // If no document exists, use template as starting point
-          this.contentHtml = this.replacePlaceholders(this.template.templateHtml);
-        }
-        this.loading = false;
-        this.templateLoadSettled = true;
-        // Once we know the template (and its ID), load workflow permissions for this document
-        if (this.template && this.template.id) {
-          this.loadWorkflowDocumentPermissions();
-        }
-        this.tryApplyOpenInEditMode();
-      },
-      error: (error) => {
-        console.error('Error loading template:', error);
-        alert('Failed to load document template');
-        this.loading = false;
-        this.templateLoadSettled = true;
-        this.tryApplyOpenInEditMode();
-      }
-    });
+    this.officerCaseService
+      .getDocumentTemplate(this.caseId, this.templateId)
+      .subscribe({
+        next: (response) => {
+          this.template = response.data;
+          if (this.template && !this.document) {
+            // If no document exists, use template as starting point
+            this.contentHtml = this.replacePlaceholders(
+              this.template.templateHtml,
+            );
+          }
+          this.loading = false;
+          this.templateLoadSettled = true;
+          // Once we know the template (and its ID), load workflow permissions for this document
+          if (this.template && this.template.id) {
+            this.loadWorkflowDocumentPermissions();
+          }
+          this.tryApplyOpenInEditMode();
+        },
+        error: (error) => {
+          console.error('Error loading template:', error);
+          alert('Failed to load document template');
+          this.loading = false;
+          this.templateLoadSettled = true;
+          this.tryApplyOpenInEditMode();
+        },
+      });
   }
 
   /**
@@ -284,7 +320,7 @@ export class DocumentEditorComponent implements OnInit, OnChanges {
       },
       error: () => {
         // On error, keep defaults (no extra actions); backend controls availability
-      }
+      },
     });
   }
 
@@ -295,37 +331,46 @@ export class DocumentEditorComponent implements OnInit, OnChanges {
   loadDocument(): void {
     if (this.templateId == null) return;
     this.loading = true;
-    this.officerCaseService.getLatestDocument(this.caseId, this.templateId).subscribe({
-      next: (response) => {
-        if (response.data) {
-          const doc = response.data;
-          this.document = doc;
-          this.contentHtml = doc.contentHtml ?? '';
-          this.documentStatus = doc.status ?? 'DRAFT';
+    this.officerCaseService
+      .getLatestDocument(this.caseId, this.templateId)
+      .subscribe({
+        next: (response) => {
+          if (response.data) {
+            const doc = response.data;
+            this.document = doc;
+            this.contentHtml = doc.contentHtml ?? '';
+            this.documentStatus = doc.status ?? 'DRAFT';
 
-          if (doc.contentData) {
-            try {
-              this.contentData = typeof doc.contentData === 'string' ? JSON.parse(doc.contentData) : doc.contentData;
-            } catch {
-              this.contentData = {};
+            if (doc.contentData) {
+              try {
+                this.contentData =
+                  typeof doc.contentData === 'string'
+                    ? JSON.parse(doc.contentData)
+                    : doc.contentData;
+              } catch {
+                this.contentData = {};
+              }
+            }
+
+            if (
+              doc.status === 'SIGNED' &&
+              this.template &&
+              !this.template.allowEditAfterSign
+            ) {
+              this.editMode = false;
             }
           }
-
-          if (doc.status === 'SIGNED' && this.template && !this.template.allowEditAfterSign) {
-            this.editMode = false;
-          }
-        }
-        this.loading = false;
-        this.documentLoadSettled = true;
-        this.tryApplyOpenInEditMode();
-      },
-      error: (error) => {
-        console.error('Error loading document:', error);
-        this.loading = false;
-        this.documentLoadSettled = true;
-        this.tryApplyOpenInEditMode();
-      }
-    });
+          this.loading = false;
+          this.documentLoadSettled = true;
+          this.tryApplyOpenInEditMode();
+        },
+        error: (error) => {
+          console.error('Error loading document:', error);
+          this.loading = false;
+          this.documentLoadSettled = true;
+          this.tryApplyOpenInEditMode();
+        },
+      });
   }
 
   /**
@@ -344,7 +389,11 @@ export class DocumentEditorComponent implements OnInit, OnChanges {
    * Enable edit mode
    */
   enableEdit(): void {
-    if (this.document?.status === 'SIGNED' && this.template && !this.template.allowEditAfterSign) {
+    if (
+      this.document?.status === 'SIGNED' &&
+      this.template &&
+      !this.template.allowEditAfterSign
+    ) {
       alert('This document is signed and cannot be edited.');
       return;
     }
@@ -415,7 +464,10 @@ export class DocumentEditorComponent implements OnInit, OnChanges {
     this.saving = true;
 
     // Ensure status is exactly as expected (uppercase, no whitespace)
-    const normalizedStatus = status.trim().toUpperCase() as 'DRAFT' | 'FINAL' | 'SIGNED';
+    const normalizedStatus = status.trim().toUpperCase() as
+      | 'DRAFT'
+      | 'FINAL'
+      | 'SIGNED';
 
     const templateId = this.templateId ?? this.template?.id;
     if (templateId == null) {
@@ -427,87 +479,105 @@ export class DocumentEditorComponent implements OnInit, OnChanges {
       contentHtml: this.contentHtml,
       contentData: JSON.stringify(this.contentData),
       status: normalizedStatus,
-      remarks: undefined as string | undefined
+      remarks: undefined as string | undefined,
     };
 
     if (this.document && this.document.id) {
       // Update existing document: PUT /api/cases/{caseId}/documents/{templateId}/{documentId}
-      this.officerCaseService.updateDocument(
-        this.caseId,
-        templateId,
-        this.document.id,
-        documentPayload
-      ).subscribe({
-        next: (response) => {
-          console.log('=== Document Update Response ===');
-          console.log('Full response:', response);
-          console.log('Response data:', response.data);
-          const returnedStatus = response.data?.status || status;
-          console.log('Requested status:', status);
-          console.log('Returned status from backend:', returnedStatus);
+      this.officerCaseService
+        .updateDocument(
+          this.caseId,
+          templateId,
+          this.document.id,
+          documentPayload,
+        )
+        .subscribe({
+          next: (response) => {
+            console.log('=== Document Update Response ===');
+            console.log('Full response:', response);
+            console.log('Response data:', response.data);
+            const returnedStatus = response.data?.status || status;
+            console.log('Requested status:', status);
+            console.log('Returned status from backend:', returnedStatus);
 
-          if (returnedStatus !== status) {
-            console.warn('⚠️ WARNING: Status mismatch!');
-            console.warn('Requested:', status, 'but backend returned:', returnedStatus);
-            alert(`⚠️ Status mismatch: Requested "${status}" but backend returned "${returnedStatus}". Please check backend logic.`);
-          } else {
-            console.log('✅ Status matches correctly');
-          }
+            if (returnedStatus !== status) {
+              console.warn('⚠️ WARNING: Status mismatch!');
+              console.warn(
+                'Requested:',
+                status,
+                'but backend returned:',
+                returnedStatus,
+              );
+              alert(
+                `⚠️ Status mismatch: Requested "${status}" but backend returned "${returnedStatus}". Please check backend logic.`,
+              );
+            } else {
+              console.log('✅ Status matches correctly');
+            }
 
-          alert(`Document updated successfully. Status: ${returnedStatus}`);
-          this.document = response.data;
-          this.documentStatus = returnedStatus as 'DRAFT' | 'FINAL' | 'SIGNED';
-          this.editMode = false;
-          this.saving = false;
-          // Notify parent component that document has been saved
-          if (this.document) {
-            this.documentSaved.emit(this.document);
-          }
-          // this.triggerAutoWorkflowAfterDocumentSave(
-          //   templateId,
-          //   String(returnedStatus),
-          // );
-        },
-        error: (error) => {
-          console.error('Document update error:', error);
-          console.error('Request payload:', documentPayload);
-          alert('Failed to update document. Check console for details.');
-          this.saving = false;
-        }
-      });
+            alert(`Document updated successfully. Status: ${returnedStatus}`);
+            this.document = response.data;
+            this.documentStatus = returnedStatus as
+              | 'DRAFT'
+              | 'FINAL'
+              | 'SIGNED';
+            this.editMode = false;
+            this.saving = false;
+            // Notify parent component that document has been saved
+            if (this.document) {
+              this.documentSaved.emit(this.document);
+            }
+            // this.triggerAutoWorkflowAfterDocumentSave(
+            //   templateId,
+            //   String(returnedStatus),
+            // );
+          },
+          error: (error) => {
+            console.error('Document update error:', error);
+            console.error('Request payload:', documentPayload);
+            alert('Failed to update document. Check console for details.');
+            this.saving = false;
+          },
+        });
     } else {
       // Create new document: POST /api/cases/{caseId}/documents/{templateId}
-      this.officerCaseService.saveDocument(
-        this.caseId,
-        templateId,
-        documentPayload
-      ).subscribe({
-        next: (response) => {
-          const returnedStatus = response.data?.status || status;
-          if (returnedStatus !== status) {
-            console.warn('Status mismatch: requested', status, 'backend returned', returnedStatus);
-          }
-          alert(`Document saved successfully. Status: ${returnedStatus}`);
-          this.document = response.data;
-          this.documentStatus = returnedStatus as 'DRAFT' | 'FINAL' | 'SIGNED';
-          this.editMode = false;
-          this.saving = false;
-          // Notify parent component that document has been saved
-          if (this.document) {
-            this.documentSaved.emit(this.document);
-          }
-          // this.triggerAutoWorkflowAfterDocumentSave(
-          //   templateId,
-          //   String(returnedStatus),
-          // );
-        },
-        error: (error) => {
-          console.error('Document save error:', error);
-          console.error('Request payload:', documentPayload);
-          alert('Failed to save document. Check console for details.');
-          this.saving = false;
-        }
-      });
+      this.officerCaseService
+        .saveDocument(this.caseId, templateId, documentPayload)
+        .subscribe({
+          next: (response) => {
+            const returnedStatus = response.data?.status || status;
+            if (returnedStatus !== status) {
+              console.warn(
+                'Status mismatch: requested',
+                status,
+                'backend returned',
+                returnedStatus,
+              );
+            }
+            alert(`Document saved successfully. Status: ${returnedStatus}`);
+            this.document = response.data;
+            this.documentStatus = returnedStatus as
+              | 'DRAFT'
+              | 'FINAL'
+              | 'SIGNED';
+            this.editMode = false;
+            this.saving = false;
+            // Notify parent component that document has been saved
+            if (this.document) {
+              this.documentSaved.emit(this.document);
+            }
+            // this.triggerAutoWorkflowAfterDocumentSave(
+            //   templateId,
+            //   String(returnedStatus),
+            // );
+          },
+          error: (error) => {
+            console.error('Document save error:', error);
+            console.error('Request payload:', documentPayload);
+            alert('Failed to save document. Check console for details.');
+            this.saving = false;
+          },
+        });
     }
   }
 
@@ -572,7 +642,9 @@ export class DocumentEditorComponent implements OnInit, OnChanges {
    * Export to PDF (placeholder - would need actual PDF library)
    */
   exportToPDF(): void {
-    alert('PDF export functionality would be implemented here using a library like jsPDF or html2pdf.js');
+    alert(
+      'PDF export functionality would be implemented here using a library like jsPDF or html2pdf.js',
+    );
     // Implementation would use html2pdf.js or similar
   }
 
@@ -582,7 +654,9 @@ export class DocumentEditorComponent implements OnInit, OnChanges {
   getDocumentTypeLabel(): string {
     const t = this.documentType;
     if (!t) return 'Document';
-    return String(t).replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+    return String(t)
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, (c) => c.toUpperCase());
   }
 
   /**
@@ -590,9 +664,9 @@ export class DocumentEditorComponent implements OnInit, OnChanges {
    */
   getStatusBadgeClass(): string {
     const classes: Record<string, string> = {
-      'DRAFT': 'bg-secondary',
-      'FINAL': 'bg-info',
-      'SIGNED': 'bg-success'
+      DRAFT: 'bg-secondary',
+      FINAL: 'bg-info',
+      SIGNED: 'bg-success',
     };
     return classes[this.documentStatus] || 'bg-secondary';
   }

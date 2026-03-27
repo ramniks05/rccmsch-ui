@@ -144,3 +144,80 @@
     }
   }
 }
+
+button.btn.btn-secondary.draft-btn.ng-star-inserted {
+    background: teal;
+}
+
+.document-editor-container {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.document-editor-fullscreen {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 1050 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: #ffffff !important;
+  display: flex;
+  flex-direction: column;
+  animation: fs-enter 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+
+  .card {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border-radius: 0 !important;
+    border: none !important;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .card-header {
+    flex-shrink: 0;
+    border-radius: 0 !important;
+  }
+
+  .card-body {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  // Stretch the rich text editor to fill remaining height
+  app-rich-text-editor {
+    flex: 1;
+    display: block;
+
+    // If your rich-text-editor uses an iframe or div, stretch it too
+    ::ng-deep .ql-container,
+    ::ng-deep .ql-editor,
+    ::ng-deep .NgxEditor,
+    ::ng-deep iframe,
+    ::ng-deep [contenteditable] {
+      height: 100% !important;
+      min-height: 0 !important;
+    }
+  }
+
+  // Give the editor wrapper full remaining space
+  .mb-3:has(app-rich-text-editor) {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0 !important;
+  }
+}
+
+@keyframes fs-enter {
+  from {
+    opacity: 0.6;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
